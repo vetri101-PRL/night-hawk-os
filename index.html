@@ -7,6 +7,7 @@
 <meta name="description" content="Night Hawk Energy Drink — Q-Commerce operations dashboard">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23F5B700'/><circle cx='16' cy='16' r='16' fill='none' stroke='%230B3954' stroke-width='2'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   :root {
     --nh-navy: #0B3954; --nh-sky: #087E8B; --nh-red: #BF1A2F;
@@ -733,23 +734,200 @@ function renderIssues(el) {
 
 function renderImport(el) {
   el.innerHTML =
-    '<div class="panel"><h2>CSV / Paste Import</h2>' +
-    '<div class="desc">Paste CSV text (first row = headers). Choose target tab. App auto-maps column names. Unknown columns are skipped.</div>' +
-    '<label class="muted">Target tab</label>' +
-    '<select id="imp-target" style="padding:6px;border:1px solid var(--nh-gray-line);border-radius:6px;margin-bottom:8px">' +
+    '<div class="panel"><h2>Import data</h2>' +
+    '<div class="desc">Upload a CSV or Excel file, or paste CSV text. First row must be column headers. The app auto-maps columns to the target tab (case and whitespace don\'t matter) and appends the rows to your Google Sheet.</div>' +
+    '<label class="muted" style="display:block;margin-bottom:4px">Target tab</label>' +
+    '<select id="imp-target" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;margin-bottom:14px;display:block;min-width:220px">' +
     '<option>daily_sales</option><option>daily_fees</option><option>daily_ad_spend</option>' +
-    '<option>inventory_snapshots</option><option>complaints_returns</option></select>' +
-    '<label class="muted" style="margin-top:8px;display:block">CSV</label>' +
-    '<textarea id="imp-csv" style="width:100%;min-height:200px;font-family:Menlo,monospace;font-size:12px;padding:8px;border:1px solid var(--nh-gray-line);border-radius:6px" placeholder="date,platform_id,city_id,sku_id,units,value\n2026-03-01,PLT-001,CTY-002,SKU-001,5,390"></textarea>' +
-    '<div style="margin-top:8px;display:flex;justify-content:flex-end">' +
-    '<button id="imp-run" style="padding:8px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Import</button></div>' +
-    '<div id="imp-out" style="margin-top:12px"></div></div>';
+    '<option>inventory_snapshots</option><option>complaints_returns</option>' +
+    '<option>expansion_plan</option><option>monthly_budget</option><option>monthly_forecast</option>' +
+    '</select>' +
+    '<div style="display:flex;gap:0;border-bottom:1px solid var(--nh-gray-line);margin-bottom:14px">' +
+    '<button id="imp-mode-upload" type="button" style="padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">\u2B06 Upload file</button>' +
+    '<button id="imp-mode-paste" type="button" style="padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;margin-left:4px">Paste CSV</button>' +
+    '</div>' +
+    '<div id="imp-upload-panel">' +
+      '<label class="muted" style="display:block;margin-bottom:6px">Pick a file (CSV, XLSX, or XLS)</label>' +
+      '<input type="file" id="imp-file" accept=".csv,.xlsx,.xls,text/csv" style="margin-bottom:4px">' +
+      '<div class="muted" style="font-size:11px">Tip: if you exported from Blinkit as XLSX, you can upload it directly \u2014 the app will convert it to CSV in your browser and send only rows to the sheet.</div>' +
+      '<div id="imp-sheet-picker" class="hidden" style="margin-top:12px">' +
+        '<label class="muted" style="display:block;margin-bottom:4px">This Excel file has multiple sheets \u2014 pick one</label>' +
+        '<select id="imp-sheet-sel" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;min-width:220px"></select>' +
+      '</div>' +
+      '<div id="imp-preview" style="margin-top:14px"></div>' +
+    '</div>' +
+    '<div id="imp-paste-panel" class="hidden">' +
+      '<label class="muted" style="display:block;margin-bottom:6px">Paste CSV below (first row = headers)</label>' +
+      '<textarea id="imp-csv" style="width:100%;min-height:200px;font-family:Menlo,monospace;font-size:12px;padding:8px;border:1px solid var(--nh-gray-line);border-radius:6px" placeholder="date,platform_id,city_id,sku_id,units,value\n2026-04-15,PLT-001,CTY-002,SKU-001,5,390"></textarea>' +
+    '</div>' +
+    '<div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+      '<div id="imp-summary" class="muted"></div>' +
+      '<button id="imp-run" style="padding:9px 18px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer;font-size:13px" disabled>Import</button>' +
+    '</div>' +
+    '<div id="imp-out" style="margin-top:14px"></div></div>';
+
+  var currentCsv = '';
+  var currentMode = 'upload';
+  var parsedWorkbook = null;
+
+  function setMode(mode) {
+    currentMode = mode;
+    $('imp-upload-panel').classList.toggle('hidden', mode !== 'upload');
+    $('imp-paste-panel').classList.toggle('hidden', mode !== 'paste');
+    var tu = $('imp-mode-upload'), tp = $('imp-mode-paste');
+    var activeStyle = 'padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
+    var inactiveStyle = 'padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
+    if (mode === 'upload') {
+      tu.setAttribute('style', activeStyle);
+      tp.setAttribute('style', inactiveStyle + ';margin-left:4px');
+    } else {
+      tu.setAttribute('style', inactiveStyle);
+      tp.setAttribute('style', activeStyle + ';margin-left:4px');
+    }
+    updateRunState();
+  }
+  function csvForSubmit() {
+    return currentMode === 'upload' ? currentCsv : $('imp-csv').value;
+  }
+  function updateRunState() {
+    var csv = csvForSubmit();
+    var rowCount = 0;
+    if (csv && csv.trim()) {
+      var lines = csv.split(/\r?\n/).filter(function(l){return l.trim().length;});
+      rowCount = Math.max(0, lines.length - 1);
+    }
+    $('imp-run').disabled = rowCount === 0;
+    $('imp-summary').textContent = rowCount > 0 ? ('Ready to import ' + rowCount + ' row' + (rowCount===1?'':'s')) : '';
+  }
+
+  $('imp-mode-upload').addEventListener('click', function() { setMode('upload'); });
+  $('imp-mode-paste').addEventListener('click', function() { setMode('paste'); });
+  $('imp-csv').addEventListener('input', updateRunState);
+
+  $('imp-file').addEventListener('change', function(e) {
+    var f = e.target.files && e.target.files[0];
+    if (!f) {
+      currentCsv = ''; parsedWorkbook = null;
+      $('imp-preview').innerHTML = '';
+      $('imp-sheet-picker').classList.add('hidden');
+      updateRunState();
+      return;
+    }
+    var name = f.name.toLowerCase();
+    $('imp-preview').innerHTML = '<div class="muted"><span class="loading"></span> Reading ' + escapeHtml(f.name) + '\u2026</div>';
+    var reader = new FileReader();
+
+    var isCsv = name.endsWith('.csv') || f.type === 'text/csv';
+    if (isCsv) {
+      reader.onload = function(ev) {
+        currentCsv = String(ev.target.result || '');
+        parsedWorkbook = null;
+        $('imp-sheet-picker').classList.add('hidden');
+        renderPreview(f.name);
+        updateRunState();
+      };
+      reader.onerror = function() {
+        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Could not read the CSV file.</div></div>';
+        currentCsv = ''; updateRunState();
+      };
+      reader.readAsText(f);
+    } else {
+      if (typeof XLSX === 'undefined') {
+        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Excel parser did not load. Check your internet connection and refresh.</div></div>';
+        return;
+      }
+      reader.onload = function(ev) {
+        try {
+          var data = new Uint8Array(ev.target.result);
+          parsedWorkbook = XLSX.read(data, { type: 'array' });
+          var sheets = parsedWorkbook.SheetNames || [];
+          if (!sheets.length) throw new Error('No sheets found');
+          if (sheets.length > 1) {
+            var sel = $('imp-sheet-sel');
+            sel.innerHTML = sheets.map(function(s){return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';}).join('');
+            sel.onchange = function() { selectSheet(sel.value, f.name); };
+            $('imp-sheet-picker').classList.remove('hidden');
+          } else {
+            $('imp-sheet-picker').classList.add('hidden');
+          }
+          selectSheet(sheets[0], f.name);
+        } catch (err) {
+          $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Failed to parse Excel file: ' + escapeHtml(err.message || err) + '</div></div>';
+          currentCsv = ''; updateRunState();
+        }
+      };
+      reader.onerror = function() {
+        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Could not read the Excel file.</div></div>';
+        currentCsv = ''; updateRunState();
+      };
+      reader.readAsArrayBuffer(f);
+    }
+  });
+
+  function selectSheet(sheetName, fileName) {
+    if (!parsedWorkbook) return;
+    var sheet = parsedWorkbook.Sheets[sheetName];
+    currentCsv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
+    renderPreview(fileName + '  \u2192  ' + sheetName);
+    updateRunState();
+  }
+
+  function renderPreview(label) {
+    if (!currentCsv || !currentCsv.trim()) {
+      $('imp-preview').innerHTML = '<div class="alert medium"><div class="sev">Warn</div><div class="msg">This file/sheet looks empty.</div></div>';
+      return;
+    }
+    var lines = currentCsv.split(/\r?\n/).filter(function(l){return l.trim().length;});
+    var headerCells = splitCsvLinePreview(lines[0]);
+    var body = lines.slice(1, 6).map(splitCsvLinePreview);
+    var rowCount = lines.length - 1;
+    var html = '<div class="muted" style="margin-bottom:6px">' + escapeHtml(label||'') + ' \u00B7 ' + rowCount + ' data row' + (rowCount===1?'':'s') + ' detected (showing first ' + body.length + ')</div>';
+    html += '<div style="overflow:auto;border:1px solid var(--nh-gray-line);border-radius:6px;max-height:260px">' +
+            '<table style="font-size:12px"><thead><tr>' +
+            headerCells.map(function(h){return '<th>' + escapeHtml(h) + '</th>';}).join('') +
+            '</tr></thead><tbody>' +
+            body.map(function(r){
+              return '<tr>' + r.map(function(c){return '<td>' + escapeHtml(c) + '</td>';}).join('') + '</tr>';
+            }).join('') +
+            '</tbody></table></div>';
+    $('imp-preview').innerHTML = html;
+  }
+
+  function splitCsvLinePreview(line) {
+    var out = []; var cur = ''; var inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (inQ) {
+        if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+        else if (c === '"') inQ = false;
+        else cur += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { out.push(cur); cur = ''; }
+        else cur += c;
+      }
+    }
+    out.push(cur);
+    return out;
+  }
+
   $('imp-run').addEventListener('click', function() {
+    var csv = csvForSubmit();
+    if (!csv || !csv.trim()) {
+      $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">No data to import.</div></div>';
+      return;
+    }
+    $('imp-run').disabled = true;
     $('imp-out').innerHTML = '<span class="loading"></span> Importing\u2026';
-    api('importCsv', { target: $('imp-target').value, csv: $('imp-csv').value }, 'POST').then(function(r) {
-      $('imp-out').innerHTML = '<div class="alert low"><div class="sev">Done</div><div class="msg"><b>Imported ' + r.added + ' rows</b>Skipped ' + r.skipped + ', errors ' + r.errors.length + '.<br>Map: <code>' + escapeHtml(JSON.stringify(r.map)) + '</code></div></div>';
+    api('importCsv', { target: $('imp-target').value, csv: csv }, 'POST').then(function(r) {
+      var errs = (r.errors || []).length;
+      var cls = errs ? 'medium' : 'low';
+      var msg = '<b>Imported ' + r.added + ' row' + (r.added===1?'':'s') + '</b>Skipped ' + r.skipped + ', errors ' + errs + '.<br>Column mapping: <code style="font-size:11px">' + escapeHtml(JSON.stringify(r.map)) + '</code>';
+      $('imp-out').innerHTML = '<div class="alert ' + cls + '"><div class="sev">Done</div><div class="msg">' + msg + '</div></div>';
+      updateRunState();
     }).catch(function(e) {
       $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
+      updateRunState();
     });
   });
 }
