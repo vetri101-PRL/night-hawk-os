@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Night Hawk Q-Commerce OS</title>
+<meta name="description" content="Night Hawk Energy Drink — Q-Commerce operations dashboard">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23F5B700'/><circle cx='16' cy='16' r='16' fill='none' stroke='%230B3954' stroke-width='2'/></svg>">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --nh-navy: #0B3954; --nh-sky: #087E8B; --nh-red: #BF1A2F;
+    --nh-yellow: #F5B700; --nh-gray-bg: #F7F8FA; --nh-gray-line: #E5E8EC;
+    --nh-gray-text: #4A5568; --nh-ok: #1E8449; --nh-warn: #B7950B; --nh-err: #C0392B;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--nh-gray-bg); color: #1a202c;
+               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+  a { color: var(--nh-sky); text-decoration: none; }
+  button { font-family: inherit; }
+
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  @media (max-width: 720px) { .app { grid-template-columns: 1fr; } .sidebar { position: sticky; top: 0; z-index: 10; height: auto; } }
+  .sidebar { background: var(--nh-navy); color: white; padding: 20px 0; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; }
+  .brand { padding: 8px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+  .brand-mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
+  .brand-mark .dot { width: 28px; height: 28px; border-radius: 50%; background: var(--nh-yellow); display: inline-block; box-shadow: 0 0 0 3px rgba(245,183,0,0.25); }
+  .brand sub { display: block; margin-top: 4px; font-weight: 400; font-size: 12px; opacity: 0.75; }
+  .nav { list-style: none; padding: 10px 0; margin: 0; flex: 1; overflow-y: auto; }
+  .nav li { padding: 10px 20px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; color: rgba(255,255,255,0.75); }
+  .nav li:hover { background: rgba(255,255,255,0.05); color: white; }
+  .nav li.active { background: rgba(8,126,139,0.25); border-left-color: var(--nh-yellow); color: white; }
+  .nav li .ico { font-size: 18px; width: 22px; text-align: center; }
+  .sidebar-foot { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; opacity: 0.75; }
+  .sidebar-foot a { color: var(--nh-yellow); cursor: pointer; }
+
+  .main { padding: 24px 28px; overflow-x: auto; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
+  .topbar h1 { margin: 0; font-size: 22px; font-weight: 700; }
+  .topbar .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filters input, .filters select { padding: 8px 10px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-size: 13px; background: white; }
+  .filters button { padding: 8px 14px; border: 0; background: var(--nh-navy); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .filters button.secondary { background: white; color: var(--nh-navy); border: 1px solid var(--nh-gray-line); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi { background: white; padding: 14px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--nh-gray-line); }
+  .kpi .label { font-size: 11px; color: var(--nh-gray-text); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+  .kpi .sub { font-size: 12px; color: var(--nh-gray-text); margin-top: 4px; }
+  .kpi.ok .value { color: var(--nh-ok); } .kpi.warn .value { color: var(--nh-warn); } .kpi.err .value { color: var(--nh-err); }
+
+  .panel { background: white; border: 1px solid var(--nh-gray-line); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; }
+  .panel h3 { margin: 12px 0 6px; font-size: 13px; }
+  .panel .desc { font-size: 12px; color: var(--nh-gray-text); margin-bottom: 12px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--nh-gray-line); }
+  th { background: #FAFBFC; font-weight: 600; color: var(--nh-gray-text); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
+  tbody tr:hover { background: #FAFCFF; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill-ok { background: #E7F6EE; color: var(--nh-ok); }
+  .pill-warn { background: #FDF6D7; color: var(--nh-warn); }
+  .pill-err { background: #FDEAEB; color: var(--nh-err); }
+  .pill-info { background: #E6F3F5; color: var(--nh-sky); }
+
+  .alert { display: flex; gap: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; border: 1px solid; align-items: flex-start; }
+  .alert.critical { background: #FDEAEB; color: #6d1016; border-color: #F5B7BD; }
+  .alert.high { background: #FDF2E9; color: #7d3c0f; border-color: #F2B68E; }
+  .alert.medium { background: #FDF6D7; color: #6b500a; border-color: #F0D96F; }
+  .alert.low { background: #EAF2F8; color: #134e66; border-color: #AECDDB; }
+  .alert .msg { flex: 1; font-size: 13px; }
+  .alert .msg b { display: block; margin-bottom: 2px; }
+  .alert .sev { font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; min-width: 56px; }
+
+  .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: var(--nh-navy); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .muted { color: var(--nh-gray-text); font-size: 12px; }
+  .hidden { display: none !important; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.show { display: flex; }
+  .modal { background: white; border-radius: 10px; width: min(640px, 92vw); padding: 22px; max-height: 92vh; overflow: auto; }
+  .modal h3 { margin: 0 0 16px; }
+  .modal label { display: block; font-size: 11px; color: var(--nh-gray-text); margin: 6px 0 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .modal textarea, .modal input, .modal select { width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-family: inherit; font-size: 13px; }
+  .modal textarea { min-height: 160px; font-family: Menlo, monospace; font-size: 12px; }
+  .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+  .modal .actions button { padding: 8px 14px; border-radius: 6px; border: 0; background: var(--nh-navy); color: white; cursor: pointer; }
+  .modal .actions button.secondary { background: white; color: var(--nh-navy); border: 1px solid var(--nh-gray-line); }
+
+  .setup-hero {
+    max-width: 640px; margin: 48px auto; padding: 28px 34px; background: white;
+    border: 1px solid var(--nh-gray-line); border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(11,57,84,0.08);
+  }
+  .setup-hero h1 { margin: 0 0 10px; color: var(--nh-navy); }
+  .setup-hero ol { padding-left: 20px; line-height: 1.55; font-size: 14px; }
+  .setup-hero input { width: 100%; padding: 10px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
+  .setup-hero button { padding: 10px 18px; border: 0; background: var(--nh-navy); color: white; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .err-box { color: var(--nh-err); font-size: 12px; padding: 6px 0; white-space: pre-wrap; }
+  code.inline { background: #F0F4F8; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div id="setup-root" class="hidden">
+  <div class="setup-hero">
+    <h1>Night Hawk Q-Commerce OS</h1>
+    <p class="muted">Welcome. Paste your Google Apps Script web-app URL below to connect the dashboard to your Google Sheet.</p>
+    <h3 style="margin:18px 0 6px">How to get the URL</h3>
+    <ol>
+      <li>Open your Google Sheet &rarr; Extensions &rarr; Apps Script.</li>
+      <li>Deploy &rarr; New deployment &rarr; Web app. Execute as <b>Me</b>, access <b>Anyone</b>.</li>
+      <li>Copy the URL (ends in <code class="inline">/exec</code>).</li>
+      <li>Paste it below and click Save.</li>
+    </ol>
+    <label class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.3px">Apps Script web app URL</label>
+    <input id="setup-url" placeholder="https://script.google.com/macros/s/..../exec">
+    <button id="setup-save">Save &amp; connect</button>
+    <div id="setup-err" class="err-box"></div>
+    <p class="muted" style="margin-top:18px">The URL is saved locally in your browser only (localStorage).</p>
+  </div>
+</div>
+
+<div class="app hidden" id="app-root">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span class="dot"></span> NIGHT HAWK</div>
+      <sub>Q-Commerce OS</sub>
+    </div>
+    <ul class="nav" id="nav">
+      <li data-view="dashboard" class="active"><span class="ico">&#9632;</span> Dashboard</li>
+      <li data-view="sales"><span class="ico">&#9650;</span> Sales</li>
+      <li data-view="unit-econ"><span class="ico">&#8377;</span> Unit Economics</li>
+      <li data-view="ads"><span class="ico">&#10022;</span> Ad Spend</li>
+      <li data-view="inventory"><span class="ico">&#9776;</span> Inventory</li>
+      <li data-view="complaints"><span class="ico">&#9993;</span> Complaints</li>
+      <li data-view="expansion"><span class="ico">+</span> Expansion</li>
+      <li data-view="budget"><span class="ico">&#9673;</span> Budget vs Actuals</li>
+      <li data-view="forecast"><span class="ico">&#9089;</span> Forecast</li>
+      <li data-view="issues"><span class="ico">!</span> Issues</li>
+      <li data-view="import"><span class="ico">&#8682;</span> Data Import</li>
+      <li data-view="master"><span class="ico">&#9881;</span> Master Data</li>
+    </ul>
+    <div class="sidebar-foot">
+      <div id="whoami">&mdash;</div>
+      <div style="margin-top:6px"><a id="settings-link">Change API URL</a></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="view-title">Executive Dashboard</h1>
+      <div class="filters">
+        <input type="date" id="date-from">
+        <input type="date" id="date-to">
+        <select id="platform-sel"></select>
+        <button id="apply-filters">Apply</button>
+        <button class="secondary" id="refresh-btn">&#8635; Refresh</button>
+      </div>
+    </div>
+
+    <section id="view-dashboard"></section>
+    <section id="view-sales" class="hidden"></section>
+    <section id="view-unit-econ" class="hidden"></section>
+    <section id="view-ads" class="hidden"></section>
+    <section id="view-inventory" class="hidden"></section>
+    <section id="view-complaints" class="hidden"></section>
+    <section id="view-expansion" class="hidden"></section>
+    <section id="view-budget" class="hidden"></section>
+    <section id="view-forecast" class="hidden"></section>
+    <section id="view-issues" class="hidden"></section>
+    <section id="view-import" class="hidden"></section>
+    <section id="view-master" class="hidden"></section>
+  </main>
+</div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+// ===================================================================
+// Night Hawk Q-Commerce OS
+// Unified client — works in three contexts:
+//   1. Served by Apps Script (template injects deployUrl)
+//   2. Hosted on GitHub Pages (user pastes URL in setup screen)
+//   3. Opened as a local file (same as #2)
+// All server calls go through fetch(); no dependency on google.script.run.
+// ===================================================================
+
+// The Apps Script HTML template will replace the next line with the real
+// deploy URL.  If this file is served as a plain static file, the raw
+// scriptlet text remains — we detect that and fall through to setup.
+var TEMPLATED_URL = "<?!= deployUrl ?>";
+
+var LS_KEY = 'nh.apiUrl';
+var state = { boot: null, charts: {}, filter: { from: null, to: null, platformId: '' } };
+
+// ---------- helpers ----------
+function $(id) { return document.getElementById(id); }
+function inr(n) { return '\u20B9' + (Math.round(n || 0)).toLocaleString('en-IN'); }
+function pct(n) { return (n == null ? '\u2014' : (+n).toFixed(1) + '%'); }
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function fmtD(d) {
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var day = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + day;
+}
+function setLoading(el) { el.innerHTML = '<div class="muted"><span class="loading"></span> Loading\u2026</div>'; }
+function showModal(html) { $('modal').innerHTML = html; $('modal-bg').classList.add('show'); }
+function hideModal() { $('modal-bg').classList.remove('show'); $('modal').innerHTML = ''; }
+$('modal-bg').addEventListener('click', function(e) { if (e.target === $('modal-bg')) hideModal(); });
+
+// ---------- API base resolution ----------
+function getApiUrl() {
+  // 1. Apps Script template injection
+  if (TEMPLATED_URL && TEMPLATED_URL.indexOf('<') === -1 && TEMPLATED_URL.indexOf('?') === -1 && TEMPLATED_URL.indexOf('/exec') > 0) {
+    return TEMPLATED_URL;
+  }
+  // 2. localStorage
+  try { return localStorage.getItem(LS_KEY) || ''; } catch (e) { return ''; }
+}
+function setApiUrl(v) {
+  try { localStorage.setItem(LS_KEY, v); } catch (e) {}
+}
+
+// ---------- API calls ----------
+function api(action, params, method) {
+  params = params || {};
+  method = method || 'GET';
+  var base = getApiUrl();
+  if (!base) return Promise.reject(new Error('API URL not configured'));
+  var req;
+  if (method === 'GET') {
+    var qp = ['action=' + encodeURIComponent(action)];
+    Object.keys(params).forEach(function(k) {
+      if (params[k] != null && params[k] !== '') qp.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+    });
+    req = fetch(base + '?' + qp.join('&'), { method: 'GET', redirect: 'follow' });
+  } else {
+    // text/plain so the browser does NOT send a CORS preflight OPTIONS
+    req = fetch(base, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: action, payload: params }),
+      redirect: 'follow'
+    });
+  }
+  return req.then(function(res) { return res.text(); }).then(function(text) {
+    var json;
+    try { json = JSON.parse(text); }
+    catch (e) {
+      throw new Error('Server did not return JSON. Check that the Apps Script deployment has "Anyone" access.\n\nFirst 200 chars: ' + text.slice(0, 200));
+    }
+    if (!json.ok) throw new Error(json.error || 'API error');
+    return json.data;
+  });
+}
+
+// ---------- setup flow ----------
+function showSetup(preErr) {
+  $('app-root').classList.add('hidden');
+  $('setup-root').classList.remove('hidden');
+  var existing = '';
+  try { existing = localStorage.getItem(LS_KEY) || ''; } catch (e) {}
+  $('setup-url').value = existing;
+  $('setup-err').textContent = preErr || '';
+}
+$('setup-save').addEventListener('click', function() {
+  var v = ($('setup-url').value || '').trim();
+  $('setup-err').textContent = '';
+  if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec\/?$/.test(v)) {
+    $('setup-err').textContent = 'That does not look like a valid Apps Script /exec URL.';
+    return;
+  }
+  setApiUrl(v);
+  $('setup-err').textContent = 'Saved. Testing connection\u2026';
+  api('boot').then(function() {
+    location.reload();
+  }).catch(function(e) {
+    $('setup-err').textContent = 'Could not reach the API: ' + (e && e.message ? e.message : e);
+  });
+});
+$('settings-link').addEventListener('click', function() { showSetup(''); });
+
+// ---------- init ----------
+function init() {
+  if (!getApiUrl()) { showSetup(''); return; }
+
+  api('boot').then(function(boot) {
+    state.boot = boot;
+    $('app-root').classList.remove('hidden');
+    $('setup-root').classList.add('hidden');
+
+    var sel = $('platform-sel');
+    var opts = ['<option value="">All platforms</option>'];
+    (boot.platforms || []).filter(function(p) { return p.status === 'active'; }).forEach(function(p) {
+      opts.push('<option value="' + escapeHtml(p.platform_id) + '">' + escapeHtml(p.name) + '</option>');
+    });
+    sel.innerHTML = opts.join('');
+
+    var to = new Date();
+    var from = new Date(to.getTime() - 89*86400000);
+    $('date-from').value = fmtD(from);
+    $('date-to').value = fmtD(to);
+    state.filter.from = fmtD(from);
+    state.filter.to = fmtD(to);
+
+    var orgName = (boot.config && boot.config.ORG_NAME) || 'Night Hawk';
+    $('whoami').innerHTML = 'Org: <b>' + escapeHtml(orgName) + '</b>';
+
+    Array.prototype.forEach.call(document.querySelectorAll('#nav li'), function(li) {
+      li.addEventListener('click', function() {
+        Array.prototype.forEach.call(document.querySelectorAll('#nav li'), function(x) { x.classList.remove('active'); });
+        li.classList.add('active');
+        switchView(li.getAttribute('data-view'));
+      });
+    });
+    $('apply-filters').addEventListener('click', function() {
+      state.filter.from = $('date-from').value;
+      state.filter.to = $('date-to').value;
+      state.filter.platformId = $('platform-sel').value;
+      reloadCurrentView();
+    });
+    $('refresh-btn').addEventListener('click', reloadCurrentView);
+
+    switchView('dashboard');
+  }).catch(function(e) {
+    showSetup('Cannot reach API. ' + (e && e.message ? e.message : e));
+  });
+}
+
+var currentView = 'dashboard';
+function switchView(v) {
+  currentView = v;
+  var titles = {
+    dashboard: 'Executive Dashboard', sales: 'Sales Analytics', 'unit-econ': 'Unit Economics',
+    ads: 'Ad Spend & ROAS', inventory: 'Inventory & Ageing', complaints: 'Complaints & Returns',
+    expansion: 'Expansion Planner', budget: 'Budget vs Actuals', forecast: 'Forecast vs Actual',
+    issues: 'Issues & Actions', 'import': 'Data Import Center', master: 'Master Data Admin'
+  };
+  $('view-title').innerText = titles[v] || v;
+  ['dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','forecast','issues','import','master'].forEach(function(id) {
+    $('view-' + id).classList.toggle('hidden', id !== v);
+  });
+  loadView(v);
+}
+function reloadCurrentView() { loadView(currentView); }
+
+function loadView(v) {
+  var el = $('view-' + v);
+  var render;
+  switch (v) {
+    case 'dashboard': render = renderDashboard; break;
+    case 'sales':     render = renderSales; break;
+    case 'unit-econ': render = renderUnitEcon; break;
+    case 'ads':       render = renderAds; break;
+    case 'inventory': render = renderInventory; break;
+    case 'complaints':render = renderComplaints; break;
+    case 'expansion': render = renderExpansion; break;
+    case 'budget':    render = renderBudget; break;
+    case 'forecast':  render = renderForecast; break;
+    case 'issues':    render = renderIssues; break;
+    case 'import':    render = renderImport; break;
+    case 'master':    render = renderMaster; break;
+  }
+  if (!render) return;
+  try {
+    var r = render(el);
+    if (r && r.catch) r.catch(function(e) { showViewError(el, v, e); });
+  } catch (e) { showViewError(el, v, e); }
+}
+function showViewError(el, v, e) {
+  var msg = (e && e.message) ? e.message : String(e);
+  el.innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg"><b>Loading ' + escapeHtml(v) + ' failed</b>' + escapeHtml(msg) + '</div></div>';
+}
+
+// ---------- dashboard ----------
+function renderDashboard(el) {
+  setLoading(el);
+  return api('dashboard', state.filter).then(function(d) {
+    var k = d.kpis;
+    var cmClass = k.cash_contribution >= 0 ? 'ok' : 'err';
+    var roasClass = k.roas >= 2 ? 'ok' : (k.roas >= 1 ? 'warn' : 'err');
+    var stoClass = k.storage_pct <= 30 ? 'ok' : (k.storage_pct <= 60 ? 'warn' : 'err');
+
+    el.innerHTML =
+      '<div class="kpi-grid">' +
+        '<div class="kpi"><div class="label">Revenue</div><div class="value">' + inr(k.revenue) + '</div><div class="sub">' + d.range.from + ' &rarr; ' + d.range.to + '</div></div>' +
+        '<div class="kpi"><div class="label">Units Sold</div><div class="value">' + (k.units||0).toLocaleString('en-IN') + '</div><div class="sub">Avg \u20B9' + k.avg_price_per_unit + '/u</div></div>' +
+        '<div class="kpi ' + roasClass + '"><div class="label">ROAS</div><div class="value">' + k.roas + 'x</div><div class="sub">Ad spend ' + inr(k.ad_spend) + '</div></div>' +
+        '<div class="kpi ' + stoClass + '"><div class="label">Storage / Revenue</div><div class="value">' + pct(k.storage_pct) + '</div><div class="sub">' + inr(k.storage_fee) + ' fee</div></div>' +
+        '<div class="kpi"><div class="label">Shipping / Revenue</div><div class="value">' + pct(k.shipping_pct) + '</div><div class="sub">' + inr(k.shipping_fee) + ' fee</div></div>' +
+        '<div class="kpi ' + cmClass + '"><div class="label">Cash Contribution</div><div class="value">' + inr(k.cash_contribution) + '</div><div class="sub">Rev \u2212 Ads \u2212 Platform</div></div>' +
+        '<div class="kpi"><div class="label">Complaint %</div><div class="value">' + pct(k.complaint_pct) + '</div><div class="sub">' + k.complaints + ' cases</div></div>' +
+        '<div class="kpi"><div class="label">Return %</div><div class="value">' + pct(k.return_pct) + '</div><div class="sub">' + k.returns + ' returns</div></div>' +
+      '</div>' +
+      '<div class="panel"><h2>Alerts &amp; Action items</h2><div id="alerts"></div></div>' +
+      '<div class="two-col">' +
+        '<div class="panel"><h2>Revenue &amp; Units (daily)</h2><div class="chart-wrap"><canvas id="chart-revenue"></canvas></div></div>' +
+        '<div class="panel"><h2>Ad Spend &amp; Storage Fee</h2><div class="chart-wrap"><canvas id="chart-costs"></canvas></div></div>' +
+      '</div>' +
+      '<div class="two-col">' +
+        '<div class="panel"><h2>Revenue by City</h2><div class="chart-wrap"><canvas id="chart-city"></canvas></div></div>' +
+        '<div class="panel"><h2>Revenue by SKU</h2><div class="chart-wrap"><canvas id="chart-sku"></canvas></div></div>' +
+      '</div>';
+
+    var alertsEl = $('alerts');
+    if (!d.alerts || !d.alerts.length) {
+      alertsEl.innerHTML = '<div class="alert low"><div class="sev">OK</div><div class="msg"><b>All clear</b>No critical issues detected in the current view.</div></div>';
+    } else {
+      alertsEl.innerHTML = d.alerts.map(function(a) {
+        return '<div class="alert ' + escapeHtml(a.severity) + '">' +
+               '<div class="sev">' + escapeHtml(a.severity) + '</div>' +
+               '<div class="msg"><b>' + escapeHtml((a.category||'').toUpperCase()) + ' \u2014 ' + escapeHtml(a.message) + '</b>' + escapeHtml(a.suggested_action || '') + '</div></div>';
+      }).join('');
+    }
+
+    destroyChart('chart-revenue'); destroyChart('chart-costs'); destroyChart('chart-city'); destroyChart('chart-sku');
+
+    state.charts['chart-revenue'] = new Chart($('chart-revenue'), {
+      type: 'line',
+      data: {
+        labels: d.series.map(function(r){return r.date;}),
+        datasets: [
+          { label: 'Revenue (\u20B9)', data: d.series.map(function(r){return r.revenue;}), borderColor: '#0B3954', backgroundColor: 'rgba(11,57,84,0.1)', tension: 0.3, yAxisID: 'y' },
+          { label: 'Units', data: d.series.map(function(r){return r.units;}), borderColor: '#F5B700', backgroundColor: 'rgba(245,183,0,0.12)', tension: 0.3, yAxisID: 'y1' }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } } }
+    });
+    state.charts['chart-costs'] = new Chart($('chart-costs'), {
+      type: 'bar',
+      data: {
+        labels: d.series.map(function(r){return r.date;}),
+        datasets: [
+          { label: 'Ad spend (\u20B9)', data: d.series.map(function(r){return r.ad_spend;}), backgroundColor: '#087E8B' },
+          { label: 'Storage fee (\u20B9)', data: d.series.map(function(r){return r.storage_fee;}), backgroundColor: '#BF1A2F' }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    state.charts['chart-city'] = new Chart($('chart-city'), {
+      type: 'doughnut',
+      data: { labels: d.byCity.map(function(c){return c.name;}), datasets: [{ data: d.byCity.map(function(c){return c.value;}), backgroundColor: ['#0B3954','#087E8B','#F5B700','#BF1A2F','#1E8449','#7F8C8D','#8E44AD','#D68910'] }] },
+      options: { plugins: { legend: { position: 'right' } }, maintainAspectRatio: false }
+    });
+    state.charts['chart-sku'] = new Chart($('chart-sku'), {
+      type: 'bar',
+      data: { labels: d.bySku.map(function(s){return s.name;}), datasets: [{ label: 'Revenue', data: d.bySku.map(function(s){return s.value;}), backgroundColor: '#0B3954' }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, maintainAspectRatio: false }
+    });
+  });
+}
+function destroyChart(id) { if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; } }
+
+// ---------- other views ----------
+function renderSales(el) {
+  setLoading(el);
+  return api('sales', state.filter).then(function(data) {
+    var cityMap = {}; (state.boot.cities || []).forEach(function(c) { cityMap[c.city_id] = c.name; });
+    var skuMap = {}; (state.boot.skus || []).forEach(function(s) { skuMap[s.sku_id] = s.name; });
+    var agg = {};
+    data.rows.forEach(function(r) {
+      var k = r.sku_id + '|' + r.city_id;
+      if (!agg[k]) agg[k] = { sku: skuMap[r.sku_id] || r.sku_id, city: cityMap[r.city_id] || r.city_id, units: 0, value: 0 };
+      agg[k].units += r.units; agg[k].value += r.value;
+    });
+    var rows = Object.keys(agg).map(function(k){return agg[k];}).sort(function(a,b){return b.value-a.value;});
+    var topHtml = rows.map(function(r) {
+      return '<tr><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
+             '<td class="num">' + r.units.toLocaleString('en-IN') + '</td>' +
+             '<td class="num">' + inr(r.value) + '</td>' +
+             '<td class="num">' + (r.units ? '\u20B9'+(r.value/r.units).toFixed(1) : '\u2014') + '</td></tr>';
+    }).join('');
+    var daily = data.rows.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,500).map(function(r) {
+      return '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(skuMap[r.sku_id]||r.sku_id) + '</td>' +
+             '<td>' + escapeHtml(cityMap[r.city_id]||r.city_id) + '</td>' +
+             '<td class="num">' + r.units + '</td><td class="num">' + inr(r.value) + '</td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="panel"><h2>Sales by SKU \u00D7 City (' + data.rows.length + ' day-rows)</h2>' +
+      '<div class="desc">Filter dates in the top bar.</div>' +
+      '<table><thead><tr><th>SKU</th><th>City</th><th class="num">Units</th><th class="num">Revenue</th><th class="num">\u20B9/unit</th></tr></thead><tbody>' + topHtml + '</tbody></table></div>' +
+      '<div class="panel"><h2>Daily detail (latest 500)</h2>' +
+      '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead><tbody>' + daily + '</tbody></table></div>';
+  });
+}
+
+function renderUnitEcon(el) {
+  setLoading(el);
+  return api('dashboard', state.filter).then(function(d) {
+    var k = d.kpis; var units = k.units || 1;
+    var rows = [
+      ['Revenue / unit', k.revenue / units],
+      ['Ad spend / unit', k.ad_spend / units],
+      ['Storage / unit', k.storage_fee / units],
+      ['Shipping / unit', k.shipping_fee / units],
+      ['Commission / unit', k.commission_fee / units],
+      ['TDS / unit', k.tds / units],
+      ['Lost/Damaged / unit', k.lost_damaged / units]
+    ];
+    var totalCostU = (k.ad_spend + k.platform_cost) / units;
+    var cmU = (k.revenue - k.ad_spend - k.platform_cost) / units;
+    var rowsHtml = rows.map(function(x) {
+      var name = x[0], v = x[1];
+      return '<tr><td>' + escapeHtml(name) + '</td>' +
+             '<td class="num">\u20B9' + (v||0).toFixed(2) + '</td>' +
+             '<td class="num">' + (k.revenue ? ((v*units/k.revenue)*100).toFixed(1)+'%' : '\u2014') + '</td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="kpi-grid">' +
+        '<div class="kpi"><div class="label">Revenue / Unit</div><div class="value">\u20B9' + (k.revenue/units).toFixed(2) + '</div><div class="sub">' + k.units + ' units</div></div>' +
+        '<div class="kpi"><div class="label">Total Cost / Unit</div><div class="value">\u20B9' + totalCostU.toFixed(2) + '</div><div class="sub">Ads + Platform (excl COGS)</div></div>' +
+        '<div class="kpi ' + (cmU >=0 ? 'ok' : 'err') + '"><div class="label">CM / Unit</div><div class="value">\u20B9' + cmU.toFixed(2) + '</div><div class="sub">Revenue \u2212 (Ads + Platform)</div></div>' +
+      '</div>' +
+      '<div class="panel"><h2>Cost decomposition (per unit)</h2>' +
+      '<table><thead><tr><th>Line</th><th class="num">\u20B9 / unit</th><th class="num">% of Revenue</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+  });
+}
+
+function renderAds(el) {
+  setLoading(el);
+  return api('adspend', state.filter).then(function(d) {
+    var rowsHtml = d.rows.map(function(r) {
+      return '<tr><td>' + escapeHtml(r.date) + '</td><td class="num">' + inr(r.ad_spend) + '</td><td class="num">' + inr(r.revenue) + '</td><td class="num">' + r.roas + 'x</td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="panel"><h2>Ad spend vs. Revenue (daily)</h2><div class="chart-wrap"><canvas id="chart-ads"></canvas></div></div>' +
+      '<div class="panel"><h2>Daily detail</h2>' +
+      '<table><thead><tr><th>Date</th><th class="num">Ad spend</th><th class="num">Revenue</th><th class="num">ROAS</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    destroyChart('chart-ads');
+    state.charts['chart-ads'] = new Chart($('chart-ads'), {
+      type: 'bar',
+      data: { labels: d.rows.map(function(r){return r.date;}), datasets: [
+        { label: 'Ad spend (\u20B9)', data: d.rows.map(function(r){return r.ad_spend;}), backgroundColor: '#087E8B' },
+        { label: 'Revenue (\u20B9)', data: d.rows.map(function(r){return r.revenue;}), backgroundColor: '#0B3954' }
+      ]},
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  });
+}
+
+function renderInventory(el) {
+  setLoading(el);
+  return api('inventory').then(function(d) {
+    if (!d.rows || !d.rows.length) {
+      el.innerHTML = '<div class="panel"><h2>Inventory</h2><div class="muted">No inventory snapshots in the DB yet.</div></div>';
+      return;
+    }
+    var rowsHtml = d.rows.map(function(r) {
+      var flag = r.cover_flag === 'critical' ? 'pill-err' : (r.cover_flag === 'warning' ? 'pill-warn' : 'pill-ok');
+      return '<tr><td>' + escapeHtml(r.warehouse) + '</td><td>' + escapeHtml(r.sku) + '</td>' +
+             '<td class="num">' + r.sellable + '</td><td class="num">' + r.unsellable + '</td>' +
+             '<td class="num">' + r.damaged + '</td><td class="num">' + r.lost + '</td>' +
+             '<td class="num">' + r.sold_7d + '</td><td class="num">' + r.sold_30d + '</td>' +
+             '<td class="num">' + r.cover_days + '</td>' +
+             '<td><span class="pill ' + flag + '">' + escapeHtml(r.cover_flag) + '</span></td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="panel"><h2>Latest snapshot \u2014 ' + escapeHtml(d.snapshot_date) + '</h2>' +
+      '<table><thead><tr><th>Warehouse</th><th>SKU</th><th class="num">Sellable</th><th class="num">Unsellable</th><th class="num">Damaged</th><th class="num">Lost</th><th class="num">7d sold</th><th class="num">30d sold</th><th class="num">Cover (days)</th><th>Status</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+  });
+}
+
+function renderComplaints(el) {
+  setLoading(el);
+  return api('complaints').then(function(d) {
+    var summary = d.bySku.map(function(s) {
+      var flag = s.complaint_pct > 5 ? 'pill-err' : (s.complaint_pct > 2 ? 'pill-warn' : 'pill-ok');
+      return '<tr><td>' + escapeHtml(s.sku || s.sku_id) + '</td>' +
+             '<td class="num">' + s.units + '</td><td class="num">' + s.complaints + '</td>' +
+             '<td class="num"><span class="pill ' + flag + '">' + s.complaint_pct + '%</span></td>' +
+             '<td class="num">' + s.returns + '</td><td class="num">' + s.return_pct + '%</td></tr>';
+    }).join('');
+    var log = d.rows.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).map(function(r) {
+      return '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
+             '<td><span class="pill ' + (r.type==='return'?'pill-warn':'pill-info') + '">' + escapeHtml(r.type) + '</span></td>' +
+             '<td class="num">' + r.units + '</td>' +
+             '<td>' + escapeHtml(r.reason) + '</td>' +
+             '<td>' + escapeHtml(r.status) + '</td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="panel"><h2>Complaint &amp; return rate by SKU</h2>' +
+      '<table><thead><tr><th>SKU</th><th class="num">Units sold</th><th class="num">Complaints</th><th class="num">Complaint %</th><th class="num">Returns</th><th class="num">Return %</th></tr></thead><tbody>' + summary + '</tbody></table></div>' +
+      '<div class="panel"><h2>Complaint log</h2>' +
+      '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th>Type</th><th class="num">Units</th><th>Reason</th><th>Status</th></tr></thead><tbody>' + log + '</tbody></table></div>';
+  });
+}
+
+function renderExpansion(el) {
+  setLoading(el);
+  return api('expansion').then(function(rows) {
+    var html = rows.map(function(r) {
+      var statusPill = r.status==='active'?'pill-ok':(r.status==='paused'?'pill-warn':'pill-info');
+      return '<tr><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
+             '<td>' + escapeHtml(r.start_date) + '</td><td>' + escapeHtml(r.end_date) + '</td>' +
+             '<td>' + escapeHtml(r.target_level) + '</td>' +
+             '<td><span class="pill ' + statusPill + '">' + escapeHtml(r.status) + '</span></td>' +
+             '<td>' + escapeHtml(r.notes||'') + '</td></tr>';
+    }).join('');
+    el.innerHTML = '<div class="panel"><h2>Expansion plan</h2>' +
+      '<table><thead><tr><th>SKU</th><th>City</th><th>Start</th><th>End</th><th>Target</th><th>Status</th><th>Notes</th></tr></thead><tbody>' + html + '</tbody></table></div>';
+  });
+}
+
+function renderBudget(el) {
+  setLoading(el);
+  el.innerHTML =
+    '<div class="panel"><h2>Budget vs. Actuals</h2>' +
+    '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">' +
+    '<label class="muted" style="margin:0">Month</label>' +
+    '<input type="month" id="bud-month" value="2026-02">' +
+    '<button id="bud-load">Load</button></div>' +
+    '<div id="bud-body"><div class="muted">Pick a month and click Load.</div></div></div>';
+  $('bud-load').addEventListener('click', function() {
+    $('bud-body').innerHTML = '<span class="loading"></span> Loading\u2026';
+    api('budget', { month: $('bud-month').value }).then(function(data) {
+      var linesHtml = data.lines.map(function(r) {
+        return '<tr><td>' + escapeHtml(r.line_item) + '</td><td class="num">' + inr(+r.amount||0) + '</td><td>' + escapeHtml(r.notes||'') + '</td></tr>';
+      }).join('');
+      $('bud-body').innerHTML =
+        '<div class="kpi-grid">' +
+        '<div class="kpi"><div class="label">Total Budget</div><div class="value">' + inr(data.totalBudget) + '</div><div class="sub">' + escapeHtml(data.month) + '</div></div>' +
+        '<div class="kpi"><div class="label">Actual Ads</div><div class="value">' + inr(data.actuals.ad_spend) + '</div></div>' +
+        '<div class="kpi"><div class="label">Actual Storage</div><div class="value">' + inr(data.actuals.storage) + '</div></div>' +
+        '<div class="kpi"><div class="label">Actual Shipping</div><div class="value">' + inr(data.actuals.shipping) + '</div></div>' +
+        '</div>' +
+        '<table><thead><tr><th>Line item</th><th class="num">Budget</th><th>Notes</th></tr></thead><tbody>' + linesHtml + '</tbody></table>';
+    }).catch(function(e) {
+      $('bud-body').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
+    });
+  });
+  $('bud-load').click();
+}
+
+function renderForecast(el) {
+  setLoading(el);
+  return api('forecast').then(function(rows) {
+    var html = rows.map(function(r) {
+      var f = +r.forecast_value || 0;
+      var a = r.actual_value == null || r.actual_value === '' ? null : +r.actual_value;
+      var v = a == null ? '\u2014' : (f ? Math.round((a-f)/f*100)+'%' : '\u2014');
+      return '<tr><td>' + escapeHtml(r.month) + '</td><td>' + escapeHtml(r.metric) + '</td>' +
+             '<td class="num">' + f.toLocaleString('en-IN') + '</td>' +
+             '<td class="num">' + (a == null ? '\u2014' : a.toLocaleString('en-IN')) + '</td>' +
+             '<td class="num">' + v + '</td>' +
+             '<td>' + escapeHtml(r.delta_note||'') + '</td></tr>';
+    }).join('');
+    el.innerHTML = '<div class="panel"><h2>Forecast vs Actual</h2>' +
+      '<table><thead><tr><th>Month</th><th>Metric</th><th class="num">Forecast</th><th class="num">Actual</th><th class="num">Variance</th><th>Note</th></tr></thead><tbody>' + html + '</tbody></table></div>';
+  });
+}
+
+function renderIssues(el) {
+  setLoading(el);
+  return api('issues').then(function(rows) {
+    var html = rows.map(function(r) {
+      var cls = r.severity==='critical'?'pill-err':(r.severity==='high'?'pill-warn':'pill-info');
+      var rdate = String(r.raised_date||'').slice(0,10);
+      return '<tr data-id="' + escapeHtml(r.issue_id) + '">' +
+        '<td>' + escapeHtml(r.issue_id) + '</td>' +
+        '<td>' + escapeHtml(rdate) + '</td>' +
+        '<td><span class="pill ' + cls + '">' + escapeHtml(r.severity) + '</span></td>' +
+        '<td>' + escapeHtml(r.category) + '</td>' +
+        '<td>' + escapeHtml(r.description) + '</td>' +
+        '<td>' + escapeHtml(r.owner||'') + '</td>' +
+        '<td>' + escapeHtml(r.status) + '</td>' +
+        '<td>' + (r.status==='open' ? '<a href="#" class="close-issue">close</a>' : '') + '</td></tr>';
+    }).join('');
+    el.innerHTML =
+      '<div class="panel">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+      '<h2 style="margin:0">Open issues &amp; actions</h2>' +
+      '<button id="new-issue-btn" style="padding:6px 12px;border-radius:6px;border:0;background:var(--nh-navy);color:#fff;cursor:pointer">+ New issue</button></div>' +
+      '<table><thead><tr><th>ID</th><th>Raised</th><th>Severity</th><th>Category</th><th>Description</th><th>Owner</th><th>Status</th><th></th></tr></thead><tbody>' + html + '</tbody></table></div>';
+
+    $('new-issue-btn').addEventListener('click', function() {
+      showModal(
+        '<h3>Create issue</h3>' +
+        '<label>Severity</label>' +
+        '<select id="i-sev"><option>low</option><option>medium</option><option selected>high</option><option>critical</option></select>' +
+        '<label>Category</label>' +
+        '<select id="i-cat"><option>ops</option><option>storage</option><option>quality</option><option>inventory</option><option>finance</option><option>ads</option><option>complaint</option></select>' +
+        '<label>Description</label>' +
+        '<textarea id="i-desc" style="min-height:90px"></textarea>' +
+        '<label>Related SKU (optional)</label>' +
+        '<input id="i-sku" placeholder="SKU-001">' +
+        '<label>Owner</label>' +
+        '<input id="i-owner" placeholder="V">' +
+        '<div class="actions">' +
+        '<button class="secondary" onclick="hideModal()">Cancel</button>' +
+        '<button id="i-submit">Create</button></div>'
+      );
+      $('i-submit').addEventListener('click', function() {
+        $('i-submit').disabled = true; $('i-submit').textContent = 'Saving\u2026';
+        api('createIssue', {
+          severity: $('i-sev').value, category: $('i-cat').value,
+          description: $('i-desc').value, related_sku: $('i-sku').value, owner: $('i-owner').value
+        }, 'POST').then(function() {
+          hideModal(); renderIssues(el);
+        }).catch(function(e) {
+          alert('Error creating issue: ' + (e.message||e));
+          $('i-submit').disabled = false; $('i-submit').textContent = 'Create';
+        });
+      });
+    });
+
+    Array.prototype.forEach.call(el.querySelectorAll('.close-issue'), function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        var id = a.closest('tr').getAttribute('data-id');
+        api('updateIssueStatus', { issueId: id, status: 'resolved' }, 'POST').then(function() {
+          renderIssues(el);
+        }).catch(function(err) { alert('Failed: ' + (err.message||err)); });
+      });
+    });
+  });
+}
+
+function renderImport(el) {
+  el.innerHTML =
+    '<div class="panel"><h2>CSV / Paste Import</h2>' +
+    '<div class="desc">Paste CSV text (first row = headers). Choose target tab. App auto-maps column names. Unknown columns are skipped.</div>' +
+    '<label class="muted">Target tab</label>' +
+    '<select id="imp-target" style="padding:6px;border:1px solid var(--nh-gray-line);border-radius:6px;margin-bottom:8px">' +
+    '<option>daily_sales</option><option>daily_fees</option><option>daily_ad_spend</option>' +
+    '<option>inventory_snapshots</option><option>complaints_returns</option></select>' +
+    '<label class="muted" style="margin-top:8px;display:block">CSV</label>' +
+    '<textarea id="imp-csv" style="width:100%;min-height:200px;font-family:Menlo,monospace;font-size:12px;padding:8px;border:1px solid var(--nh-gray-line);border-radius:6px" placeholder="date,platform_id,city_id,sku_id,units,value\n2026-03-01,PLT-001,CTY-002,SKU-001,5,390"></textarea>' +
+    '<div style="margin-top:8px;display:flex;justify-content:flex-end">' +
+    '<button id="imp-run" style="padding:8px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Import</button></div>' +
+    '<div id="imp-out" style="margin-top:12px"></div></div>';
+  $('imp-run').addEventListener('click', function() {
+    $('imp-out').innerHTML = '<span class="loading"></span> Importing\u2026';
+    api('importCsv', { target: $('imp-target').value, csv: $('imp-csv').value }, 'POST').then(function(r) {
+      $('imp-out').innerHTML = '<div class="alert low"><div class="sev">Done</div><div class="msg"><b>Imported ' + r.added + ' rows</b>Skipped ' + r.skipped + ', errors ' + r.errors.length + '.<br>Map: <code>' + escapeHtml(JSON.stringify(r.map)) + '</code></div></div>';
+    }).catch(function(e) {
+      $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
+    });
+  });
+}
+
+function renderMaster(el) {
+  var b = state.boot;
+  function escRow(cells) { return '<tr>' + cells.map(function(c) { return '<td>' + escapeHtml(c) + '</td>'; }).join('') + '</tr>'; }
+  var skuRows = (b.skus||[]).map(function(s) { return escRow([s.sku_id, s.name, '\u20B9'+s.mrp, s.status]); }).join('');
+  var cityRows = (b.cities||[]).map(function(c) { return escRow([c.city_id, c.name, c.state, c.status]); }).join('');
+  var whRows = (b.warehouses||[]).map(function(w) { return escRow([w.warehouse_id, w.facility_id, w.name]); }).join('');
+  var plRows = (b.platforms||[]).map(function(p) { return escRow([p.platform_id, p.name, p.status]); }).join('');
+  el.innerHTML =
+    '<div class="panel"><h2>Master Data (read-only view)</h2>' +
+    '<div class="desc">Edit these tabs directly in the Google Sheet. The app reads them on every refresh.</div>' +
+    '<div class="two-col">' +
+    '<div><h3>SKUs</h3>' +
+    '<table><thead><tr><th>ID</th><th>Name</th><th>MRP</th><th>Status</th></tr></thead><tbody>' + skuRows + '</tbody></table>' +
+    '<h3 style="margin-top:16px">Cities</h3>' +
+    '<table><thead><tr><th>ID</th><th>Name</th><th>State</th><th>Status</th></tr></thead><tbody>' + cityRows + '</tbody></table></div>' +
+    '<div><h3>Warehouses</h3>' +
+    '<table><thead><tr><th>ID</th><th>Facility</th><th>Name</th></tr></thead><tbody>' + whRows + '</tbody></table>' +
+    '<h3 style="margin-top:16px">Platforms</h3>' +
+    '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead><tbody>' + plRows + '</tbody></table></div>' +
+    '</div></div>';
+}
+
+init();
+</script>
+</body>
+</html>
