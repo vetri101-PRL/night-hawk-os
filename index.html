@@ -1450,16 +1450,40 @@ function wireDecisionForm(existing, parentEl) {
 function renderImport(el) {
   el.innerHTML =
     '<div class="panel"><h2>Import data</h2>' +
-    '<div class="desc">Upload a CSV or Excel file, or paste CSV text. First row must be column headers. The app auto-maps columns to the target tab (case and whitespace don\'t matter) and appends the rows to your Google Sheet.</div>' +
-    '<label class="muted" style="display:block;margin-bottom:4px">Target tab</label>' +
-    '<select id="imp-target" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;margin-bottom:14px;display:block;min-width:220px">' +
-    '<option>daily_sales</option><option>daily_fees</option><option>daily_ad_spend</option>' +
-    '<option>inventory_snapshots</option><option>complaints_returns</option>' +
-    '<option>expansion_plan</option><option>monthly_budget</option><option>monthly_forecast</option>' +
-    '</select>' +
+    '<div class="desc">Upload a CSV or Excel file (or paste CSV text). The importer understands Blinkit\'s native column names (Item ID, Warehouse Facility ID, Last 7 days, etc.) and auto-translates Blinkit IDs to your internal IDs. It also de-duplicates by default so you can re-import the same month safely.</div>' +
+
+    '<div class="two-col" style="align-items:start;margin-bottom:14px">' +
+      '<div>' +
+        '<label class="muted" style="display:block;margin-bottom:4px">Target tab</label>' +
+        '<select id="imp-target" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;display:block;width:100%">' +
+          '<option>daily_sales</option><option>daily_fees</option><option>daily_ad_spend</option>' +
+          '<option>inventory_snapshots</option><option>complaints_returns</option>' +
+          '<option>expansion_plan</option><option>monthly_budget</option><option>monthly_forecast</option>' +
+        '</select>' +
+
+        '<label class="muted" style="display:block;margin:10px 0 4px">Duplicate handling</label>' +
+        '<select id="imp-dedupe" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;display:block;width:100%">' +
+          '<option value="skip" selected>Skip duplicates (safe, recommended)</option>' +
+          '<option value="replace">Replace duplicates (use for corrections)</option>' +
+          '<option value="append">Append all (no de-dup, may create duplicates)</option>' +
+        '</select>' +
+
+        '<div style="margin-top:10px">' +
+          '<label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer">' +
+            '<input type="checkbox" id="imp-dryrun"> Dry run \u2014 count only, don\'t write' +
+          '</label>' +
+        '</div>' +
+      '</div>' +
+      '<div>' +
+        '<label class="muted" style="display:block;margin-bottom:4px">Defaults (used for empty/missing fields)</label>' +
+        '<div id="imp-defaults" style="display:flex;flex-direction:column;gap:6px"></div>' +
+        '<div class="muted" style="font-size:11px;margin-top:6px">These values fill in for rows where the column is missing or empty. e.g. if your Blinkit XLSX doesn\'t have a snapshot_date column, enter the date here.</div>' +
+      '</div>' +
+    '</div>' +
+
     '<div style="display:flex;gap:0;border-bottom:1px solid var(--nh-gray-line);margin-bottom:14px">' +
-    '<button id="imp-mode-upload" type="button" style="padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">\u2B06 Upload file</button>' +
-    '<button id="imp-mode-paste" type="button" style="padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;margin-left:4px">Paste CSV</button>' +
+      '<button id="imp-mode-upload" type="button" style="padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">\u2B06 Upload file</button>' +
+      '<button id="imp-mode-paste" type="button" style="padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;margin-left:4px">Paste CSV</button>' +
     '</div>' +
     // Upload panel
     '<div id="imp-upload-panel">' +
@@ -1486,6 +1510,57 @@ function renderImport(el) {
   var currentCsv = '';
   var currentMode = 'upload';
   var parsedWorkbook = null;
+
+  // Target-specific default-value fields
+  var DEFAULTS_FIELDS = {
+    inventory_snapshots: [
+      { id: 'def-snapshot-date', label: 'Snapshot date', col: 'snapshot_date', type: 'date',
+        help: 'Blinkit inventory exports don\'t include a per-row date. Set the date this snapshot was taken.' }
+    ],
+    daily_sales:    [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
+    daily_fees:     [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
+    daily_ad_spend: [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
+    complaints_returns: [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
+  };
+
+  function renderDefaultsFields() {
+    var target = $('imp-target').value;
+    var fields = DEFAULTS_FIELDS[target] || [];
+    var platforms = (state.boot.platforms || []).filter(function(p){return p.status==='active';});
+    var todayStr = (new Date()).toISOString().slice(0, 10);
+    $('imp-defaults').innerHTML = fields.length ? fields.map(function(f) {
+      var inputHtml = '';
+      if (f.type === 'date') {
+        inputHtml = '<input id="' + f.id + '" type="date" value="' + todayStr + '" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">';
+      } else if (f.type === 'platform') {
+        inputHtml = '<select id="' + f.id + '" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">' +
+          (platforms.length ? platforms.map(function(p){return '<option value="'+escapeHtml(p.platform_id)+'">'+escapeHtml(p.name)+'</option>';}).join('')
+            : '<option value="PLT-001">Blinkit</option>') +
+          '</select>';
+      } else {
+        inputHtml = '<input id="' + f.id + '" type="text" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">';
+      }
+      return '<div>' +
+             '<label class="muted" style="font-size:11px;display:block;margin-bottom:2px">' + escapeHtml(f.label) + '</label>' +
+             inputHtml +
+             (f.help ? '<div class="muted" style="font-size:10px;margin-top:2px">' + escapeHtml(f.help) + '</div>' : '') +
+             '</div>';
+    }).join('') : '<div class="muted" style="font-size:12px">No defaults required for this target.</div>';
+  }
+
+  function collectDefaults() {
+    var target = $('imp-target').value;
+    var fields = DEFAULTS_FIELDS[target] || [];
+    var out = {};
+    fields.forEach(function(f) {
+      var v = $(f.id) ? $(f.id).value : '';
+      if (v) out[f.col] = v;
+    });
+    return out;
+  }
+
+  $('imp-target').addEventListener('change', function() { renderDefaultsFields(); updateRunState(); });
+  renderDefaultsFields();
 
   function setMode(mode) {
     currentMode = mode;
@@ -1628,19 +1703,66 @@ function renderImport(el) {
     return out;
   }
 
+  function updateRunButtonLabel() {
+    var dry = $('imp-dryrun') && $('imp-dryrun').checked;
+    $('imp-run').textContent = dry ? 'Dry run' : 'Import';
+  }
+  if ($('imp-dryrun')) $('imp-dryrun').addEventListener('change', updateRunButtonLabel);
+  updateRunButtonLabel();
+
   $('imp-run').addEventListener('click', function() {
     var csv = csvForSubmit();
     if (!csv || !csv.trim()) {
       $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">No data to import.</div></div>';
       return;
     }
+    var dedupe = $('imp-dedupe').value;
+    var dryRun = $('imp-dryrun').checked;
+    var defaults = collectDefaults();
+
     $('imp-run').disabled = true;
-    $('imp-out').innerHTML = '<span class="loading"></span> Importing\u2026';
-    api('importCsv', { target: $('imp-target').value, csv: csv }, 'POST').then(function(r) {
+    $('imp-out').innerHTML = '<span class="loading"></span> ' + (dryRun ? 'Dry-running' : 'Importing') + '\u2026';
+
+    api('importCsv', {
+      target: $('imp-target').value,
+      csv: csv,
+      options: { dedupe: dedupe, defaults: defaults, dry_run: dryRun, source_file: 'upload' }
+    }, 'POST').then(function(r) {
       var errs = (r.errors || []).length;
-      var cls = errs ? 'medium' : 'low';
-      var msg = '<b>Imported ' + r.added + ' row' + (r.added===1?'':'s') + '</b>Skipped ' + r.skipped + ', errors ' + errs + '.<br>Column mapping: <code style="font-size:11px">' + escapeHtml(JSON.stringify(r.map)) + '</code>';
-      $('imp-out').innerHTML = '<div class="alert ' + cls + '"><div class="sev">Done</div><div class="msg">' + msg + '</div></div>';
+      var cls = errs ? 'medium' : (dryRun ? 'low' : 'low');
+
+      // Summary pills
+      var pills = [];
+      if (r.added > 0) pills.push('<span class="pill pill-ok">' + r.added + ' added</span>');
+      if (r.updated > 0) pills.push('<span class="pill pill-info">' + r.updated + ' updated</span>');
+      if (r.skipped_duplicate > 0) pills.push('<span class="pill pill-warn">' + r.skipped_duplicate + ' dup skipped</span>');
+      if (r.skipped_empty > 0) pills.push('<span class="pill pill-info">' + r.skipped_empty + ' empty skipped</span>');
+      if (errs > 0) pills.push('<span class="pill pill-err">' + errs + ' errors</span>');
+
+      // Column map display
+      var mapRows = Object.keys(r.map || {}).map(function(k) {
+        var v = r.map[k];
+        var vCls = (!v || v === '__ignore__') ? 'pill-warn' : 'pill-ok';
+        var vTxt = !v ? '(unmapped)' : (v === '__ignore__' ? '(ignored)' : v);
+        return '<tr><td style="padding:2px 8px">' + escapeHtml(k) + '</td>' +
+               '<td style="padding:2px 8px">\u2192</td>' +
+               '<td style="padding:2px 8px"><span class="pill ' + vCls + '">' + escapeHtml(vTxt) + '</span></td></tr>';
+      }).join('');
+      var mapTable = '<details style="margin-top:8px"><summary class="muted" style="cursor:pointer;font-size:12px">Column mapping (click to expand)</summary>' +
+                     '<table style="margin-top:6px;font-size:12px"><tbody>' + mapRows + '</tbody></table></details>';
+
+      var heading = dryRun ? 'Dry run complete' : 'Import complete';
+      var body = '<b>' + escapeHtml(heading) + '</b>' +
+                 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + pills.join(' ') + '</div>' +
+                 (r.total_rows ? '<div class="muted" style="font-size:11px;margin-top:4px">' + r.total_rows + ' rows processed \u00B7 dedupe: ' + escapeHtml(r.dedupe_mode || 'skip') + '</div>' : '') +
+                 mapTable;
+
+      if (errs > 0) {
+        body += '<div style="margin-top:8px"><details><summary class="muted" style="cursor:pointer;font-size:12px">' + errs + ' error detail' + (errs===1?'':'s') + '</summary>' +
+                '<ul style="font-size:12px">' + r.errors.slice(0, 20).map(function(e){return '<li>Row ' + escapeHtml(String(e.row)) + ': ' + escapeHtml(e.error) + '</li>';}).join('') + '</ul></details></div>';
+      }
+
+      $('imp-out').innerHTML = '<div class="alert ' + cls + '"><div class="sev">' + (dryRun ? 'Preview' : 'Done') + '</div><div class="msg">' + body + '</div></div>';
       updateRunState();
     }).catch(function(e) {
       $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
