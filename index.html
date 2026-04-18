@@ -137,7 +137,8 @@
       <sub>Q-Commerce OS</sub>
     </div>
     <ul class="nav" id="nav">
-      <li data-view="dashboard" class="active"><span class="ico">&#9632;</span> Dashboard</li>
+      <li data-view="brief" class="active"><span class="ico">&#9728;</span> Daily Brief</li>
+      <li data-view="dashboard"><span class="ico">&#9632;</span> Dashboard</li>
       <li data-view="sales"><span class="ico">&#9650;</span> Sales</li>
       <li data-view="unit-econ"><span class="ico">&#8377;</span> Unit Economics</li>
       <li data-view="ads"><span class="ico">&#10022;</span> Ad Spend</li>
@@ -145,7 +146,10 @@
       <li data-view="complaints"><span class="ico">&#9993;</span> Complaints</li>
       <li data-view="expansion"><span class="ico">+</span> Expansion</li>
       <li data-view="budget"><span class="ico">&#9673;</span> Budget vs Actuals</li>
+      <li data-view="cash"><span class="ico">&#128176;</span> Cash &amp; Runway</li>
       <li data-view="forecast"><span class="ico">&#9089;</span> Forecast</li>
+      <li data-view="scenarios"><span class="ico">&#9881;</span> Scenarios</li>
+      <li data-view="decisions"><span class="ico">&#10004;</span> Decisions</li>
       <li data-view="issues"><span class="ico">!</span> Issues</li>
       <li data-view="import"><span class="ico">&#8682;</span> Data Import</li>
       <li data-view="master"><span class="ico">&#9881;</span> Master Data</li>
@@ -168,7 +172,8 @@
       </div>
     </div>
 
-    <section id="view-dashboard"></section>
+    <section id="view-brief"></section>
+    <section id="view-dashboard" class="hidden"></section>
     <section id="view-sales" class="hidden"></section>
     <section id="view-unit-econ" class="hidden"></section>
     <section id="view-ads" class="hidden"></section>
@@ -176,7 +181,10 @@
     <section id="view-complaints" class="hidden"></section>
     <section id="view-expansion" class="hidden"></section>
     <section id="view-budget" class="hidden"></section>
+    <section id="view-cash" class="hidden"></section>
     <section id="view-forecast" class="hidden"></section>
+    <section id="view-scenarios" class="hidden"></section>
+    <section id="view-decisions" class="hidden"></section>
     <section id="view-issues" class="hidden"></section>
     <section id="view-import" class="hidden"></section>
     <section id="view-master" class="hidden"></section>
@@ -338,23 +346,28 @@ function init() {
     });
     $('refresh-btn').addEventListener('click', reloadCurrentView);
 
-    switchView('dashboard');
+    switchView('brief');
   }).catch(function(e) {
     showSetup('Cannot reach API. ' + (e && e.message ? e.message : e));
   });
 }
 
-var currentView = 'dashboard';
+var currentView = 'brief';
 function switchView(v) {
   currentView = v;
   var titles = {
+    brief: 'Daily Brief',
     dashboard: 'Executive Dashboard', sales: 'Sales Analytics', 'unit-econ': 'Unit Economics',
     ads: 'Ad Spend & ROAS', inventory: 'Inventory & Ageing', complaints: 'Complaints & Returns',
-    expansion: 'Expansion Planner', budget: 'Budget vs Actuals', forecast: 'Forecast vs Actual',
+    expansion: 'Expansion Planner', budget: 'Budget vs Actuals',
+    cash: 'Cash & Runway',
+    forecast: 'Forecast vs Actual',
+    scenarios: 'Scenario Planner',
+    decisions: 'Decisions & Experiments',
     issues: 'Issues & Actions', 'import': 'Data Import Center', master: 'Master Data Admin'
   };
   $('view-title').innerText = titles[v] || v;
-  ['dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','forecast','issues','import','master'].forEach(function(id) {
+  ['brief','dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','cash','forecast','scenarios','decisions','issues','import','master'].forEach(function(id) {
     $('view-' + id).classList.toggle('hidden', id !== v);
   });
   loadView(v);
@@ -365,6 +378,7 @@ function loadView(v) {
   var el = $('view-' + v);
   var render;
   switch (v) {
+    case 'brief':     render = renderBrief; break;
     case 'dashboard': render = renderDashboard; break;
     case 'sales':     render = renderSales; break;
     case 'unit-econ': render = renderUnitEcon; break;
@@ -373,7 +387,10 @@ function loadView(v) {
     case 'complaints':render = renderComplaints; break;
     case 'expansion': render = renderExpansion; break;
     case 'budget':    render = renderBudget; break;
+    case 'cash':      render = renderCash; break;
     case 'forecast':  render = renderForecast; break;
+    case 'scenarios': render = renderScenarios; break;
+    case 'decisions': render = renderDecisions; break;
     case 'issues':    render = renderIssues; break;
     case 'import':    render = renderImport; break;
     case 'master':    render = renderMaster; break;
@@ -392,16 +409,52 @@ function showViewError(el, v, e) {
 // ---------- dashboard ----------
 function renderDashboard(el) {
   setLoading(el);
-  return api('dashboard', state.filter).then(function(d) {
+  var currentMonth = (function(){ var x = new Date(); return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0'); })();
+  return Promise.all([
+    api('dashboard', state.filter),
+    api('budget', { month: currentMonth }).catch(function(){ return null; })
+  ]).then(function(results) {
+    var d = results[0];
+    var b = results[1];
     var k = d.kpis;
     var cmClass = k.cash_contribution >= 0 ? 'ok' : 'err';
+    var cmUnitClass = (k.cm_per_unit >= 0) ? 'ok' : ((k.cm_per_unit >= -20) ? 'warn' : 'err');
+    var costUnitClass = (k.revenue && k.cost_per_unit <= k.avg_price_per_unit) ? 'ok' : 'err';
     var roasClass = k.roas >= 2 ? 'ok' : (k.roas >= 1 ? 'warn' : 'err');
     var stoClass = k.storage_pct <= 30 ? 'ok' : (k.storage_pct <= 60 ? 'warn' : 'err');
+
+    // Build per-platform cost-per-can table
+    var platRows = (d.byPlatform || []).map(function(p) {
+      var cmCls = p.cm_per_unit >= 0 ? 'pill-ok' : (p.cm_per_unit >= -20 ? 'pill-warn' : 'pill-err');
+      return '<tr>' +
+        '<td><b>' + escapeHtml(p.platform_name) + '</b></td>' +
+        '<td class="num">' + p.units.toLocaleString('en-IN') + '</td>' +
+        '<td class="num">\u20B9' + p.revenue_per_unit.toFixed(2) + '</td>' +
+        '<td class="num">\u20B9' + p.cogs_per_unit.toFixed(2) + '</td>' +
+        '<td class="num">\u20B9' + p.platform_per_unit.toFixed(2) + '</td>' +
+        '<td class="num">\u20B9' + p.ad_per_unit.toFixed(2) + '</td>' +
+        '<td class="num"><b>\u20B9' + p.cost_per_unit.toFixed(2) + '</b></td>' +
+        '<td class="num"><span class="pill ' + cmCls + '">\u20B9' + p.cm_per_unit.toFixed(2) + '</span></td>' +
+        '</tr>';
+    }).join('');
+    var platHtml = (d.byPlatform && d.byPlatform.length)
+      ? '<table><thead><tr>' +
+          '<th>Platform</th><th class="num">Units</th>' +
+          '<th class="num">Price / can</th>' +
+          '<th class="num" title="Production cost">COGS / can</th>' +
+          '<th class="num" title="Storage + Shipping + Commission + TDS + Lost/Damaged">Platform fees / can</th>' +
+          '<th class="num">Ads / can</th>' +
+          '<th class="num">Total cost / can</th>' +
+          '<th class="num">CM / can</th>' +
+          '</tr></thead><tbody>' + platRows + '</tbody></table>'
+      : '<div class="muted">No sales in this date range.</div>';
 
     el.innerHTML =
       '<div class="kpi-grid">' +
         '<div class="kpi"><div class="label">Revenue</div><div class="value">' + inr(k.revenue) + '</div><div class="sub">' + d.range.from + ' &rarr; ' + d.range.to + '</div></div>' +
-        '<div class="kpi"><div class="label">Units Sold</div><div class="value">' + (k.units||0).toLocaleString('en-IN') + '</div><div class="sub">Avg \u20B9' + k.avg_price_per_unit + '/u</div></div>' +
+        '<div class="kpi"><div class="label">Units Sold</div><div class="value">' + (k.units||0).toLocaleString('en-IN') + '</div><div class="sub">Avg \u20B9' + k.avg_price_per_unit + '/can sold</div></div>' +
+        '<div class="kpi ' + costUnitClass + '"><div class="label">Cost / Can</div><div class="value">\u20B9' + (k.cost_per_unit||0).toFixed(2) + '</div><div class="sub">COGS + Ads + Platform fees</div></div>' +
+        '<div class="kpi ' + cmUnitClass + '"><div class="label">CM / Can</div><div class="value">\u20B9' + (k.cm_per_unit||0).toFixed(2) + '</div><div class="sub">Price \u2212 Total cost</div></div>' +
         '<div class="kpi ' + roasClass + '"><div class="label">ROAS</div><div class="value">' + k.roas + 'x</div><div class="sub">Ad spend ' + inr(k.ad_spend) + '</div></div>' +
         '<div class="kpi ' + stoClass + '"><div class="label">Storage / Revenue</div><div class="value">' + pct(k.storage_pct) + '</div><div class="sub">' + inr(k.storage_fee) + ' fee</div></div>' +
         '<div class="kpi"><div class="label">Shipping / Revenue</div><div class="value">' + pct(k.shipping_pct) + '</div><div class="sub">' + inr(k.shipping_fee) + ' fee</div></div>' +
@@ -409,7 +462,13 @@ function renderDashboard(el) {
         '<div class="kpi"><div class="label">Complaint %</div><div class="value">' + pct(k.complaint_pct) + '</div><div class="sub">' + k.complaints + ' cases</div></div>' +
         '<div class="kpi"><div class="label">Return %</div><div class="value">' + pct(k.return_pct) + '</div><div class="sub">' + k.returns + ' returns</div></div>' +
       '</div>' +
+      '<div class="panel">' +
+        '<h2>Cost per can by platform</h2>' +
+        '<div class="desc">What it costs to put one can in a customer\'s hand on each platform. CM/can is your margin before fixed overheads (team, office). Negative CM means you\'re paying to sell.</div>' +
+        platHtml +
+      '</div>' +
       '<div class="panel"><h2>Alerts &amp; Action items</h2><div id="alerts"></div></div>' +
+      renderBudgetSnapshotHtml(b, currentMonth) +
       '<div class="two-col">' +
         '<div class="panel"><h2>Revenue &amp; Units (daily)</h2><div class="chart-wrap"><canvas id="chart-revenue"></canvas></div></div>' +
         '<div class="panel"><h2>Ad Spend &amp; Storage Fee</h2><div class="chart-wrap"><canvas id="chart-costs"></canvas></div></div>' +
@@ -467,6 +526,30 @@ function renderDashboard(el) {
   });
 }
 function destroyChart(id) { if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; } }
+
+function renderBudgetSnapshotHtml(b, month) {
+  if (!b) {
+    return '<div class="panel"><h2>Budget snapshot \u2014 ' + escapeHtml(month) + '</h2>' +
+           '<div class="muted">No budget for this month. Add rows to the <code>monthly_budget</code> tab to see a snapshot.</div></div>';
+  }
+  var pctCls = b.pctUsed > 110 ? 'err' : (b.pctUsed > 90 ? 'warn' : 'ok');
+  var varianceCls = b.projectedVariance >= 0 ? 'ok' : 'err';
+  var progressPct = Math.min(100, Math.max(0, b.pctUsed || 0));
+  var progressBg = b.pctUsed > 110 ? 'var(--nh-err)' : (b.pctUsed > 90 ? 'var(--nh-warn)' : 'var(--nh-ok)');
+  return '<div class="panel">' +
+    '<h2>Budget snapshot \u2014 ' + escapeHtml(month) + '</h2>' +
+    '<div class="desc">Live month-to-date tracking against your budget for ads, storage, shipping and commission. Other budget lines (sampling, buyout, printing) have no auto-tracked actuals \u2014 see the Budget view for the full line-by-line breakdown.</div>' +
+    '<div style="height:10px;background:var(--nh-gray-line);border-radius:5px;margin-bottom:10px;overflow:hidden">' +
+      '<div style="height:100%;width:' + progressPct + '%;background:' + progressBg + ';transition:width 0.4s"></div>' +
+    '</div>' +
+    '<div class="kpi-grid" style="margin-bottom:0">' +
+      '<div class="kpi"><div class="label">Monthly budget</div><div class="value">' + inr(b.totalBudget) + '</div><div class="sub">across ' + (b.lines||[]).length + ' lines</div></div>' +
+      '<div class="kpi ' + pctCls + '"><div class="label">Spent MTD</div><div class="value">' + inr(b.totalActualTracked) + '</div><div class="sub">' + b.pctUsed + '% of budget</div></div>' +
+      '<div class="kpi"><div class="label">Remaining</div><div class="value">' + inr(b.remaining) + '</div><div class="sub">' + b.daysRemaining + ' days left</div></div>' +
+      '<div class="kpi"><div class="label">Projected EOM</div><div class="value">' + inr(b.projectedEndOfMonth) + '</div><div class="sub">at current run-rate</div></div>' +
+      '<div class="kpi ' + varianceCls + '"><div class="label">Projected variance</div><div class="value">' + inr(b.projectedVariance) + '</div><div class="sub">budget \u2212 projected</div></div>' +
+    '</div></div>';
+}
 
 // ---------- other views ----------
 function renderSales(el) {
@@ -562,18 +645,67 @@ function renderInventory(el) {
       el.innerHTML = '<div class="panel"><h2>Inventory</h2><div class="muted">No inventory snapshots in the DB yet.</div></div>';
       return;
     }
+    // Reorder panel
+    var reorderHtml = '';
+    if (d.reorder && d.reorder.length) {
+      var reorderRows = d.reorder.map(function(r) {
+        var u = r.reorder.urgency;
+        var pillCls = u === 'critical' ? 'pill-err' : (u === 'high' ? 'pill-warn' : 'pill-info');
+        return '<tr>' +
+          '<td><span class="pill ' + pillCls + '">' + escapeHtml(u) + '</span></td>' +
+          '<td>' + escapeHtml(r.sku) + '</td>' +
+          '<td>' + escapeHtml(r.warehouse) + '</td>' +
+          '<td class="num">' + r.sellable + '</td>' +
+          '<td class="num">' + r.daily_run + '/day</td>' +
+          '<td class="num">' + r.cover_days + 'd</td>' +
+          '<td class="num"><b>' + r.reorder.recommended_qty + '</b></td>' +
+          '<td>' + escapeHtml(r.reorder.reorder_by_date) + '</td>' +
+          '<td><button class="mk-issue-btn" data-sku="' + escapeHtml(r.sku_id) + '" data-wh="' + escapeHtml(r.warehouse) + '" data-qty="' + r.reorder.recommended_qty + '" data-by="' + escapeHtml(r.reorder.reorder_by_date) + '" style="padding:4px 9px;border:1px solid var(--nh-navy);background:#fff;color:var(--nh-navy);border-radius:5px;cursor:pointer;font-size:12px">Log as issue</button></td>' +
+          '</tr>';
+      }).join('');
+      reorderHtml = '<div class="panel">' +
+        '<h2>Reorder alerts <span class="pill pill-warn" style="margin-left:8px">' + d.reorder.length + '</span></h2>' +
+        '<div class="desc">SKUs running low relative to your configured lead time (' + (state.boot.config.REORDER_LEAD_TIME_DAYS || 7) + 'd) and target cover (' + (state.boot.config.REORDER_TARGET_COVER_DAYS || 21) + 'd). Recommended quantities bring you back to target. Click "Log as issue" to hand off to ops.</div>' +
+        '<table><thead><tr><th>Urgency</th><th>SKU</th><th>Warehouse</th><th class="num">Sellable</th><th class="num">Daily run</th><th class="num">Cover</th><th class="num">Order qty</th><th>By date</th><th></th></tr></thead><tbody>' + reorderRows + '</tbody></table>' +
+        '</div>';
+    }
     var rowsHtml = d.rows.map(function(r) {
       var flag = r.cover_flag === 'critical' ? 'pill-err' : (r.cover_flag === 'warning' ? 'pill-warn' : 'pill-ok');
       return '<tr><td>' + escapeHtml(r.warehouse) + '</td><td>' + escapeHtml(r.sku) + '</td>' +
              '<td class="num">' + r.sellable + '</td><td class="num">' + r.unsellable + '</td>' +
              '<td class="num">' + r.damaged + '</td><td class="num">' + r.lost + '</td>' +
              '<td class="num">' + r.sold_7d + '</td><td class="num">' + r.sold_30d + '</td>' +
+             '<td class="num">' + r.daily_run + '</td>' +
              '<td class="num">' + r.cover_days + '</td>' +
              '<td><span class="pill ' + flag + '">' + escapeHtml(r.cover_flag) + '</span></td></tr>';
     }).join('');
-    el.innerHTML =
+    el.innerHTML = reorderHtml +
       '<div class="panel"><h2>Latest snapshot \u2014 ' + escapeHtml(d.snapshot_date) + '</h2>' +
-      '<table><thead><tr><th>Warehouse</th><th>SKU</th><th class="num">Sellable</th><th class="num">Unsellable</th><th class="num">Damaged</th><th class="num">Lost</th><th class="num">7d sold</th><th class="num">30d sold</th><th class="num">Cover (days)</th><th>Status</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+      '<table><thead><tr><th>Warehouse</th><th>SKU</th><th class="num">Sellable</th><th class="num">Unsellable</th><th class="num">Damaged</th><th class="num">Lost</th><th class="num">7d sold</th><th class="num">30d sold</th><th class="num">Daily run</th><th class="num">Cover (d)</th><th>Status</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+
+    // Wire "Log as issue" buttons
+    Array.prototype.forEach.call(el.querySelectorAll('.mk-issue-btn'), function(btn) {
+      btn.addEventListener('click', function() {
+        var sku = btn.getAttribute('data-sku');
+        var wh = btn.getAttribute('data-wh');
+        var qty = btn.getAttribute('data-qty');
+        var by = btn.getAttribute('data-by');
+        btn.disabled = true; btn.textContent = 'Saving\u2026';
+        api('createIssue', {
+          severity: 'high',
+          category: 'inventory',
+          description: 'Reorder ' + qty + ' units of ' + sku + ' for ' + wh + ' by ' + by,
+          related_sku: sku,
+          owner: '',
+        }, 'POST').then(function() {
+          btn.textContent = 'Logged \u2713';
+          btn.style.background = 'var(--nh-ok)'; btn.style.color = '#fff'; btn.style.border = '0';
+        }).catch(function(e) {
+          btn.disabled = false; btn.textContent = 'Log as issue';
+          alert('Failed: ' + e.message);
+        });
+      });
+    });
   });
 }
 
@@ -620,27 +752,72 @@ function renderExpansion(el) {
 
 function renderBudget(el) {
   setLoading(el);
+  var defaultMonth = (function() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+  })();
   el.innerHTML =
     '<div class="panel"><h2>Budget vs. Actuals</h2>' +
+    '<div class="desc">Track budgeted vs. actual spend for each line. Actuals are matched by keyword to daily ads, storage, shipping and commission rows. Lines without a matchable actual source show "\u2014".</div>' +
     '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">' +
     '<label class="muted" style="margin:0">Month</label>' +
-    '<input type="month" id="bud-month" value="2026-02">' +
-    '<button id="bud-load">Load</button></div>' +
+    '<input type="month" id="bud-month" value="' + defaultMonth + '">' +
+    '<button id="bud-load" style="padding:7px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Load</button></div>' +
     '<div id="bud-body"><div class="muted">Pick a month and click Load.</div></div></div>';
   $('bud-load').addEventListener('click', function() {
     $('bud-body').innerHTML = '<span class="loading"></span> Loading\u2026';
     api('budget', { month: $('bud-month').value }).then(function(data) {
+      var pctCls = data.pctUsed > 110 ? 'err' : (data.pctUsed > 90 ? 'warn' : 'ok');
+      var varianceCls = data.projectedVariance >= 0 ? 'ok' : 'err';
       var linesHtml = data.lines.map(function(r) {
-        return '<tr><td>' + escapeHtml(r.line_item) + '</td><td class="num">' + inr(+r.amount||0) + '</td><td>' + escapeHtml(r.notes||'') + '</td></tr>';
+        var actualTxt = r.actual == null ? '<span class="muted">\u2014</span>' : inr(r.actual);
+        var deltaTxt = r.delta == null ? '<span class="muted">\u2014</span>' : (
+          r.delta >= 0
+            ? '<span class="pill pill-ok">+' + inr(r.delta) + '</span>'
+            : '<span class="pill pill-err">' + inr(r.delta) + '</span>'
+        );
+        var pctTxt = r.pct_used == null ? '<span class="muted">\u2014</span>' : (
+          (r.pct_used > 100 ? '<span class="pill pill-err">' : (r.pct_used > 80 ? '<span class="pill pill-warn">' : '<span class="pill pill-ok">'))
+          + r.pct_used + '%</span>'
+        );
+        var source = r.source ? '<span class="muted" style="font-size:11px">(' + escapeHtml(r.source) + ')</span>' : '';
+        return '<tr>' +
+               '<td>' + escapeHtml(r.line_item) + ' ' + source + '</td>' +
+               '<td class="num">' + inr(r.amount) + '</td>' +
+               '<td class="num">' + actualTxt + '</td>' +
+               '<td class="num">' + deltaTxt + '</td>' +
+               '<td class="num">' + pctTxt + '</td>' +
+               '<td style="font-size:12px;color:var(--nh-gray-text)">' + escapeHtml(r.notes||'') + '</td>' +
+               '</tr>';
       }).join('');
       $('bud-body').innerHTML =
         '<div class="kpi-grid">' +
-        '<div class="kpi"><div class="label">Total Budget</div><div class="value">' + inr(data.totalBudget) + '</div><div class="sub">' + escapeHtml(data.month) + '</div></div>' +
-        '<div class="kpi"><div class="label">Actual Ads</div><div class="value">' + inr(data.actuals.ad_spend) + '</div></div>' +
-        '<div class="kpi"><div class="label">Actual Storage</div><div class="value">' + inr(data.actuals.storage) + '</div></div>' +
-        '<div class="kpi"><div class="label">Actual Shipping</div><div class="value">' + inr(data.actuals.shipping) + '</div></div>' +
+          '<div class="kpi"><div class="label">Total Budget</div><div class="value">' + inr(data.totalBudget) + '</div><div class="sub">' + escapeHtml(data.month) + ' \u00B7 ' + data.daysInMonth + ' days</div></div>' +
+          '<div class="kpi ' + pctCls + '"><div class="label">Spent (tracked)</div><div class="value">' + inr(data.totalActualTracked) + '</div><div class="sub">' + data.pctUsed + '% of budget</div></div>' +
+          '<div class="kpi"><div class="label">Remaining</div><div class="value">' + inr(data.remaining) + '</div><div class="sub">after tracked spend</div></div>' +
+          '<div class="kpi"><div class="label">Day ' + data.daysElapsed + ' of ' + data.daysInMonth + '</div><div class="value">' + data.daysRemaining + 'd</div><div class="sub">left in month</div></div>' +
+          '<div class="kpi"><div class="label">Run-rate / day</div><div class="value">' + inr(data.runRatePerDay) + '</div><div class="sub">on tracked lines</div></div>' +
+          '<div class="kpi ' + varianceCls + '"><div class="label">Projected variance</div><div class="value">' + inr(data.projectedVariance) + '</div><div class="sub">at month-end</div></div>' +
         '</div>' +
-        '<table><thead><tr><th>Line item</th><th class="num">Budget</th><th>Notes</th></tr></thead><tbody>' + linesHtml + '</tbody></table>';
+        '<h3 style="margin:18px 0 8px">Line-by-line</h3>' +
+        '<table><thead><tr>' +
+        '<th>Line item</th>' +
+        '<th class="num">Budget</th>' +
+        '<th class="num">Actual (MTD)</th>' +
+        '<th class="num">Delta</th>' +
+        '<th class="num">% used</th>' +
+        '<th>Notes</th>' +
+        '</tr></thead><tbody>' + linesHtml + '</tbody></table>' +
+        '<h3 style="margin:18px 0 8px">Actuals detail</h3>' +
+        '<table><thead><tr><th>Actual line</th><th class="num">Amount</th></tr></thead><tbody>' +
+          '<tr><td>Revenue</td><td class="num">' + inr(data.actuals.revenue) + '</td></tr>' +
+          '<tr><td>Ad spend</td><td class="num">' + inr(data.actuals.ad_spend) + '</td></tr>' +
+          '<tr><td>Storage fee</td><td class="num">' + inr(data.actuals.storage) + '</td></tr>' +
+          '<tr><td>Shipping fee</td><td class="num">' + inr(data.actuals.shipping) + '</td></tr>' +
+          '<tr><td>Commission fee</td><td class="num">' + inr(data.actuals.commission) + '</td></tr>' +
+          '<tr><td>TDS</td><td class="num">' + inr(data.actuals.tds) + '</td></tr>' +
+          '<tr><td>Lost/Damaged</td><td class="num">' + inr(data.actuals.lost_damaged) + '</td></tr>' +
+        '</tbody></table>';
     }).catch(function(e) {
       $('bud-body').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
     });
@@ -732,6 +909,544 @@ function renderIssues(el) {
   });
 }
 
+function renderScenarios(el) {
+  setLoading(el);
+  // Pull the last-30d dashboard data as baseline
+  return api('dashboard', { from: new Date(Date.now() - 30*86400000).toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) }).then(function(d) {
+    var k = d.kpis;
+    var units = k.units || 1;
+    // Derive current per-can economics to seed the scenario form
+    var cur = {
+      units: k.units || 0,
+      price: k.avg_price_per_unit || 78,
+      cogs: (k.cogs_per_unit && k.cogs_per_unit > 0) ? k.cogs_per_unit : 28,
+      platform_per_unit: k.platform_per_unit || 0,
+      ads_per_unit: k.ad_per_unit || 0,
+      platform_pct: k.revenue ? (k.platform_cost / k.revenue * 100) : 0,
+      ads_pct: k.revenue ? (k.ad_spend / k.revenue * 100) : 0,
+      revenue: k.revenue || 0,
+      cost_per_unit: k.cost_per_unit || 0,
+      cm_per_unit: k.cm_per_unit || 0,
+    };
+    var s = {
+      units: Math.max(600, Math.round(cur.units * 1.2)),  // +20% as a starting target
+      price: 85,      // target floor
+      cogs: cur.cogs,
+      platform_pct: Math.min(80, Math.round(cur.platform_pct * 0.6 * 10) / 10),  // aim to cut platform %
+      ads_pct: Math.max(15, Math.round(cur.ads_pct * 0.5 * 10) / 10),
+      logistics_per_can: 15,
+      buffer_pct: 10,
+    };
+
+    el.innerHTML =
+      '<div class="panel">' +
+      '<h2>Scenario Planner</h2>' +
+      '<div class="desc">Model a what-if month \u2014 set your target units, price, and cost targets, and see whether it clears break-even and what monthly budget you\'d need to fund it. The \"Current\" column is the last-30-day actual for reference. Nothing here is saved; this is a live calculator.</div>' +
+      '<div class="two-col" style="align-items:start">' +
+        '<div>' +
+          '<h3>Scenario inputs</h3>' +
+          '<div id="sc-form" style="display:grid;grid-template-columns:1fr auto;gap:8px 12px;font-size:13px">' +
+            inputRow('Target units / month',       'sc-units',       s.units, 'units', 'integer') +
+            inputRow('Realised price per can',     'sc-price',       s.price, '\u20B9', 'number', 0.5) +
+            inputRow('COGS per can (production)',  'sc-cogs',        s.cogs, '\u20B9', 'number', 0.5) +
+            inputRow('Platform fees (storage+ship+comm) as % of revenue', 'sc-platform-pct', s.platform_pct, '%', 'number', 0.5) +
+            inputRow('Ad spend as % of revenue',   'sc-ads-pct',     s.ads_pct, '%', 'number', 0.5) +
+            inputRow('Logistics per can (NH\u2192warehouse)', 'sc-log', s.logistics_per_can, '\u20B9', 'number', 0.5) +
+            inputRow('Safety buffer on budget',    'sc-buf',         s.buffer_pct, '%', 'number', 1) +
+          '</div>' +
+          '<div style="margin-top:14px;display:flex;gap:8px">' +
+            '<button id="sc-recalc" style="padding:8px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Recalculate</button>' +
+            '<button id="sc-load-cur" class="secondary" style="padding:8px 14px;border:1px solid var(--nh-gray-line);background:#fff;color:var(--nh-navy);border-radius:6px;cursor:pointer">Reset to current</button>' +
+          '</div>' +
+          '<p class="muted" style="margin-top:10px;font-size:11px">Platform fees and ads are expressed as % of revenue because that\'s how Blinkit\'s economics scale. Storage fee of 55% of revenue was the February 2026 reality; you want to get that to under 25% to print money.</p>' +
+        '</div>' +
+        '<div>' +
+          '<h3>Projection</h3>' +
+          '<div id="sc-results"></div>' +
+        '</div>' +
+      '</div>' +
+      '</div>';
+
+    function inputRow(label, id, val, suffix, type, step) {
+      return '<label for="' + id + '" style="align-self:center">' + escapeHtml(label) + '</label>' +
+             '<div style="display:flex;align-items:center;gap:6px">' +
+             '<input id="' + id + '" type="number" value="' + val + '" step="' + (step || 1) + '" ' +
+             'style="width:110px;padding:6px 8px;border:1px solid var(--nh-gray-line);border-radius:6px;font-size:13px;text-align:right">' +
+             '<span class="muted" style="min-width:12px">' + escapeHtml(suffix) + '</span></div>';
+    }
+
+    function readScenario() {
+      return {
+        units: parseFloat($('sc-units').value) || 0,
+        price: parseFloat($('sc-price').value) || 0,
+        cogs: parseFloat($('sc-cogs').value) || 0,
+        platform_pct: parseFloat($('sc-platform-pct').value) || 0,
+        ads_pct: parseFloat($('sc-ads-pct').value) || 0,
+        logistics_per_can: parseFloat($('sc-log').value) || 0,
+        buffer_pct: parseFloat($('sc-buf').value) || 0,
+      };
+    }
+
+    function computeScenario(x) {
+      var revenue = x.units * x.price;
+      var cogsTotal = x.units * x.cogs;
+      var platformTotal = revenue * x.platform_pct / 100;
+      var adsTotal = revenue * x.ads_pct / 100;
+      var logisticsTotal = x.units * x.logistics_per_can;
+      var totalCost = cogsTotal + platformTotal + adsTotal + logisticsTotal;
+      var cm = revenue - totalCost;
+      var cm_per_can = x.units ? cm / x.units : 0;
+      var required_budget = Math.round((cogsTotal + platformTotal + adsTotal + logisticsTotal) * (1 + x.buffer_pct / 100));
+      // Break-even: what units at current CM/can would zero out a fixed overhead? (show the break-even price if CM negative)
+      var break_even_price = x.units ? (totalCost / x.units) : 0;
+      return {
+        revenue: revenue, cogsTotal: cogsTotal, platformTotal: platformTotal, adsTotal: adsTotal,
+        logisticsTotal: logisticsTotal, totalCost: totalCost, cm: cm, cm_per_can: cm_per_can,
+        required_budget: required_budget, break_even_price: break_even_price,
+      };
+    }
+
+    function render() {
+      var x = readScenario();
+      var r = computeScenario(x);
+      var cmCls = r.cm_per_can >= 0 ? 'ok' : (r.cm_per_can >= -20 ? 'warn' : 'err');
+      var curCmCls = cur.cm_per_unit >= 0 ? 'ok' : (cur.cm_per_unit >= -20 ? 'warn' : 'err');
+      var html = '';
+      // Headline KPIs for the scenario
+      html += '<div class="kpi-grid" style="margin-bottom:12px">' +
+        '<div class="kpi"><div class="label">Projected revenue</div><div class="value">' + inr(r.revenue) + '</div><div class="sub">' + x.units + ' \u00D7 \u20B9' + x.price + '</div></div>' +
+        '<div class="kpi"><div class="label">Total cost</div><div class="value">' + inr(r.totalCost) + '</div><div class="sub">COGS + platform + ads + logistics</div></div>' +
+        '<div class="kpi ' + cmCls + '"><div class="label">CM / can</div><div class="value">\u20B9' + r.cm_per_can.toFixed(2) + '</div><div class="sub">' + (r.cm >= 0 ? '+' : '') + inr(r.cm) + ' total</div></div>' +
+        '<div class="kpi"><div class="label">Required monthly budget</div><div class="value">' + inr(r.required_budget) + '</div><div class="sub">incl. ' + x.buffer_pct + '% buffer</div></div>' +
+      '</div>';
+      // Side-by-side comparison
+      html += '<h3 style="margin:10px 0 8px">Scenario vs. Current (last 30d)</h3>';
+      html += '<table><thead><tr><th>Line</th><th class="num">Current</th><th class="num">Scenario</th><th class="num">\u0394</th></tr></thead><tbody>';
+      var rows = [
+        ['Units sold / month', cur.units, x.units, 0],
+        ['Realised price / can', cur.price, x.price, 2],
+        ['COGS / can', cur.cogs, x.cogs, 2],
+        ['Platform fees (% of rev)', cur.platform_pct, x.platform_pct, 1, '%'],
+        ['Ad spend (% of rev)', cur.ads_pct, x.ads_pct, 1, '%'],
+        ['Cost / can', cur.cost_per_unit, x.price - r.cm_per_can, 2],
+        ['CM / can', cur.cm_per_unit, r.cm_per_can, 2],
+      ];
+      rows.forEach(function(row) {
+        var cu = row[1], sc = row[2], dp = row[3], suffix = row[4] || '';
+        var fmt = function(v) { return (suffix === '%') ? (v.toFixed(dp) + '%') : (dp > 0 ? '\u20B9' + v.toFixed(dp) : Math.round(v).toLocaleString('en-IN')); };
+        var delta = sc - cu;
+        var deltaCls = delta >= 0 ? 'pill-ok' : 'pill-err';
+        // For "costs" rising is bad — flip the semantic
+        var costLines = ['COGS / can', 'Platform fees (% of rev)', 'Ad spend (% of rev)', 'Cost / can'];
+        if (costLines.indexOf(row[0]) >= 0) deltaCls = delta <= 0 ? 'pill-ok' : 'pill-err';
+        var deltaTxt = (delta >= 0 ? '+' : '') + fmt(delta);
+        html += '<tr><td>' + row[0] + '</td>' +
+          '<td class="num">' + fmt(cu) + '</td>' +
+          '<td class="num"><b>' + fmt(sc) + '</b></td>' +
+          '<td class="num"><span class="pill ' + deltaCls + '">' + deltaTxt + '</span></td></tr>';
+      });
+      html += '</tbody></table>';
+      // Cost breakdown table
+      html += '<h3 style="margin:14px 0 8px">Required budget breakdown</h3>';
+      html += '<table><thead><tr><th>Category</th><th class="num">Amount</th><th class="num">Per can</th></tr></thead><tbody>' +
+        '<tr><td>COGS (production)</td><td class="num">' + inr(r.cogsTotal) + '</td><td class="num">\u20B9' + x.cogs.toFixed(2) + '</td></tr>' +
+        '<tr><td>Platform fees</td><td class="num">' + inr(r.platformTotal) + '</td><td class="num">\u20B9' + (x.units ? r.platformTotal/x.units : 0).toFixed(2) + '</td></tr>' +
+        '<tr><td>Ad spend</td><td class="num">' + inr(r.adsTotal) + '</td><td class="num">\u20B9' + (x.units ? r.adsTotal/x.units : 0).toFixed(2) + '</td></tr>' +
+        '<tr><td>Logistics</td><td class="num">' + inr(r.logisticsTotal) + '</td><td class="num">\u20B9' + x.logistics_per_can.toFixed(2) + '</td></tr>' +
+        '<tr><td><b>Subtotal</b></td><td class="num"><b>' + inr(r.totalCost) + '</b></td><td class="num"><b>\u20B9' + (x.units ? r.totalCost/x.units : 0).toFixed(2) + '</b></td></tr>' +
+        '<tr><td>Safety buffer (' + x.buffer_pct + '%)</td><td class="num">' + inr(r.required_budget - r.totalCost) + '</td><td class="num">\u2014</td></tr>' +
+        '<tr><td><b>Required monthly budget</b></td><td class="num"><b>' + inr(r.required_budget) + '</b></td><td class="num">\u2014</td></tr>' +
+      '</tbody></table>';
+      // Insight
+      var insight = '';
+      if (r.cm_per_can > 0) {
+        insight = '<div class="alert low"><div class="sev">OK</div><div class="msg"><b>Unit-profitable at this scenario</b>Each can makes \u20B9' + r.cm_per_can.toFixed(2) + '. Scale + fixed overheads are now the next question.</div></div>';
+      } else if (r.cm_per_can >= -20) {
+        insight = '<div class="alert medium"><div class="sev">Warn</div><div class="msg"><b>Close to break-even</b>CM/can of \u20B9' + r.cm_per_can.toFixed(2) + ' \u2014 you\'d need price of \u20B9' + r.break_even_price.toFixed(2) + ' to break even at these costs.</div></div>';
+      } else {
+        insight = '<div class="alert high"><div class="sev">Loss</div><div class="msg"><b>Still loss-making</b>CM/can of \u20B9' + r.cm_per_can.toFixed(2) + '. To break even you\'d need price \u20B9' + r.break_even_price.toFixed(2) + ' OR cut total cost/can by \u20B9' + (-r.cm_per_can).toFixed(2) + '.</div></div>';
+      }
+      html = insight + html;
+      $('sc-results').innerHTML = html;
+    }
+
+    // Wire events
+    $('sc-recalc').addEventListener('click', render);
+    ['sc-units','sc-price','sc-cogs','sc-platform-pct','sc-ads-pct','sc-log','sc-buf'].forEach(function(id) {
+      $(id).addEventListener('input', render);
+    });
+    $('sc-load-cur').addEventListener('click', function() {
+      $('sc-units').value = Math.round(cur.units);
+      $('sc-price').value = cur.price.toFixed(2);
+      $('sc-cogs').value = cur.cogs.toFixed(2);
+      $('sc-platform-pct').value = cur.platform_pct.toFixed(1);
+      $('sc-ads-pct').value = cur.ads_pct.toFixed(1);
+      render();
+    });
+    render();
+  });
+}
+
+// ---------- Daily Brief ----------
+function renderBrief(el) {
+  setLoading(el);
+  return api('dailyBrief').then(function(d) {
+    var staleBadge = d.is_stale
+      ? '<span class="pill pill-warn" style="margin-left:10px">Latest data: ' + escapeHtml(d.latest_date) + ' (not today)</span>'
+      : '<span class="pill pill-ok" style="margin-left:10px">Fresh \u2014 ' + escapeHtml(d.latest_date) + '</span>';
+
+    function deltaPill(delta, invert) {
+      var pos = invert ? delta <= 0 : delta >= 0;
+      var cls = pos ? 'pill-ok' : 'pill-err';
+      var sign = delta > 0 ? '+' : '';
+      return '<span class="pill ' + cls + '">' + sign + delta + '</span>';
+    }
+
+    // Headline cards
+    var s = d.sales.latest, p = d.sales.previous, w = d.week;
+    var html =
+      '<div style="display:flex;align-items:center;margin-bottom:14px">' +
+      '<div class="muted">Good morning. Here\'s what happened on <b>' + escapeHtml(d.latest_date) + '</b>' +
+      (d.previous_date ? ' vs <b>' + escapeHtml(d.previous_date) + '</b>' : '') + '.</div>' +
+      staleBadge + '</div>' +
+      '<div class="kpi-grid">' +
+        '<div class="kpi"><div class="label">Units sold</div><div class="value">' + s.units + '</div>' +
+          '<div class="sub">' + deltaPill(d.sales.delta_units) + ' vs prev. Week avg ' + w.avg_units + '/d</div></div>' +
+        '<div class="kpi"><div class="label">Revenue</div><div class="value">' + inr(s.revenue) + '</div>' +
+          '<div class="sub">' + deltaPill(Math.round(d.sales.delta_revenue)) + ' vs prev. Week ' + inr(w.revenue) + '</div></div>' +
+        '<div class="kpi"><div class="label">Ad spend</div><div class="value">' + inr(d.ad_spend.latest) + '</div>' +
+          '<div class="sub">' + deltaPill(Math.round(d.ad_spend.delta), true) + ' vs prev</div></div>' +
+        '<div class="kpi ' + (d.stockouts.length ? 'err' : 'ok') + '"><div class="label">Stockout alerts</div><div class="value">' + d.stockouts.length + '</div>' +
+          '<div class="sub">SKUs needing reorder</div></div>' +
+        '<div class="kpi ' + (d.complaints.length ? 'warn' : 'ok') + '"><div class="label">New complaints</div><div class="value">' + d.complaints.length + '</div>' +
+          '<div class="sub">in last 2 days</div></div>' +
+        '<div class="kpi ' + (d.issues.length ? 'warn' : 'ok') + '"><div class="label">New issues</div><div class="value">' + d.issues.length + '</div>' +
+          '<div class="sub">raised recently</div></div>' +
+      '</div>';
+
+    // Top SKUs
+    var topSkusRows = (d.top_skus || []).map(function(s) {
+      return '<tr><td>' + escapeHtml(s.sku) + '</td>' +
+             '<td class="num">' + s.units + '</td>' +
+             '<td class="num">' + deltaPill(s.delta_units) + '</td>' +
+             '<td class="num">' + inr(s.value) + '</td></tr>';
+    }).join('');
+    var topCitiesRows = (d.top_cities || []).map(function(c) {
+      return '<tr><td>' + escapeHtml(c.city) + '</td>' +
+             '<td class="num">' + c.units + '</td>' +
+             '<td class="num">' + deltaPill(c.delta_units) + '</td>' +
+             '<td class="num">' + inr(c.value) + '</td></tr>';
+    }).join('');
+    html += '<div class="two-col">' +
+      '<div class="panel"><h2>Top SKUs yesterday</h2>' +
+        (topSkusRows ? '<table><thead><tr><th>SKU</th><th class="num">Units</th><th class="num">\u0394</th><th class="num">Revenue</th></tr></thead><tbody>' + topSkusRows + '</tbody></table>' : '<div class="muted">No sales.</div>') +
+      '</div>' +
+      '<div class="panel"><h2>Top cities yesterday</h2>' +
+        (topCitiesRows ? '<table><thead><tr><th>City</th><th class="num">Units</th><th class="num">\u0394</th><th class="num">Revenue</th></tr></thead><tbody>' + topCitiesRows + '</tbody></table>' : '<div class="muted">No sales.</div>') +
+      '</div></div>';
+
+    // Stockout alerts
+    var stockoutsHtml = '';
+    if (d.stockouts && d.stockouts.length) {
+      var soRows = d.stockouts.map(function(r) {
+        var u = r.reorder.urgency;
+        var pillCls = u === 'critical' ? 'pill-err' : (u === 'high' ? 'pill-warn' : 'pill-info');
+        return '<tr><td><span class="pill ' + pillCls + '">' + escapeHtml(u) + '</span></td>' +
+          '<td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.warehouse) + '</td>' +
+          '<td class="num">' + r.sellable + '</td>' +
+          '<td class="num">' + r.cover_days + 'd</td>' +
+          '<td class="num"><b>' + r.reorder.recommended_qty + '</b></td>' +
+          '<td>' + escapeHtml(r.reorder.reorder_by_date) + '</td></tr>';
+      }).join('');
+      stockoutsHtml = '<div class="panel">' +
+        '<h2>Stockout alerts</h2>' +
+        '<div class="desc">Click Inventory for 1-click "log as issue" on any of these.</div>' +
+        '<table><thead><tr><th>Urgency</th><th>SKU</th><th>Warehouse</th><th class="num">Sellable</th><th class="num">Cover</th><th class="num">Order qty</th><th>By date</th></tr></thead><tbody>' + soRows + '</tbody></table>' +
+        '</div>';
+    }
+
+    // New complaints
+    var compHtml = '';
+    if (d.complaints && d.complaints.length) {
+      var cRows = d.complaints.map(function(c) {
+        return '<tr><td>' + escapeHtml(c.date) + '</td><td>' + escapeHtml(c.sku) + '</td>' +
+          '<td>' + escapeHtml(c.city) + '</td>' +
+          '<td><span class="pill ' + (c.type==='return'?'pill-warn':'pill-info') + '">' + escapeHtml(c.type) + '</span></td>' +
+          '<td class="num">' + c.units + '</td><td>' + escapeHtml(c.reason) + '</td></tr>';
+      }).join('');
+      compHtml = '<div class="panel">' +
+        '<h2>Recent complaints &amp; returns</h2>' +
+        '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th>Type</th><th class="num">Units</th><th>Reason</th></tr></thead><tbody>' + cRows + '</tbody></table>' +
+        '</div>';
+    }
+
+    // New issues
+    var issueHtml = '';
+    if (d.issues && d.issues.length) {
+      var iRows = d.issues.map(function(i) {
+        var cls = i.severity === 'critical' ? 'pill-err' : (i.severity === 'high' ? 'pill-warn' : 'pill-info');
+        return '<tr><td>' + escapeHtml(i.issue_id) + '</td>' +
+          '<td><span class="pill ' + cls + '">' + escapeHtml(i.severity) + '</span></td>' +
+          '<td>' + escapeHtml(i.category) + '</td>' +
+          '<td>' + escapeHtml(i.description) + '</td>' +
+          '<td>' + escapeHtml(i.owner || '') + '</td></tr>';
+      }).join('');
+      issueHtml = '<div class="panel">' +
+        '<h2>New issues raised</h2>' +
+        '<table><thead><tr><th>ID</th><th>Severity</th><th>Category</th><th>Description</th><th>Owner</th></tr></thead><tbody>' + iRows + '</tbody></table>' +
+        '</div>';
+    }
+
+    // If nothing to report
+    if (!stockoutsHtml && !compHtml && !issueHtml && (!d.top_skus || !d.top_skus.length)) {
+      html += '<div class="alert low" style="margin-top:10px"><div class="sev">Quiet</div><div class="msg"><b>Nothing unusual overnight</b>No stockouts, complaints, or issues. Enjoy the coffee.</div></div>';
+    }
+
+    el.innerHTML = html + stockoutsHtml + compHtml + issueHtml;
+  });
+}
+
+// ---------- Cash & Runway ----------
+function renderCash(el) {
+  setLoading(el);
+  return api('cashRunway').then(function(d) {
+    if (d.missing_tab) {
+      el.innerHTML = '<div class="panel"><h2>Cash &amp; Runway</h2>' +
+        '<div class="alert medium"><div class="sev">Setup</div><div class="msg"><b>cash_ledger tab not found</b>Open your Google Sheet, then Night Hawk OS menu &rarr; "Create missing tabs (upgrade)" to add it. Or add a tab named <code>cash_ledger</code> with columns: entry_id, date, type, amount, category, notes.</div></div></div>';
+      return;
+    }
+
+    var bal = d.balance;
+    var burn = d.avg_net_burn;
+    var runway = d.runway_months;
+    var burnCls = burn <= 0 ? 'ok' : 'warn';
+    var runwayCls = (runway === null) ? 'ok' : (runway < 6 ? 'err' : (runway < 12 ? 'warn' : 'ok'));
+    var runwayValue = (runway === null) ? '\u221E' : (runway + ' mo');
+    var runwaySub = (runway === null) ? 'Net-positive or near break-even' : 'At current ' + d.lookback_months + '-mo avg burn';
+
+    var html = '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="label">Cash balance</div><div class="value">' + inr(bal) + '</div><div class="sub">as of latest entry</div></div>' +
+      '<div class="kpi ' + burnCls + '"><div class="label">Avg monthly burn</div><div class="value">' + inr(burn) + '</div><div class="sub">last ' + d.lookback_months + ' months</div></div>' +
+      '<div class="kpi"><div class="label">Avg inflow</div><div class="value">' + inr(d.avg_monthly_inflow) + '</div><div class="sub">per month</div></div>' +
+      '<div class="kpi"><div class="label">Avg outflow</div><div class="value">' + inr(d.avg_monthly_outflow) + '</div><div class="sub">per month</div></div>' +
+      '<div class="kpi ' + runwayCls + '"><div class="label">Runway</div><div class="value">' + runwayValue + '</div><div class="sub">' + runwaySub + '</div></div>' +
+      (d.projected_breakeven_month ?
+        '<div class="kpi ok"><div class="label">Projected break-even</div><div class="value">' + escapeHtml(d.projected_breakeven_month) + '</div><div class="sub">if burn-reduction trend continues</div></div>'
+        : '') +
+    '</div>';
+
+    html += '<div class="panel">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+        '<h2 style="margin:0">Monthly flow</h2>' +
+        '<button id="add-cash-btn" style="padding:7px 14px;border:0;background:var(--nh-navy);color:#fff;border-radius:6px;cursor:pointer">+ Add entry</button>' +
+      '</div>' +
+      (d.byMonth.length ? (
+        '<table><thead><tr><th>Month</th><th class="num">Inflow</th><th class="num">Outflow</th><th class="num">Net</th></tr></thead><tbody>' +
+        d.byMonth.slice().reverse().map(function(m) {
+          var netCls = m.net >= 0 ? 'pill-ok' : 'pill-err';
+          return '<tr><td>' + escapeHtml(m.month) + '</td>' +
+            '<td class="num">' + inr(m.inflow) + '</td>' +
+            '<td class="num">' + inr(m.outflow) + '</td>' +
+            '<td class="num"><span class="pill ' + netCls + '">' + inr(m.net) + '</span></td></tr>';
+        }).join('') + '</tbody></table>'
+      ) : '<div class="muted">No entries yet. Click "+ Add entry" to record your opening balance.</div>') +
+    '</div>';
+
+    html += '<div class="panel">' +
+      '<h2>Ledger (newest first)</h2>' +
+      '<table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th class="num">Amount</th><th class="num">Balance</th><th>Notes</th></tr></thead><tbody>' +
+      d.entries.map(function(e) {
+        var typeCls = e.type === 'inflow' ? 'pill-ok' : (e.type === 'outflow' ? 'pill-err' : 'pill-info');
+        return '<tr><td>' + escapeHtml(e.date) + '</td>' +
+          '<td><span class="pill ' + typeCls + '">' + escapeHtml(e.type) + '</span></td>' +
+          '<td>' + escapeHtml(e.category) + '</td>' +
+          '<td class="num">' + inr(e.amount) + '</td>' +
+          '<td class="num">' + inr(e.balance) + '</td>' +
+          '<td>' + escapeHtml(e.notes) + '</td></tr>';
+      }).join('') +
+      '</tbody></table></div>';
+
+    el.innerHTML = html;
+
+    $('add-cash-btn').addEventListener('click', function() {
+      var today = (new Date()).toISOString().slice(0,10);
+      showModal(
+        '<h3>Add cash entry</h3>' +
+        '<label>Date</label><input type="date" id="cash-date" value="' + today + '">' +
+        '<label>Type</label><select id="cash-type"><option>outflow</option><option>inflow</option><option>opening</option></select>' +
+        '<label>Amount (\u20B9)</label><input id="cash-amt" type="number" placeholder="e.g. 25000">' +
+        '<label>Category</label><input id="cash-cat" placeholder="e.g. ads, production, founder_capital">' +
+        '<label>Notes</label><input id="cash-notes" placeholder="optional">' +
+        '<div class="actions">' +
+        '<button class="secondary" onclick="hideModal()">Cancel</button>' +
+        '<button id="cash-save">Save</button></div>'
+      );
+      $('cash-save').addEventListener('click', function() {
+        var btn = $('cash-save');
+        btn.disabled = true; btn.textContent = 'Saving\u2026';
+        api('addCashEntry', {
+          date: $('cash-date').value,
+          type: $('cash-type').value,
+          amount: parseFloat($('cash-amt').value) || 0,
+          category: $('cash-cat').value,
+          notes: $('cash-notes').value,
+        }, 'POST').then(function() {
+          hideModal();
+          renderCash(el);
+        }).catch(function(e) {
+          btn.disabled = false; btn.textContent = 'Save';
+          alert('Failed: ' + e.message);
+        });
+      });
+    });
+  });
+}
+
+// ---------- Decisions & Experiments ----------
+function renderDecisions(el) {
+  setLoading(el);
+  return api('decisions').then(function(d) {
+    if (d.missing_tab) {
+      el.innerHTML = '<div class="panel"><h2>Decisions &amp; Experiments</h2>' +
+        '<div class="alert medium"><div class="sev">Setup</div><div class="msg"><b>decisions tab not found</b>Open your Google Sheet, then Night Hawk OS menu &rarr; "Create missing tabs (upgrade)".</div></div></div>';
+      return;
+    }
+
+    var rows = d.rows || [];
+    var summary = { planned: 0, running: 0, win: 0, loss: 0, mixed: 0, cancelled: 0 };
+    rows.forEach(function(r) { if (summary[r.status] !== undefined) summary[r.status]++; });
+
+    var statusPill = {
+      planned: 'pill-info', running: 'pill-warn', win: 'pill-ok', loss: 'pill-err', mixed: 'pill-warn', cancelled: 'pill-info'
+    };
+
+    el.innerHTML =
+      '<div class="panel">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+        '<h2 style="margin:0">Decisions &amp; Experiments</h2>' +
+        '<button id="new-decision-btn" style="padding:7px 14px;border:0;background:var(--nh-navy);color:#fff;border-radius:6px;cursor:pointer">+ New decision</button>' +
+      '</div>' +
+      '<div class="desc">Log every meaningful decision or experiment \u2014 hypothesis, success criterion, outcome, learnings. Your future self (and investors) will thank you.</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
+        '<span class="pill pill-ok">Win: ' + summary.win + '</span>' +
+        '<span class="pill pill-err">Loss: ' + summary.loss + '</span>' +
+        '<span class="pill pill-warn">Running: ' + summary.running + '</span>' +
+        '<span class="pill pill-warn">Mixed: ' + summary.mixed + '</span>' +
+        '<span class="pill pill-info">Planned: ' + summary.planned + '</span>' +
+        '<span class="pill pill-info">Cancelled: ' + summary.cancelled + '</span>' +
+      '</div>' +
+      (rows.length ? (
+        '<table><thead><tr>' +
+        '<th>ID</th><th>Created</th><th>Title</th><th>Category</th><th>Owner</th><th>Status</th><th>Outcome</th><th></th>' +
+        '</tr></thead><tbody>' +
+        rows.map(function(r) {
+          var cls = statusPill[r.status] || 'pill-info';
+          return '<tr data-id="' + escapeHtml(r.decision_id) + '">' +
+            '<td>' + escapeHtml(r.decision_id) + '</td>' +
+            '<td>' + escapeHtml(r.created_date) + '</td>' +
+            '<td><b>' + escapeHtml(r.title) + '</b><br><span class="muted" style="font-size:11px">' + escapeHtml((r.hypothesis || '').slice(0, 100)) + (r.hypothesis && r.hypothesis.length > 100 ? '\u2026' : '') + '</span></td>' +
+            '<td>' + escapeHtml(r.category) + '</td>' +
+            '<td>' + escapeHtml(r.owner || '') + '</td>' +
+            '<td><span class="pill ' + cls + '">' + escapeHtml(r.status) + '</span></td>' +
+            '<td style="max-width:240px;font-size:12px">' + escapeHtml((r.outcome || '').slice(0, 140)) + (r.outcome && r.outcome.length > 140 ? '\u2026' : '') + '</td>' +
+            '<td><a href="#" class="dec-view">view</a></td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>'
+      ) : '<div class="muted">No decisions logged yet. Click + New decision to add one.</div>') +
+      '</div>';
+
+    $('new-decision-btn').addEventListener('click', function() {
+      showModal(decisionFormHtml(null));
+      wireDecisionForm(null, el);
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('.dec-view'), function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        var id = a.closest('tr').getAttribute('data-id');
+        var row = rows.filter(function(x) { return x.decision_id === id; })[0];
+        if (!row) return;
+        showModal(decisionFormHtml(row));
+        wireDecisionForm(row, el);
+      });
+    });
+  });
+}
+
+function decisionFormHtml(r) {
+  r = r || {};
+  function val(k, d) { return escapeHtml(r[k] != null ? r[k] : (d || '')); }
+  var isEdit = !!r.decision_id;
+  return '<h3>' + (isEdit ? 'Decision ' + escapeHtml(r.decision_id) : 'New decision') + '</h3>' +
+    '<label>Title</label>' +
+    '<input id="d-title" value="' + val('title') + '" ' + (isEdit ? 'disabled' : '') + ' placeholder="e.g. Launch BB Single in Mumbai">' +
+    '<label>Hypothesis</label>' +
+    '<textarea id="d-hypo" ' + (isEdit ? 'disabled' : '') + ' style="min-height:80px">' + val('hypothesis') + '</textarea>' +
+    '<label>Category</label>' +
+    '<select id="d-cat" ' + (isEdit ? 'disabled' : '') + '>' +
+      ['pricing','sku','expansion','ads','ops','quality','finance'].map(function(c) {
+        return '<option' + (r.category === c ? ' selected' : '') + '>' + c + '</option>';
+      }).join('') +
+    '</select>' +
+    '<label>Owner</label>' +
+    '<input id="d-owner" value="' + val('owner') + '" ' + (isEdit ? 'disabled' : '') + '>' +
+    '<label>Start date</label>' +
+    '<input id="d-start" type="date" value="' + val('start_date') + '" ' + (isEdit ? 'disabled' : '') + '>' +
+    '<label>Target end date</label>' +
+    '<input id="d-end" type="date" value="' + val('end_date') + '">' +
+    '<label>Success criterion</label>' +
+    '<textarea id="d-crit" ' + (isEdit ? 'disabled' : '') + ' style="min-height:60px">' + val('success_criterion') + '</textarea>' +
+    '<label>Status</label>' +
+    '<select id="d-status">' +
+      ['planned','running','win','loss','mixed','cancelled'].map(function(s) {
+        return '<option' + (r.status === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('') +
+    '</select>' +
+    '<label>Outcome (update when done)</label>' +
+    '<textarea id="d-outcome" style="min-height:80px">' + val('outcome') + '</textarea>' +
+    '<label>Learnings</label>' +
+    '<textarea id="d-learn" style="min-height:80px">' + val('learnings') + '</textarea>' +
+    '<div class="actions">' +
+      '<button class="secondary" onclick="hideModal()">Cancel</button>' +
+      '<button id="d-save">' + (isEdit ? 'Update' : 'Create') + '</button>' +
+    '</div>';
+}
+
+function wireDecisionForm(existing, parentEl) {
+  $('d-save').addEventListener('click', function() {
+    var btn = $('d-save');
+    btn.disabled = true; btn.textContent = 'Saving\u2026';
+    if (existing && existing.decision_id) {
+      api('updateDecision', {
+        decision_id: existing.decision_id,
+        status: $('d-status').value,
+        outcome: $('d-outcome').value,
+        learnings: $('d-learn').value,
+        end_date: $('d-end').value,
+      }, 'POST').then(function() {
+        hideModal(); renderDecisions(parentEl);
+      }).catch(function(e) {
+        btn.disabled = false; btn.textContent = 'Update'; alert('Failed: ' + e.message);
+      });
+    } else {
+      api('createDecision', {
+        title: $('d-title').value,
+        hypothesis: $('d-hypo').value,
+        category: $('d-cat').value,
+        owner: $('d-owner').value,
+        start_date: $('d-start').value,
+        end_date: $('d-end').value,
+        success_criterion: $('d-crit').value,
+        status: $('d-status').value,
+      }, 'POST').then(function() {
+        hideModal(); renderDecisions(parentEl);
+      }).catch(function(e) {
+        btn.disabled = false; btn.textContent = 'Create'; alert('Failed: ' + e.message);
+      });
+    }
+  });
+}
+
 function renderImport(el) {
   el.innerHTML =
     '<div class="panel"><h2>Import data</h2>' +
@@ -746,6 +1461,7 @@ function renderImport(el) {
     '<button id="imp-mode-upload" type="button" style="padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">\u2B06 Upload file</button>' +
     '<button id="imp-mode-paste" type="button" style="padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;margin-left:4px">Paste CSV</button>' +
     '</div>' +
+    // Upload panel
     '<div id="imp-upload-panel">' +
       '<label class="muted" style="display:block;margin-bottom:6px">Pick a file (CSV, XLSX, or XLS)</label>' +
       '<input type="file" id="imp-file" accept=".csv,.xlsx,.xls,text/csv" style="margin-bottom:4px">' +
@@ -756,6 +1472,7 @@ function renderImport(el) {
       '</div>' +
       '<div id="imp-preview" style="margin-top:14px"></div>' +
     '</div>' +
+    // Paste panel
     '<div id="imp-paste-panel" class="hidden">' +
       '<label class="muted" style="display:block;margin-bottom:6px">Paste CSV below (first row = headers)</label>' +
       '<textarea id="imp-csv" style="width:100%;min-height:200px;font-family:Menlo,monospace;font-size:12px;padding:8px;border:1px solid var(--nh-gray-line);border-radius:6px" placeholder="date,platform_id,city_id,sku_id,units,value\n2026-04-15,PLT-001,CTY-002,SKU-001,5,390"></textarea>' +
