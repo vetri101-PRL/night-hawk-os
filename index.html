@@ -1,2149 +1,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Night Hawk Q-Commerce OS</title>
-<meta name="description" content="Night Hawk Energy Drink — Q-Commerce operations dashboard">
-<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23F5B700'/><circle cx='16' cy='16' r='16' fill='none' stroke='%230B3954' stroke-width='2'/></svg>">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Join BOIPRA - South Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏦</text></svg>"/>
 <style>
-  :root {
-    --nh-navy: #0B3954; --nh-sky: #087E8B; --nh-red: #BF1A2F;
-    --nh-yellow: #F5B700; --nh-gray-bg: #F7F8FA; --nh-gray-line: #E5E8EC;
-    --nh-gray-text: #4A5568; --nh-ok: #1E8449; --nh-warn: #B7950B; --nh-err: #C0392B;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--nh-gray-bg); color: #1a202c;
-               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
-  a { color: var(--nh-sky); text-decoration: none; }
-  button { font-family: inherit; }
-
-  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-  @media (max-width: 720px) { .app { grid-template-columns: 1fr; } .sidebar { position: sticky; top: 0; z-index: 10; height: auto; } }
-  .sidebar { background: var(--nh-navy); color: white; padding: 20px 0; height: 100vh; position: sticky; top: 0; display: flex; flex-direction: column; }
-  .brand { padding: 8px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
-  .brand-mark { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: 0.3px; }
-  .brand-mark .dot { width: 28px; height: 28px; border-radius: 50%; background: var(--nh-yellow); display: inline-block; box-shadow: 0 0 0 3px rgba(245,183,0,0.25); }
-  .brand sub { display: block; margin-top: 4px; font-weight: 400; font-size: 12px; opacity: 0.75; }
-  .nav { list-style: none; padding: 10px 0; margin: 0; flex: 1; overflow-y: auto; }
-  .nav li { padding: 10px 20px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent; color: rgba(255,255,255,0.75); }
-  .nav li:hover { background: rgba(255,255,255,0.05); color: white; }
-  .nav li.active { background: rgba(8,126,139,0.25); border-left-color: var(--nh-yellow); color: white; }
-  .nav li .ico { font-size: 18px; width: 22px; text-align: center; }
-  .sidebar-foot { padding: 12px 20px; border-top: 1px solid rgba(255,255,255,0.12); font-size: 11px; opacity: 0.75; }
-  .sidebar-foot a { color: var(--nh-yellow); cursor: pointer; }
-
-  .main { padding: 24px 28px; overflow-x: auto; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
-  .topbar h1 { margin: 0; font-size: 22px; font-weight: 700; }
-  .topbar .filters { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .filters input, .filters select { padding: 8px 10px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-size: 13px; background: white; }
-  .filters button { padding: 8px 14px; border: 0; background: var(--nh-navy); color: white; border-radius: 6px; cursor: pointer; font-size: 13px; }
-  .filters button.secondary { background: white; color: var(--nh-navy); border: 1px solid var(--nh-gray-line); }
-
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .kpi { background: white; padding: 14px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--nh-gray-line); }
-  .kpi .label { font-size: 11px; color: var(--nh-gray-text); text-transform: uppercase; letter-spacing: 0.5px; }
-  .kpi .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
-  .kpi .sub { font-size: 12px; color: var(--nh-gray-text); margin-top: 4px; }
-  .kpi.ok .value { color: var(--nh-ok); } .kpi.warn .value { color: var(--nh-warn); } .kpi.err .value { color: var(--nh-err); }
-
-  .panel { background: white; border: 1px solid var(--nh-gray-line); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
-  .panel h2 { margin: 0 0 12px; font-size: 15px; }
-  .panel h3 { margin: 12px 0 6px; font-size: 13px; }
-  .panel .desc { font-size: 12px; color: var(--nh-gray-text); margin-bottom: 12px; }
-
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--nh-gray-line); }
-  th { background: #FAFBFC; font-weight: 600; color: var(--nh-gray-text); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px; }
-  tbody tr:hover { background: #FAFCFF; }
-  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
-  .pill-ok { background: #E7F6EE; color: var(--nh-ok); }
-  .pill-warn { background: #FDF6D7; color: var(--nh-warn); }
-  .pill-err { background: #FDEAEB; color: var(--nh-err); }
-  .pill-info { background: #E6F3F5; color: var(--nh-sky); }
-
-  .alert { display: flex; gap: 12px; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; border: 1px solid; align-items: flex-start; }
-  .alert.critical { background: #FDEAEB; color: #6d1016; border-color: #F5B7BD; }
-  .alert.high { background: #FDF2E9; color: #7d3c0f; border-color: #F2B68E; }
-  .alert.medium { background: #FDF6D7; color: #6b500a; border-color: #F0D96F; }
-  .alert.low { background: #EAF2F8; color: #134e66; border-color: #AECDDB; }
-  .alert .msg { flex: 1; font-size: 13px; }
-  .alert .msg b { display: block; margin-bottom: 2px; }
-  .alert .sev { font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; min-width: 56px; }
-
-  .loading { display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: var(--nh-navy); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .muted { color: var(--nh-gray-text); font-size: 12px; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #f8fafc; color: #1e293b; }
+  .header { background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%); color: white; text-align: center; padding: 2rem 1rem; }
+  .header h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .header p { font-size: 0.85rem; opacity: 0.8; }
+  .header .sub { font-size: 0.75rem; opacity: 0.6; margin-top: 4px; }
+  .header-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 24px; }
+  .container { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+  .progress-bar { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 16px; margin-top: -20px; margin-bottom: 16px; }
+  .steps { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .step-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; transition: all 0.3s; flex-shrink: 0; }
+  .step-dot.done { background: #22c55e; color: white; }
+  .step-dot.active { background: #1e3a5f; color: white; }
+  .step-dot.pending { background: #f1f5f9; color: #94a3b8; }
+  .step-line { width: 24px; height: 2px; background: #e2e8f0; flex-shrink: 0; }
+  .step-line.done { background: #22c55e; }
+  .step-title { text-align: center; margin-top: 10px; font-size: 0.85rem; font-weight: 700; }
+  .step-sub { text-align: center; font-size: 0.7rem; color: #94a3b8; }
+  .card { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 24px; margin-bottom: 16px; animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+  .form-group label .req { color: #ef4444; margin-left: 2px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+  input, select, textarea { width: 100%; border: 2px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: white; }
+  input:focus, select:focus, textarea:focus { border-color: #3b82f6; }
+  textarea { resize: none; }
+  .btn-row { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+  .btn { padding: 10px 24px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+  .btn-back { background: white; color: #64748b; border: 2px solid #e2e8f0; }
+  .btn-back:hover { background: #f8fafc; }
+  .btn-next { background: #1e3a5f; color: white; box-shadow: 0 4px 12px rgba(30,58,95,0.3); }
+  .btn-next:hover { background: #1e40af; }
+  .btn-submit { background: #16a34a; color: white; padding: 12px 32px; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(22,163,74,0.3); }
+  .btn-submit:hover { background: #15803d; }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 10px 14px; margin-top: 12px; color: #dc2626; font-size: 0.85rem; }
+  .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .info-box p { font-size: 0.8rem; color: #1e40af; }
+  .info-box .title { font-weight: 700; font-size: 0.85rem; color: #1e3a5f; margin-bottom: 4px; }
+  .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+  @media (max-width: 640px) { .review-grid { grid-template-columns: 1fr; } }
+  .review-item .rlabel { font-size: 0.65rem; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
+  .review-item .rvalue { font-size: 0.85rem; font-weight: 500; color: #1e293b; }
+  .review-bg { background: #f8fafc; border-radius: 12px; padding: 20px; }
+  .warning-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; padding: 14px; }
+  .warning-box .title { font-weight: 700; font-size: 0.85rem; color: #92400e; margin-bottom: 4px; }
+  .warning-box p { font-size: 0.75rem; color: #92400e; }
+  .success-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .success-card { background: white; border-radius: 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); padding: 32px; max-width: 420px; width: 100%; text-align: center; animation: fadeIn 0.4s ease-out; }
+  .success-icon { width: 80px; height: 80px; border-radius: 50%; background: #dcfce7; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; }
+  .success-card h2 { font-size: 1.5rem; margin-bottom: 8px; }
+  .success-card .desc { color: #64748b; font-size: 0.9rem; margin-bottom: 16px; }
+  .ref-box { background: #eff6ff; border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+  .ref-box .ref-label { font-size: 0.75rem; color: #64748b; }
+  .ref-box .ref-id { font-size: 1.1rem; font-weight: 700; color: #1e3a5f; font-family: monospace; }
+  .footer { text-align: center; padding: 20px; font-size: 0.7rem; color: #94a3b8; }
   .hidden { display: none !important; }
-  .chart-wrap { position: relative; height: 280px; }
-
-  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
-  .modal-bg.show { display: flex; }
-  .modal { background: white; border-radius: 10px; width: min(640px, 92vw); padding: 22px; max-height: 92vh; overflow: auto; }
-  .modal h3 { margin: 0 0 16px; }
-  .modal label { display: block; font-size: 11px; color: var(--nh-gray-text); margin: 6px 0 3px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .modal textarea, .modal input, .modal select { width: 100%; padding: 8px; margin-bottom: 6px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-family: inherit; font-size: 13px; }
-  .modal textarea { min-height: 160px; font-family: Menlo, monospace; font-size: 12px; }
-  .modal .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
-  .modal .actions button { padding: 8px 14px; border-radius: 6px; border: 0; background: var(--nh-navy); color: white; cursor: pointer; }
-  .modal .actions button.secondary { background: white; color: var(--nh-navy); border: 1px solid var(--nh-gray-line); }
-
-  .setup-hero {
-    max-width: 640px; margin: 48px auto; padding: 28px 34px; background: white;
-    border: 1px solid var(--nh-gray-line); border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(11,57,84,0.08);
-  }
-  .setup-hero h1 { margin: 0 0 10px; color: var(--nh-navy); }
-  .setup-hero ol { padding-left: 20px; line-height: 1.55; font-size: 14px; }
-  .setup-hero input { width: 100%; padding: 10px; border: 1px solid var(--nh-gray-line); border-radius: 6px; font-size: 13px; margin-bottom: 10px; }
-  .setup-hero button { padding: 10px 18px; border: 0; background: var(--nh-navy); color: white; border-radius: 6px; cursor: pointer; font-size: 14px; }
-  .err-box { color: var(--nh-err); font-size: 12px; padding: 6px 0; white-space: pre-wrap; }
-  code.inline { background: #F0F4F8; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  .separator { border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 16px; }
+  .separator-title { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 12px; }
 </style>
 </head>
 <body>
 
-<div id="setup-root" class="hidden">
-  <div class="setup-hero">
-    <h1>Night Hawk Q-Commerce OS</h1>
-    <p class="muted">Welcome. Paste your Google Apps Script web-app URL below to connect the dashboard to your Google Sheet.</p>
-    <h3 style="margin:18px 0 6px">How to get the URL</h3>
-    <ol>
-      <li>Open your Google Sheet &rarr; Extensions &rarr; Apps Script.</li>
-      <li>Deploy &rarr; New deployment &rarr; Web app. Execute as <b>Me</b>, access <b>Anyone</b>.</li>
-      <li>Copy the URL (ends in <code class="inline">/exec</code>).</li>
-      <li>Paste it below and click Save.</li>
-    </ol>
-    <label class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.3px">Apps Script web app URL</label>
-    <input id="setup-url" placeholder="https://script.google.com/macros/s/..../exec">
-    <button id="setup-save">Save &amp; connect</button>
-    <div id="setup-err" class="err-box"></div>
-    <p class="muted" style="margin-top:18px">The URL is saved locally in your browser only (localStorage).</p>
+<!-- SUCCESS PAGE (hidden by default) -->
+<div id="successPage" class="success-page hidden">
+  <div class="success-card">
+    <div class="success-icon">✅</div>
+    <h2>Application Submitted!</h2>
+    <p class="desc">Thank you for applying to join BOIPRA - South Zone. Your application will be reviewed by the committee.</p>
+    <div id="refBox" class="ref-box hidden">
+      <p class="ref-label">Your Application Reference</p>
+      <p class="ref-id" id="refId"></p>
+    </div>
+    <div class="warning-box" style="text-align:left;">
+      <p class="title">What happens next?</p>
+      <p>A committee member will review your application and contact you on the mobile number you provided. Please keep your PF documents handy for verification.</p>
+    </div>
+    <a href="javascript:location.reload()" style="display:inline-block;margin-top:16px;color:#3b82f6;font-size:0.85rem;">Submit another application</a>
   </div>
 </div>
 
-<div class="app hidden" id="app-root">
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-mark"><span class="dot"></span> NIGHT HAWK</div>
-      <sub>Q-Commerce OS</sub>
-    </div>
-    <ul class="nav" id="nav">
-      <li data-view="brief" class="active"><span class="ico">&#9728;</span> Daily Brief</li>
-      <li data-view="ai"><span class="ico">&#129504;</span> Ask Strategist</li>
-      <li data-view="dashboard"><span class="ico">&#9632;</span> Dashboard</li>
-      <li data-view="sales"><span class="ico">&#9650;</span> Sales</li>
-      <li data-view="unit-econ"><span class="ico">&#8377;</span> Unit Economics</li>
-      <li data-view="ads"><span class="ico">&#10022;</span> Ad Spend</li>
-      <li data-view="inventory"><span class="ico">&#9776;</span> Inventory</li>
-      <li data-view="complaints"><span class="ico">&#9993;</span> Complaints</li>
-      <li data-view="expansion"><span class="ico">+</span> Expansion</li>
-      <li data-view="budget"><span class="ico">&#9673;</span> Budget vs Actuals</li>
-      <li data-view="cash"><span class="ico">&#128176;</span> Cash &amp; Runway</li>
-      <li data-view="forecast"><span class="ico">&#9089;</span> Forecast</li>
-      <li data-view="scenarios"><span class="ico">&#9881;</span> Scenarios</li>
-      <li data-view="decisions"><span class="ico">&#10004;</span> Decisions</li>
-      <li data-view="issues"><span class="ico">!</span> Issues</li>
-      <li data-view="import"><span class="ico">&#8682;</span> Data Import</li>
-      <li data-view="master"><span class="ico">&#9881;</span> Master Data</li>
-    </ul>
-    <div class="sidebar-foot">
-      <div id="whoami">&mdash;</div>
-      <div style="margin-top:6px"><a id="settings-link">Change API URL</a></div>
-    </div>
-  </aside>
+<!-- MAIN FORM PAGE -->
+<div id="formPage">
+  <div class="header">
+    <div class="header-icon">🏦</div>
+    <h1>Join BOIPRA - South Zone</h1>
+    <p>Bank of India Pensioners' & Retirees' Association</p>
+    <p class="sub">Reg. No. 115/2017</p>
+  </div>
 
-  <main class="main">
-    <div class="topbar">
-      <h1 id="view-title">Executive Dashboard</h1>
-      <div class="filters">
-        <input type="date" id="date-from">
-        <input type="date" id="date-to">
-        <select id="platform-sel"></select>
-        <button id="apply-filters">Apply</button>
-        <button class="secondary" id="refresh-btn">&#8635; Refresh</button>
-      </div>
+  <div class="container">
+    <!-- Progress -->
+    <div class="progress-bar">
+      <div class="steps" id="stepsBar"></div>
+      <div class="step-title" id="stepTitle"></div>
+      <div class="step-sub" id="stepSub"></div>
     </div>
 
-    <section id="view-brief"></section>
-    <section id="view-ai" class="hidden"></section>
-    <section id="view-dashboard" class="hidden"></section>
-    <section id="view-sales" class="hidden"></section>
-    <section id="view-unit-econ" class="hidden"></section>
-    <section id="view-ads" class="hidden"></section>
-    <section id="view-inventory" class="hidden"></section>
-    <section id="view-complaints" class="hidden"></section>
-    <section id="view-expansion" class="hidden"></section>
-    <section id="view-budget" class="hidden"></section>
-    <section id="view-cash" class="hidden"></section>
-    <section id="view-forecast" class="hidden"></section>
-    <section id="view-scenarios" class="hidden"></section>
-    <section id="view-decisions" class="hidden"></section>
-    <section id="view-issues" class="hidden"></section>
-    <section id="view-import" class="hidden"></section>
-    <section id="view-master" class="hidden"></section>
-  </main>
-</div>
+    <!-- Form Card -->
+    <div class="card" id="formCard"></div>
 
-<div class="modal-bg" id="modal-bg">
-  <div class="modal" id="modal"></div>
+    <!-- Footer -->
+    <div class="footer">
+      <p>BOIPRA - South Zone &middot; Membership Application Form</p>
+      <p style="margin-top:4px;">Your data is securely stored. For queries, contact: boiparasz@gmail.com</p>
+    </div>
+  </div>
 </div>
 
 <script>
-// ===================================================================
-// Night Hawk Q-Commerce OS
-// Unified client — works in three contexts:
-//   1. Served by Apps Script (template injects deployUrl)
-//   2. Hosted on GitHub Pages (user pastes URL in setup screen)
-//   3. Opened as a local file (same as #2)
-// All server calls go through fetch(); no dependency on google.script.run.
-// ===================================================================
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjakhlEirKX-zkOJeqzjW8dsy1DOfI5Mo5INEET2p3tTFokP1lNTytri4-Y18O69JC/exec";
 
-// The Apps Script HTML template will replace the next line with the real
-// deploy URL.  If this file is served as a plain static file, the raw
-// scriptlet text remains — we detect that and fall through to setup.
-var TEMPLATED_URL = "<?!= deployUrl ?>";
+var ZONES = ["CHENNAI","MADURAI","COIMBATORE","TRICHY","SALEM","ERODE","TIRUNELVELI","NAGERCOIL","VELLORE","PONDICHERRY","THANJAVUR"];
+var BLOOD_GROUPS = ["A+","A-","B+","B-","AB+","AB-","O+","O-"];
+var CATEGORIES = [["OFF","Officer"],["AS","Award Staff"],["SUB","Sub Staff"]];
+var TITLES = ["Mr.","Mrs.","Ms.","Dr."];
+var PAYMENT_MODES = ["Cheque","NEFT","UPI","Cash"];
 
-var LS_KEY = 'nh.apiUrl';
-var state = { boot: null, charts: {}, filter: { from: null, to: null, platformId: '' } };
+var STEP_INFO = [
+  { title: "Personal Details", sub: "Tell us about yourself", icon: "👤" },
+  { title: "Contact & Location", sub: "How can we reach you", icon: "📍" },
+  { title: "Service Details", sub: "Your banking career", icon: "🏦" },
+  { title: "Payment", sub: "Membership fees", icon: "💳" },
+  { title: "Review & Submit", sub: "Confirm your details", icon: "✅" }
+];
 
-// ---------- helpers ----------
-function $(id) { return document.getElementById(id); }
-function inr(n) { return '\u20B9' + (Math.round(n || 0)).toLocaleString('en-IN'); }
-function pct(n) { return (n == null ? '\u2014' : (+n).toFixed(1) + '%'); }
-function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
-    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
-  });
-}
-function fmtD(d) {
-  var y = d.getFullYear();
-  var m = String(d.getMonth()+1).padStart(2,'0');
-  var day = String(d.getDate()).padStart(2,'0');
-  return y + '-' + m + '-' + day;
-}
-function setLoading(el) { el.innerHTML = '<div class="muted"><span class="loading"></span> Loading\u2026</div>'; }
-function showModal(html) { $('modal').innerHTML = html; $('modal-bg').classList.add('show'); }
-function hideModal() { $('modal-bg').classList.remove('show'); $('modal').innerHTML = ''; }
-$('modal-bg').addEventListener('click', function(e) { if (e.target === $('modal-bg')) hideModal(); });
+var currentStep = 0;
+var formData = {
+  TITLE: "", NAME: "", S_W_D_O: "", PF_NO: "", DOB: "", BLOOD_GROUP: "", CATEGORY: "",
+  CONTACT_1: "", CONTACT_2: "", EMAIL: "", ADDRESS: "", ZONE: "", CENTRE: "",
+  DATE_OF_RETIREMENT: "", BRANCH_RETIRED_FROM: "", BRANCH_PENSION_DRAWN: "",
+  FAMILY_PENSIONER: "", FAMILY_CONTACT: "",
+  PAYMENT_MODE: "", PAYMENT_REF: "", AMOUNT_PAID: "", NOTES: ""
+};
 
-// ---------- API base resolution ----------
-function getApiUrl() {
-  // 1. Apps Script template injection
-  if (TEMPLATED_URL && TEMPLATED_URL.indexOf('<') === -1 && TEMPLATED_URL.indexOf('?') === -1 && TEMPLATED_URL.indexOf('/exec') > 0) {
-    return TEMPLATED_URL;
+function saveFields() {
+  var inputs = document.querySelectorAll("#formCard [data-field]");
+  for (var i = 0; i < inputs.length; i++) {
+    formData[inputs[i].getAttribute("data-field")] = inputs[i].value;
   }
-  // 2. localStorage
-  try { return localStorage.getItem(LS_KEY) || ''; } catch (e) { return ''; }
-}
-function setApiUrl(v) {
-  try { localStorage.setItem(LS_KEY, v); } catch (e) {}
 }
 
-// ---------- API calls ----------
-function api(action, params, method) {
-  params = params || {};
-  method = method || 'GET';
-  var base = getApiUrl();
-  if (!base) return Promise.reject(new Error('API URL not configured'));
-  var req;
-  if (method === 'GET') {
-    var qp = ['action=' + encodeURIComponent(action)];
-    Object.keys(params).forEach(function(k) {
-      if (params[k] != null && params[k] !== '') qp.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
-    });
-    req = fetch(base + '?' + qp.join('&'), { method: 'GET', redirect: 'follow' });
+function makeOptions(arr, placeholder) {
+  var html = '<option value="">' + placeholder + '</option>';
+  for (var i = 0; i < arr.length; i++) {
+    if (Array.isArray(arr[i])) {
+      html += '<option value="' + arr[i][0] + '">' + arr[i][1] + '</option>';
+    } else {
+      html += '<option value="' + arr[i] + '">' + arr[i] + '</option>';
+    }
+  }
+  return html;
+}
+
+function field(label, type, key, placeholder, required, options) {
+  var req = required ? '<span class="req">*</span>' : '';
+  var val = formData[key] || '';
+  var html = '<div class="form-group"><label>' + label + req + '</label>';
+  if (type === 'select') {
+    html += '<select data-field="' + key + '">' + makeOptions(options, placeholder || '— Select —') + '</select>';
+  } else if (type === 'textarea') {
+    html += '<textarea data-field="' + key + '" rows="3" placeholder="' + (placeholder||'') + '">' + val + '</textarea>';
   } else {
-    // text/plain so the browser does NOT send a CORS preflight OPTIONS
-    req = fetch(base, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, payload: params }),
-      redirect: 'follow'
-    });
-  }
-  return req.then(function(res) { return res.text(); }).then(function(text) {
-    var json;
-    try { json = JSON.parse(text); }
-    catch (e) {
-      throw new Error('Server did not return JSON. Check that the Apps Script deployment has "Anyone" access.\n\nFirst 200 chars: ' + text.slice(0, 200));
+    html += '<input type="' + type + '" data-field="' + key + '" value="' + val + '" placeholder="' + (placeholder||'') + '"'
+    if (type === 'text' && (key === 'NAME' || key === 'S_W_D_O' || key === 'BRANCH_RETIRED_FROM' || key === 'BRANCH_PENSION_DRAWN' || key === 'FAMILY_PENSIONER' || key === 'CENTRE')) {
+      html += ' oninput="this.value=this.value.toUpperCase()"';
     }
-    if (!json.ok) throw new Error(json.error || 'API error');
-    return json.data;
-  });
-}
-
-// ---------- setup flow ----------
-function showSetup(preErr) {
-  $('app-root').classList.add('hidden');
-  $('setup-root').classList.remove('hidden');
-  var existing = '';
-  try { existing = localStorage.getItem(LS_KEY) || ''; } catch (e) {}
-  $('setup-url').value = existing;
-  $('setup-err').textContent = preErr || '';
-}
-$('setup-save').addEventListener('click', function() {
-  var v = ($('setup-url').value || '').trim();
-  $('setup-err').textContent = '';
-  if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec\/?$/.test(v)) {
-    $('setup-err').textContent = 'That does not look like a valid Apps Script /exec URL.';
-    return;
+    html += '/>';
   }
-  setApiUrl(v);
-  $('setup-err').textContent = 'Saved. Testing connection\u2026';
-  api('boot').then(function() {
-    location.reload();
-  }).catch(function(e) {
-    $('setup-err').textContent = 'Could not reach the API: ' + (e && e.message ? e.message : e);
-  });
-});
-$('settings-link').addEventListener('click', function() { showSetup(''); });
-
-// ---------- init ----------
-function init() {
-  if (!getApiUrl()) { showSetup(''); return; }
-
-  api('boot').then(function(boot) {
-    state.boot = boot;
-    $('app-root').classList.remove('hidden');
-    $('setup-root').classList.add('hidden');
-
-    var sel = $('platform-sel');
-    var opts = ['<option value="">All platforms</option>'];
-    (boot.platforms || []).filter(function(p) { return p.status === 'active'; }).forEach(function(p) {
-      opts.push('<option value="' + escapeHtml(p.platform_id) + '">' + escapeHtml(p.name) + '</option>');
-    });
-    sel.innerHTML = opts.join('');
-
-    var to = new Date();
-    var from = new Date(to.getTime() - 89*86400000);
-    $('date-from').value = fmtD(from);
-    $('date-to').value = fmtD(to);
-    state.filter.from = fmtD(from);
-    state.filter.to = fmtD(to);
-
-    var orgName = (boot.config && boot.config.ORG_NAME) || 'Night Hawk';
-    $('whoami').innerHTML = 'Org: <b>' + escapeHtml(orgName) + '</b>';
-
-    Array.prototype.forEach.call(document.querySelectorAll('#nav li'), function(li) {
-      li.addEventListener('click', function() {
-        Array.prototype.forEach.call(document.querySelectorAll('#nav li'), function(x) { x.classList.remove('active'); });
-        li.classList.add('active');
-        switchView(li.getAttribute('data-view'));
-      });
-    });
-    $('apply-filters').addEventListener('click', function() {
-      state.filter.from = $('date-from').value;
-      state.filter.to = $('date-to').value;
-      state.filter.platformId = $('platform-sel').value;
-      reloadCurrentView();
-    });
-    $('refresh-btn').addEventListener('click', reloadCurrentView);
-
-    switchView('brief');
-  }).catch(function(e) {
-    showSetup('Cannot reach API. ' + (e && e.message ? e.message : e));
-  });
+  html += '</div>';
+  return html;
 }
 
-var currentView = 'brief';
-function switchView(v) {
-  currentView = v;
-  var titles = {
-    brief: 'Daily Brief',
-    ai: 'Ask Strategist',
-    dashboard: 'Executive Dashboard', sales: 'Sales Analytics', 'unit-econ': 'Unit Economics',
-    ads: 'Ad Spend & ROAS', inventory: 'Inventory & Ageing', complaints: 'Complaints & Returns',
-    expansion: 'Expansion Planner', budget: 'Budget vs Actuals',
-    cash: 'Cash & Runway',
-    forecast: 'Forecast vs Actual',
-    scenarios: 'Scenario Planner',
-    decisions: 'Decisions & Experiments',
-    issues: 'Issues & Actions', 'import': 'Data Import Center', master: 'Master Data Admin'
-  };
-  $('view-title').innerText = titles[v] || v;
-  ['brief','ai','dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','cash','forecast','scenarios','decisions','issues','import','master'].forEach(function(id) {
-    $('view-' + id).classList.toggle('hidden', id !== v);
-  });
-  loadView(v);
-}
-function reloadCurrentView() { loadView(currentView); }
-
-function loadView(v) {
-  var el = $('view-' + v);
-  var render;
-  switch (v) {
-    case 'brief':     render = renderBrief; break;
-    case 'ai':        render = renderAI; break;
-    case 'dashboard': render = renderDashboard; break;
-    case 'sales':     render = renderSales; break;
-    case 'unit-econ': render = renderUnitEcon; break;
-    case 'ads':       render = renderAds; break;
-    case 'inventory': render = renderInventory; break;
-    case 'complaints':render = renderComplaints; break;
-    case 'expansion': render = renderExpansion; break;
-    case 'budget':    render = renderBudget; break;
-    case 'cash':      render = renderCash; break;
-    case 'forecast':  render = renderForecast; break;
-    case 'scenarios': render = renderScenarios; break;
-    case 'decisions': render = renderDecisions; break;
-    case 'issues':    render = renderIssues; break;
-    case 'import':    render = renderImport; break;
-    case 'master':    render = renderMaster; break;
+function renderStep() {
+  // Update progress bar
+  var stepsHtml = '';
+  for (var i = 0; i < 5; i++) {
+    var cls = i < currentStep ? 'done' : (i === currentStep ? 'active' : 'pending');
+    var inner = i < currentStep ? '✓' : (i + 1);
+    stepsHtml += '<div class="step-dot ' + cls + '">' + inner + '</div>';
+    if (i < 4) stepsHtml += '<div class="step-line' + (i < currentStep ? ' done' : '') + '"></div>';
   }
-  if (!render) return;
-  try {
-    var r = render(el);
-    if (r && r.catch) r.catch(function(e) { showViewError(el, v, e); });
-  } catch (e) { showViewError(el, v, e); }
-}
-function showViewError(el, v, e) {
-  var msg = (e && e.message) ? e.message : String(e);
-  el.innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg"><b>Loading ' + escapeHtml(v) + ' failed</b>' + escapeHtml(msg) + '</div></div>';
-}
+  document.getElementById("stepsBar").innerHTML = stepsHtml;
+  document.getElementById("stepTitle").textContent = STEP_INFO[currentStep].icon + ' ' + STEP_INFO[currentStep].title;
+  document.getElementById("stepSub").textContent = STEP_INFO[currentStep].sub;
 
-// ---------- dashboard ----------
-function renderDashboard(el) {
-  setLoading(el);
-  var currentMonth = (function(){ var x = new Date(); return x.getFullYear() + '-' + String(x.getMonth()+1).padStart(2,'0'); })();
-  return Promise.all([
-    api('dashboard', state.filter),
-    api('budget', { month: currentMonth }).catch(function(){ return null; })
-  ]).then(function(results) {
-    var d = results[0];
-    var b = results[1];
-    var k = d.kpis;
-    var cmClass = k.cash_contribution >= 0 ? 'ok' : 'err';
-    var cmUnitClass = (k.cm_per_unit >= 0) ? 'ok' : ((k.cm_per_unit >= -20) ? 'warn' : 'err');
-    var costUnitClass = (k.revenue && k.cost_per_unit <= k.avg_price_per_unit) ? 'ok' : 'err';
-    var roasClass = k.roas >= 2 ? 'ok' : (k.roas >= 1 ? 'warn' : 'err');
-    var stoClass = k.storage_pct <= 30 ? 'ok' : (k.storage_pct <= 60 ? 'warn' : 'err');
+  // Build form content
+  var html = '';
 
-    // Build per-platform cost-per-can table
-    var platRows = (d.byPlatform || []).map(function(p) {
-      var cmCls = p.cm_per_unit >= 0 ? 'pill-ok' : (p.cm_per_unit >= -20 ? 'pill-warn' : 'pill-err');
-      return '<tr>' +
-        '<td><b>' + escapeHtml(p.platform_name) + '</b></td>' +
-        '<td class="num">' + p.units.toLocaleString('en-IN') + '</td>' +
-        '<td class="num">\u20B9' + p.revenue_per_unit.toFixed(2) + '</td>' +
-        '<td class="num">\u20B9' + p.cogs_per_unit.toFixed(2) + '</td>' +
-        '<td class="num">\u20B9' + p.platform_per_unit.toFixed(2) + '</td>' +
-        '<td class="num">\u20B9' + p.ad_per_unit.toFixed(2) + '</td>' +
-        '<td class="num"><b>\u20B9' + p.cost_per_unit.toFixed(2) + '</b></td>' +
-        '<td class="num"><span class="pill ' + cmCls + '">\u20B9' + p.cm_per_unit.toFixed(2) + '</span></td>' +
-        '</tr>';
-    }).join('');
-    var platHtml = (d.byPlatform && d.byPlatform.length)
-      ? '<table><thead><tr>' +
-          '<th>Platform</th><th class="num">Units</th>' +
-          '<th class="num">Price / can</th>' +
-          '<th class="num" title="Production cost">COGS / can</th>' +
-          '<th class="num" title="Storage + Shipping + Commission + TDS + Lost/Damaged">Platform fees / can</th>' +
-          '<th class="num">Ads / can</th>' +
-          '<th class="num">Total cost / can</th>' +
-          '<th class="num">CM / can</th>' +
-          '</tr></thead><tbody>' + platRows + '</tbody></table>'
-      : '<div class="muted">No sales in this date range.</div>';
-
-    el.innerHTML =
-      '<div class="kpi-grid">' +
-        '<div class="kpi"><div class="label">Revenue</div><div class="value">' + inr(k.revenue) + '</div><div class="sub">' + d.range.from + ' &rarr; ' + d.range.to + '</div></div>' +
-        '<div class="kpi"><div class="label">Units Sold</div><div class="value">' + (k.units||0).toLocaleString('en-IN') + '</div><div class="sub">Avg \u20B9' + k.avg_price_per_unit + '/can sold</div></div>' +
-        '<div class="kpi ' + costUnitClass + '"><div class="label">Cost / Can</div><div class="value">\u20B9' + (k.cost_per_unit||0).toFixed(2) + '</div><div class="sub">COGS + Ads + Platform fees</div></div>' +
-        '<div class="kpi ' + cmUnitClass + '"><div class="label">CM / Can</div><div class="value">\u20B9' + (k.cm_per_unit||0).toFixed(2) + '</div><div class="sub">Price \u2212 Total cost</div></div>' +
-        '<div class="kpi ' + roasClass + '"><div class="label">ROAS</div><div class="value">' + k.roas + 'x</div><div class="sub">Ad spend ' + inr(k.ad_spend) + '</div></div>' +
-        '<div class="kpi ' + stoClass + '"><div class="label">Storage / Revenue</div><div class="value">' + pct(k.storage_pct) + '</div><div class="sub">' + inr(k.storage_fee) + ' fee</div></div>' +
-        '<div class="kpi"><div class="label">Shipping / Revenue</div><div class="value">' + pct(k.shipping_pct) + '</div><div class="sub">' + inr(k.shipping_fee) + ' fee</div></div>' +
-        '<div class="kpi ' + cmClass + '"><div class="label">Cash Contribution</div><div class="value">' + inr(k.cash_contribution) + '</div><div class="sub">Rev \u2212 Ads \u2212 Platform</div></div>' +
-        '<div class="kpi"><div class="label">Complaint %</div><div class="value">' + pct(k.complaint_pct) + '</div><div class="sub">' + k.complaints + ' cases</div></div>' +
-        '<div class="kpi"><div class="label">Return %</div><div class="value">' + pct(k.return_pct) + '</div><div class="sub">' + k.returns + ' returns</div></div>' +
-      '</div>' +
-      '<div class="panel">' +
-        '<h2>Cost per can by platform</h2>' +
-        '<div class="desc">What it costs to put one can in a customer\'s hand on each platform. CM/can is your margin before fixed overheads (team, office). Negative CM means you\'re paying to sell.</div>' +
-        platHtml +
-      '</div>' +
-      '<div class="panel"><h2>Alerts &amp; Action items</h2><div id="alerts"></div></div>' +
-      renderBudgetSnapshotHtml(b, currentMonth) +
-      '<div class="two-col">' +
-        '<div class="panel"><h2>Revenue &amp; Units (daily)</h2><div class="chart-wrap"><canvas id="chart-revenue"></canvas></div></div>' +
-        '<div class="panel"><h2>Ad Spend &amp; Storage Fee</h2><div class="chart-wrap"><canvas id="chart-costs"></canvas></div></div>' +
-      '</div>' +
-      '<div class="two-col">' +
-        '<div class="panel"><h2>Revenue by City</h2><div class="chart-wrap"><canvas id="chart-city"></canvas></div></div>' +
-        '<div class="panel"><h2>Revenue by SKU</h2><div class="chart-wrap"><canvas id="chart-sku"></canvas></div></div>' +
-      '</div>';
-
-    var alertsEl = $('alerts');
-    if (!d.alerts || !d.alerts.length) {
-      alertsEl.innerHTML = '<div class="alert low"><div class="sev">OK</div><div class="msg"><b>All clear</b>No critical issues detected in the current view.</div></div>';
-    } else {
-      alertsEl.innerHTML = d.alerts.map(function(a) {
-        return '<div class="alert ' + escapeHtml(a.severity) + '">' +
-               '<div class="sev">' + escapeHtml(a.severity) + '</div>' +
-               '<div class="msg"><b>' + escapeHtml((a.category||'').toUpperCase()) + ' \u2014 ' + escapeHtml(a.message) + '</b>' + escapeHtml(a.suggested_action || '') + '</div></div>';
-      }).join('');
-    }
-
-    destroyChart('chart-revenue'); destroyChart('chart-costs'); destroyChart('chart-city'); destroyChart('chart-sku');
-
-    state.charts['chart-revenue'] = new Chart($('chart-revenue'), {
-      type: 'line',
-      data: {
-        labels: d.series.map(function(r){return r.date;}),
-        datasets: [
-          { label: 'Revenue (\u20B9)', data: d.series.map(function(r){return r.revenue;}), borderColor: '#0B3954', backgroundColor: 'rgba(11,57,84,0.1)', tension: 0.3, yAxisID: 'y' },
-          { label: 'Units', data: d.series.map(function(r){return r.units;}), borderColor: '#F5B700', backgroundColor: 'rgba(245,183,0,0.12)', tension: 0.3, yAxisID: 'y1' }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false, scales: { y: { type: 'linear', position: 'left' }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } } }
-    });
-    state.charts['chart-costs'] = new Chart($('chart-costs'), {
-      type: 'bar',
-      data: {
-        labels: d.series.map(function(r){return r.date;}),
-        datasets: [
-          { label: 'Ad spend (\u20B9)', data: d.series.map(function(r){return r.ad_spend;}), backgroundColor: '#087E8B' },
-          { label: 'Storage fee (\u20B9)', data: d.series.map(function(r){return r.storage_fee;}), backgroundColor: '#BF1A2F' }
-        ]
-      },
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-    state.charts['chart-city'] = new Chart($('chart-city'), {
-      type: 'doughnut',
-      data: { labels: d.byCity.map(function(c){return c.name;}), datasets: [{ data: d.byCity.map(function(c){return c.value;}), backgroundColor: ['#0B3954','#087E8B','#F5B700','#BF1A2F','#1E8449','#7F8C8D','#8E44AD','#D68910'] }] },
-      options: { plugins: { legend: { position: 'right' } }, maintainAspectRatio: false }
-    });
-    state.charts['chart-sku'] = new Chart($('chart-sku'), {
-      type: 'bar',
-      data: { labels: d.bySku.map(function(s){return s.name;}), datasets: [{ label: 'Revenue', data: d.bySku.map(function(s){return s.value;}), backgroundColor: '#0B3954' }] },
-      options: { indexAxis: 'y', plugins: { legend: { display: false } }, maintainAspectRatio: false }
-    });
-  });
-}
-function destroyChart(id) { if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; } }
-
-function renderBudgetSnapshotHtml(b, month) {
-  if (!b) {
-    return '<div class="panel"><h2>Budget snapshot \u2014 ' + escapeHtml(month) + '</h2>' +
-           '<div class="muted">No budget for this month. Add rows to the <code>monthly_budget</code> tab to see a snapshot.</div></div>';
+  if (currentStep === 0) {
+    html += '<div class="form-row">';
+    html += field("Title", "select", "TITLE", "— Select —", false, TITLES);
+    html += field("Full Name", "text", "NAME", "As per bank records", true);
+    html += '</div>';
+    html += field("S/o, W/o, D/o", "text", "S_W_D_O", "Father / Spouse name", true);
+    html += field("PF Number", "text", "PF_NO", "Provident Fund number", true);
+    html += '<div class="form-row">';
+    html += field("Date of Birth", "date", "DOB", "", true);
+    html += field("Blood Group", "select", "BLOOD_GROUP", "— Select —", false, BLOOD_GROUPS);
+    html += '</div>';
+    html += field("Category", "select", "CATEGORY", "— Select —", false, CATEGORIES);
   }
-  var pctCls = b.pctUsed > 110 ? 'err' : (b.pctUsed > 90 ? 'warn' : 'ok');
-  var varianceCls = b.projectedVariance >= 0 ? 'ok' : 'err';
-  var progressPct = Math.min(100, Math.max(0, b.pctUsed || 0));
-  var progressBg = b.pctUsed > 110 ? 'var(--nh-err)' : (b.pctUsed > 90 ? 'var(--nh-warn)' : 'var(--nh-ok)');
-  return '<div class="panel">' +
-    '<h2>Budget snapshot \u2014 ' + escapeHtml(month) + '</h2>' +
-    '<div class="desc">Live month-to-date tracking against your budget for ads, storage, shipping and commission. Other budget lines (sampling, buyout, printing) have no auto-tracked actuals \u2014 see the Budget view for the full line-by-line breakdown.</div>' +
-    '<div style="height:10px;background:var(--nh-gray-line);border-radius:5px;margin-bottom:10px;overflow:hidden">' +
-      '<div style="height:100%;width:' + progressPct + '%;background:' + progressBg + ';transition:width 0.4s"></div>' +
-    '</div>' +
-    '<div class="kpi-grid" style="margin-bottom:0">' +
-      '<div class="kpi"><div class="label">Monthly budget</div><div class="value">' + inr(b.totalBudget) + '</div><div class="sub">across ' + (b.lines||[]).length + ' lines</div></div>' +
-      '<div class="kpi ' + pctCls + '"><div class="label">Spent MTD</div><div class="value">' + inr(b.totalActualTracked) + '</div><div class="sub">' + b.pctUsed + '% of budget</div></div>' +
-      '<div class="kpi"><div class="label">Remaining</div><div class="value">' + inr(b.remaining) + '</div><div class="sub">' + b.daysRemaining + ' days left</div></div>' +
-      '<div class="kpi"><div class="label">Projected EOM</div><div class="value">' + inr(b.projectedEndOfMonth) + '</div><div class="sub">at current run-rate</div></div>' +
-      '<div class="kpi ' + varianceCls + '"><div class="label">Projected variance</div><div class="value">' + inr(b.projectedVariance) + '</div><div class="sub">budget \u2212 projected</div></div>' +
-    '</div></div>';
-}
 
-// ---------- other views ----------
-function renderSales(el) {
-  setLoading(el);
-  return api('sales', state.filter).then(function(data) {
-    var cityMap = {}; (state.boot.cities || []).forEach(function(c) { cityMap[c.city_id] = c.name; });
-    var skuMap = {}; (state.boot.skus || []).forEach(function(s) { skuMap[s.sku_id] = s.name; });
-    var agg = {};
-    data.rows.forEach(function(r) {
-      var k = r.sku_id + '|' + r.city_id;
-      if (!agg[k]) agg[k] = { sku: skuMap[r.sku_id] || r.sku_id, city: cityMap[r.city_id] || r.city_id, units: 0, value: 0 };
-      agg[k].units += r.units; agg[k].value += r.value;
-    });
-    var rows = Object.keys(agg).map(function(k){return agg[k];}).sort(function(a,b){return b.value-a.value;});
-    var topHtml = rows.map(function(r) {
-      return '<tr><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
-             '<td class="num">' + r.units.toLocaleString('en-IN') + '</td>' +
-             '<td class="num">' + inr(r.value) + '</td>' +
-             '<td class="num">' + (r.units ? '\u20B9'+(r.value/r.units).toFixed(1) : '\u2014') + '</td></tr>';
-    }).join('');
-    var daily = data.rows.slice().sort(function(a,b){return b.date.localeCompare(a.date);}).slice(0,500).map(function(r) {
-      return '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(skuMap[r.sku_id]||r.sku_id) + '</td>' +
-             '<td>' + escapeHtml(cityMap[r.city_id]||r.city_id) + '</td>' +
-             '<td class="num">' + r.units + '</td><td class="num">' + inr(r.value) + '</td></tr>';
-    }).join('');
-    el.innerHTML =
-      '<div class="panel"><h2>Sales by SKU \u00D7 City (' + data.rows.length + ' day-rows)</h2>' +
-      '<div class="desc">Filter dates in the top bar.</div>' +
-      '<table><thead><tr><th>SKU</th><th>City</th><th class="num">Units</th><th class="num">Revenue</th><th class="num">\u20B9/unit</th></tr></thead><tbody>' + topHtml + '</tbody></table></div>' +
-      '<div class="panel"><h2>Daily detail (latest 500)</h2>' +
-      '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th class="num">Units</th><th class="num">Revenue</th></tr></thead><tbody>' + daily + '</tbody></table></div>';
-  });
-}
+  if (currentStep === 1) {
+    html += '<div class="form-row">';
+    html += field("Mobile Number (WhatsApp)", "tel", "CONTACT_1", "10-digit mobile number", true);
+    html += field("Alternate Contact", "tel", "CONTACT_2", "Optional", false);
+    html += '</div>';
+    html += field("Email", "email", "EMAIL", "your.email@example.com", false);
+    html += field("Full Address", "textarea", "ADDRESS", "House/Flat No., Street, Area, City, PIN", true);
+    html += '<div class="form-row">';
+    html += field("Zone", "select", "ZONE", "— Select Zone —", true, ZONES);
+    html += field("Centre / City", "text", "CENTRE", "e.g. CHENNAI", false);
+    html += '</div>';
+  }
 
-function renderUnitEcon(el) {
-  setLoading(el);
-  return api('dashboard', state.filter).then(function(d) {
-    var k = d.kpis; var units = k.units || 1;
-    var rows = [
-      ['Revenue / unit', k.revenue / units],
-      ['Ad spend / unit', k.ad_spend / units],
-      ['Storage / unit', k.storage_fee / units],
-      ['Shipping / unit', k.shipping_fee / units],
-      ['Commission / unit', k.commission_fee / units],
-      ['TDS / unit', k.tds / units],
-      ['Lost/Damaged / unit', k.lost_damaged / units]
+  if (currentStep === 2) {
+    html += field("Date of Retirement", "date", "DATE_OF_RETIREMENT", "", true);
+    html += field("Branch Retired From", "text", "BRANCH_RETIRED_FROM", "Last branch before retirement", true);
+    html += field("Branch Where Pension is Drawn", "text", "BRANCH_PENSION_DRAWN", "Branch for pension credits", false);
+    html += '<div class="separator"><p class="separator-title">Family Details (Optional)</p>';
+    html += '<div class="form-row">';
+    html += field("Family Pensioner Name", "text", "FAMILY_PENSIONER", "Nominee name", false);
+    html += field("Family Contact No.", "tel", "FAMILY_CONTACT", "Family member mobile", false);
+    html += '</div></div>';
+  }
+
+  if (currentStep === 3) {
+    html += '<div class="info-box"><p class="title">Membership Fees</p>';
+    html += '<p>Admission Fee: <strong>Rs. 100</strong> (one-time) + Annual Subscription: <strong>Rs. 750</strong></p>';
+    html += '<p>2-Year Subscription: <strong>Rs. 1,500</strong></p>';
+    html += '<p style="margin-top:8px;font-weight:600;">Bank Details for NEFT/UPI:</p>';
+    html += '<p>A/c Name: <strong>BOIPARA SZ</strong></p>';
+    html += '<p>A/c No: <strong>800210110005740</strong></p>';
+    html += '<p>Bank: <strong>Bank of India</strong></p></div>';
+    html += '<div class="form-row">';
+    html += field("Payment Mode", "select", "PAYMENT_MODE", "— Select —", false, PAYMENT_MODES);
+    html += field("Amount Paid (Rs.)", "number", "AMOUNT_PAID", "e.g. 850", false);
+    html += '</div>';
+    html += field("Payment Reference / UTR / Cheque No.", "text", "PAYMENT_REF", "Transaction reference number", false);
+    html += field("Additional Notes", "textarea", "NOTES", "Any additional information...", false);
+  }
+
+  if (currentStep === 4) {
+    var items = [
+      ["Name", (formData.TITLE + ' ' + formData.NAME).trim()],
+      ["S/o, W/o, D/o", formData.S_W_D_O],
+      ["PF Number", formData.PF_NO],
+      ["Date of Birth", formData.DOB],
+      ["Blood Group", formData.BLOOD_GROUP],
+      ["Category", formData.CATEGORY],
+      ["Mobile", formData.CONTACT_1],
+      ["Email", formData.EMAIL],
+      ["Address", formData.ADDRESS],
+      ["Zone", formData.ZONE],
+      ["Centre", formData.CENTRE],
+      ["Date of Retirement", formData.DATE_OF_RETIREMENT],
+      ["Branch Retired From", formData.BRANCH_RETIRED_FROM],
+      ["Branch Pension Drawn", formData.BRANCH_PENSION_DRAWN],
+      ["Family Pensioner", formData.FAMILY_PENSIONER],
+      ["Payment Mode", formData.PAYMENT_MODE],
+      ["Amount", formData.AMOUNT_PAID ? "Rs. " + formData.AMOUNT_PAID : ""],
+      ["Payment Ref", formData.PAYMENT_REF]
     ];
-    var totalCostU = (k.ad_spend + k.platform_cost) / units;
-    var cmU = (k.revenue - k.ad_spend - k.platform_cost) / units;
-    var rowsHtml = rows.map(function(x) {
-      var name = x[0], v = x[1];
-      return '<tr><td>' + escapeHtml(name) + '</td>' +
-             '<td class="num">\u20B9' + (v||0).toFixed(2) + '</td>' +
-             '<td class="num">' + (k.revenue ? ((v*units/k.revenue)*100).toFixed(1)+'%' : '\u2014') + '</td></tr>';
-    }).join('');
-    el.innerHTML =
-      '<div class="kpi-grid">' +
-        '<div class="kpi"><div class="label">Revenue / Unit</div><div class="value">\u20B9' + (k.revenue/units).toFixed(2) + '</div><div class="sub">' + k.units + ' units</div></div>' +
-        '<div class="kpi"><div class="label">Total Cost / Unit</div><div class="value">\u20B9' + totalCostU.toFixed(2) + '</div><div class="sub">Ads + Platform (excl COGS)</div></div>' +
-        '<div class="kpi ' + (cmU >=0 ? 'ok' : 'err') + '"><div class="label">CM / Unit</div><div class="value">\u20B9' + cmU.toFixed(2) + '</div><div class="sub">Revenue \u2212 (Ads + Platform)</div></div>' +
-      '</div>' +
-      '<div class="panel"><h2>Cost decomposition (per unit)</h2>' +
-      '<table><thead><tr><th>Line</th><th class="num">\u20B9 / unit</th><th class="num">% of Revenue</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
-  });
-}
-
-function renderAds(el) {
-  setLoading(el);
-  return api('adspend', state.filter).then(function(d) {
-    var rowsHtml = d.rows.map(function(r) {
-      return '<tr><td>' + escapeHtml(r.date) + '</td><td class="num">' + inr(r.ad_spend) + '</td><td class="num">' + inr(r.revenue) + '</td><td class="num">' + r.roas + 'x</td></tr>';
-    }).join('');
-    el.innerHTML =
-      '<div class="panel"><h2>Ad spend vs. Revenue (daily)</h2><div class="chart-wrap"><canvas id="chart-ads"></canvas></div></div>' +
-      '<div class="panel"><h2>Daily detail</h2>' +
-      '<table><thead><tr><th>Date</th><th class="num">Ad spend</th><th class="num">Revenue</th><th class="num">ROAS</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
-    destroyChart('chart-ads');
-    state.charts['chart-ads'] = new Chart($('chart-ads'), {
-      type: 'bar',
-      data: { labels: d.rows.map(function(r){return r.date;}), datasets: [
-        { label: 'Ad spend (\u20B9)', data: d.rows.map(function(r){return r.ad_spend;}), backgroundColor: '#087E8B' },
-        { label: 'Revenue (\u20B9)', data: d.rows.map(function(r){return r.revenue;}), backgroundColor: '#0B3954' }
-      ]},
-      options: { responsive: true, maintainAspectRatio: false }
-    });
-  });
-}
-
-function renderInventory(el) {
-  setLoading(el);
-  return api('inventory').then(function(d) {
-    if (!d.rows || !d.rows.length) {
-      el.innerHTML = '<div class="panel"><h2>Inventory</h2><div class="muted">No inventory snapshots in the DB yet.</div></div>';
-      return;
+    html += '<div class="review-bg"><p style="font-size:0.85rem;font-weight:700;margin-bottom:12px;">Please review your details before submitting:</p>';
+    html += '<div class="review-grid">';
+    for (var i = 0; i < items.length; i++) {
+      if (items[i][1] && items[i][1].trim()) {
+        html += '<div class="review-item"><div class="rlabel">' + items[i][0] + '</div><div class="rvalue">' + items[i][1] + '</div></div>';
+      }
     }
-    // Reorder panel
-    var reorderHtml = '';
-    if (d.reorder && d.reorder.length) {
-      var reorderRows = d.reorder.map(function(r) {
-        var u = r.reorder.urgency;
-        var pillCls = u === 'critical' ? 'pill-err' : (u === 'high' ? 'pill-warn' : 'pill-info');
-        return '<tr>' +
-          '<td><span class="pill ' + pillCls + '">' + escapeHtml(u) + '</span></td>' +
-          '<td>' + escapeHtml(r.sku) + '</td>' +
-          '<td>' + escapeHtml(r.warehouse) + '</td>' +
-          '<td class="num">' + r.sellable + '</td>' +
-          '<td class="num">' + r.daily_run + '/day</td>' +
-          '<td class="num">' + r.cover_days + 'd</td>' +
-          '<td class="num"><b>' + r.reorder.recommended_qty + '</b></td>' +
-          '<td>' + escapeHtml(r.reorder.reorder_by_date) + '</td>' +
-          '<td><button class="mk-issue-btn" data-sku="' + escapeHtml(r.sku_id) + '" data-wh="' + escapeHtml(r.warehouse) + '" data-qty="' + r.reorder.recommended_qty + '" data-by="' + escapeHtml(r.reorder.reorder_by_date) + '" style="padding:4px 9px;border:1px solid var(--nh-navy);background:#fff;color:var(--nh-navy);border-radius:5px;cursor:pointer;font-size:12px">Log as issue</button></td>' +
-          '</tr>';
-      }).join('');
-      reorderHtml = '<div class="panel">' +
-        '<h2>Reorder alerts <span class="pill pill-warn" style="margin-left:8px">' + d.reorder.length + '</span></h2>' +
-        '<div class="desc">SKUs running low relative to your configured lead time (' + (state.boot.config.REORDER_LEAD_TIME_DAYS || 7) + 'd) and target cover (' + (state.boot.config.REORDER_TARGET_COVER_DAYS || 21) + 'd). Recommended quantities bring you back to target. Click "Log as issue" to hand off to ops.</div>' +
-        '<table><thead><tr><th>Urgency</th><th>SKU</th><th>Warehouse</th><th class="num">Sellable</th><th class="num">Daily run</th><th class="num">Cover</th><th class="num">Order qty</th><th>By date</th><th></th></tr></thead><tbody>' + reorderRows + '</tbody></table>' +
-        '</div>';
-    }
-    var rowsHtml = d.rows.map(function(r) {
-      var flag = r.cover_flag === 'critical' ? 'pill-err' : (r.cover_flag === 'warning' ? 'pill-warn' : 'pill-ok');
-      return '<tr><td>' + escapeHtml(r.warehouse) + '</td><td>' + escapeHtml(r.sku) + '</td>' +
-             '<td class="num">' + r.sellable + '</td><td class="num">' + r.unsellable + '</td>' +
-             '<td class="num">' + r.damaged + '</td><td class="num">' + r.lost + '</td>' +
-             '<td class="num">' + r.sold_7d + '</td><td class="num">' + r.sold_30d + '</td>' +
-             '<td class="num">' + r.daily_run + '</td>' +
-             '<td class="num">' + r.cover_days + '</td>' +
-             '<td><span class="pill ' + flag + '">' + escapeHtml(r.cover_flag) + '</span></td></tr>';
-    }).join('');
-    el.innerHTML = reorderHtml +
-      '<div class="panel"><h2>Latest snapshot \u2014 ' + escapeHtml(d.snapshot_date) + '</h2>' +
-      '<table><thead><tr><th>Warehouse</th><th>SKU</th><th class="num">Sellable</th><th class="num">Unsellable</th><th class="num">Damaged</th><th class="num">Lost</th><th class="num">7d sold</th><th class="num">30d sold</th><th class="num">Daily run</th><th class="num">Cover (d)</th><th>Status</th></tr></thead><tbody>' + rowsHtml + '</tbody></table></div>';
+    html += '</div></div>';
+    html += '<div class="warning-box" style="margin-top:16px;"><p class="title">Please confirm:</p>';
+    html += '<p>By submitting, you confirm that the information provided is accurate. The committee will review your application and contact you for verification.</p></div>';
+  }
 
-    // Wire "Log as issue" buttons
-    Array.prototype.forEach.call(el.querySelectorAll('.mk-issue-btn'), function(btn) {
-      btn.addEventListener('click', function() {
-        var sku = btn.getAttribute('data-sku');
-        var wh = btn.getAttribute('data-wh');
-        var qty = btn.getAttribute('data-qty');
-        var by = btn.getAttribute('data-by');
-        btn.disabled = true; btn.textContent = 'Saving\u2026';
-        api('createIssue', {
-          severity: 'high',
-          category: 'inventory',
-          description: 'Reorder ' + qty + ' units of ' + sku + ' for ' + wh + ' by ' + by,
-          related_sku: sku,
-          owner: '',
-        }, 'POST').then(function() {
-          btn.textContent = 'Logged \u2713';
-          btn.style.background = 'var(--nh-ok)'; btn.style.color = '#fff'; btn.style.border = '0';
-        }).catch(function(e) {
-          btn.disabled = false; btn.textContent = 'Log as issue';
-          alert('Failed: ' + e.message);
-        });
-      });
-    });
-  });
+  // Error placeholder
+  html += '<div id="errorBox" class="error-box hidden"></div>';
+
+  // Buttons
+  html += '<div class="btn-row">';
+  if (currentStep > 0) {
+    html += '<button class="btn btn-back" onclick="goBack()">&#8592; Back</button>';
+  } else {
+    html += '<div></div>';
+  }
+  if (currentStep < 4) {
+    html += '<button class="btn btn-next" onclick="goNext()">Next &#8594;</button>';
+  } else {
+    html += '<button class="btn btn-submit" id="submitBtn" onclick="doSubmit()">✓ Submit Application</button>';
+  }
+  html += '</div>';
+
+  document.getElementById("formCard").innerHTML = html;
+
+  // Restore select values (selects don't take value from html attribute same way)
+  var selects = document.querySelectorAll("#formCard select[data-field]");
+  for (var i = 0; i < selects.length; i++) {
+    var key = selects[i].getAttribute("data-field");
+    if (formData[key]) selects[i].value = formData[key];
+  }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function renderComplaints(el) {
-  setLoading(el);
-  return api('complaints').then(function(d) {
-    var summary = d.bySku.map(function(s) {
-      var flag = s.complaint_pct > 5 ? 'pill-err' : (s.complaint_pct > 2 ? 'pill-warn' : 'pill-ok');
-      return '<tr><td>' + escapeHtml(s.sku || s.sku_id) + '</td>' +
-             '<td class="num">' + s.units + '</td><td class="num">' + s.complaints + '</td>' +
-             '<td class="num"><span class="pill ' + flag + '">' + s.complaint_pct + '%</span></td>' +
-             '<td class="num">' + s.returns + '</td><td class="num">' + s.return_pct + '%</td></tr>';
-    }).join('');
-    var log = d.rows.slice().sort(function(a,b){return String(b.date).localeCompare(String(a.date));}).map(function(r) {
-      return '<tr><td>' + escapeHtml(r.date) + '</td><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
-             '<td><span class="pill ' + (r.type==='return'?'pill-warn':'pill-info') + '">' + escapeHtml(r.type) + '</span></td>' +
-             '<td class="num">' + r.units + '</td>' +
-             '<td>' + escapeHtml(r.reason) + '</td>' +
-             '<td>' + escapeHtml(r.status) + '</td></tr>';
-    }).join('');
-    el.innerHTML =
-      '<div class="panel"><h2>Complaint &amp; return rate by SKU</h2>' +
-      '<table><thead><tr><th>SKU</th><th class="num">Units sold</th><th class="num">Complaints</th><th class="num">Complaint %</th><th class="num">Returns</th><th class="num">Return %</th></tr></thead><tbody>' + summary + '</tbody></table></div>' +
-      '<div class="panel"><h2>Complaint log</h2>' +
-      '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th>Type</th><th class="num">Units</th><th>Reason</th><th>Status</th></tr></thead><tbody>' + log + '</tbody></table></div>';
-  });
+function showError(msg) {
+  var box = document.getElementById("errorBox");
+  if (box) { box.textContent = msg; box.classList.remove("hidden"); }
 }
 
-function renderExpansion(el) {
-  setLoading(el);
-  return api('expansion').then(function(rows) {
-    var html = rows.map(function(r) {
-      var statusPill = r.status==='active'?'pill-ok':(r.status==='paused'?'pill-warn':'pill-info');
-      return '<tr><td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.city) + '</td>' +
-             '<td>' + escapeHtml(r.start_date) + '</td><td>' + escapeHtml(r.end_date) + '</td>' +
-             '<td>' + escapeHtml(r.target_level) + '</td>' +
-             '<td><span class="pill ' + statusPill + '">' + escapeHtml(r.status) + '</span></td>' +
-             '<td>' + escapeHtml(r.notes||'') + '</td></tr>';
-    }).join('');
-    el.innerHTML = '<div class="panel"><h2>Expansion plan</h2>' +
-      '<table><thead><tr><th>SKU</th><th>City</th><th>Start</th><th>End</th><th>Target</th><th>Status</th><th>Notes</th></tr></thead><tbody>' + html + '</tbody></table></div>';
-  });
+function validate() {
+  if (currentStep === 0) {
+    if (!formData.NAME.trim()) return "Full Name is required";
+    if (!formData.S_W_D_O.trim()) return "Father's / Spouse's name is required";
+    if (!formData.PF_NO.trim()) return "PF Number is required";
+    if (!formData.DOB) return "Date of Birth is required";
+  }
+  if (currentStep === 1) {
+    if (!formData.CONTACT_1.trim()) return "Mobile number is required";
+    if (!formData.ADDRESS.trim()) return "Address is required";
+    if (!formData.ZONE) return "Please select your Zone";
+  }
+  if (currentStep === 2) {
+    if (!formData.DATE_OF_RETIREMENT) return "Date of Retirement is required";
+    if (!formData.BRANCH_RETIRED_FROM.trim()) return "Branch Retired From is required";
+  }
+  return null;
 }
 
-function renderBudget(el) {
-  setLoading(el);
-  var defaultMonth = (function() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-  })();
-  el.innerHTML =
-    '<div class="panel"><h2>Budget vs. Actuals</h2>' +
-    '<div class="desc">Track budgeted vs. actual spend for each line. Actuals are matched by keyword to daily ads, storage, shipping and commission rows. Lines without a matchable actual source show "\u2014".</div>' +
-    '<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">' +
-    '<label class="muted" style="margin:0">Month</label>' +
-    '<input type="month" id="bud-month" value="' + defaultMonth + '">' +
-    '<button id="bud-load" style="padding:7px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Load</button></div>' +
-    '<div id="bud-body"><div class="muted">Pick a month and click Load.</div></div></div>';
-  $('bud-load').addEventListener('click', function() {
-    $('bud-body').innerHTML = '<span class="loading"></span> Loading\u2026';
-    api('budget', { month: $('bud-month').value }).then(function(data) {
-      var pctCls = data.pctUsed > 110 ? 'err' : (data.pctUsed > 90 ? 'warn' : 'ok');
-      var varianceCls = data.projectedVariance >= 0 ? 'ok' : 'err';
-      var linesHtml = data.lines.map(function(r) {
-        var actualTxt = r.actual == null ? '<span class="muted">\u2014</span>' : inr(r.actual);
-        var deltaTxt = r.delta == null ? '<span class="muted">\u2014</span>' : (
-          r.delta >= 0
-            ? '<span class="pill pill-ok">+' + inr(r.delta) + '</span>'
-            : '<span class="pill pill-err">' + inr(r.delta) + '</span>'
-        );
-        var pctTxt = r.pct_used == null ? '<span class="muted">\u2014</span>' : (
-          (r.pct_used > 100 ? '<span class="pill pill-err">' : (r.pct_used > 80 ? '<span class="pill pill-warn">' : '<span class="pill pill-ok">'))
-          + r.pct_used + '%</span>'
-        );
-        var source = r.source ? '<span class="muted" style="font-size:11px">(' + escapeHtml(r.source) + ')</span>' : '';
-        return '<tr>' +
-               '<td>' + escapeHtml(r.line_item) + ' ' + source + '</td>' +
-               '<td class="num">' + inr(r.amount) + '</td>' +
-               '<td class="num">' + actualTxt + '</td>' +
-               '<td class="num">' + deltaTxt + '</td>' +
-               '<td class="num">' + pctTxt + '</td>' +
-               '<td style="font-size:12px;color:var(--nh-gray-text)">' + escapeHtml(r.notes||'') + '</td>' +
-               '</tr>';
-      }).join('');
-      $('bud-body').innerHTML =
-        '<div class="kpi-grid">' +
-          '<div class="kpi"><div class="label">Total Budget</div><div class="value">' + inr(data.totalBudget) + '</div><div class="sub">' + escapeHtml(data.month) + ' \u00B7 ' + data.daysInMonth + ' days</div></div>' +
-          '<div class="kpi ' + pctCls + '"><div class="label">Spent (tracked)</div><div class="value">' + inr(data.totalActualTracked) + '</div><div class="sub">' + data.pctUsed + '% of budget</div></div>' +
-          '<div class="kpi"><div class="label">Remaining</div><div class="value">' + inr(data.remaining) + '</div><div class="sub">after tracked spend</div></div>' +
-          '<div class="kpi"><div class="label">Day ' + data.daysElapsed + ' of ' + data.daysInMonth + '</div><div class="value">' + data.daysRemaining + 'd</div><div class="sub">left in month</div></div>' +
-          '<div class="kpi"><div class="label">Run-rate / day</div><div class="value">' + inr(data.runRatePerDay) + '</div><div class="sub">on tracked lines</div></div>' +
-          '<div class="kpi ' + varianceCls + '"><div class="label">Projected variance</div><div class="value">' + inr(data.projectedVariance) + '</div><div class="sub">at month-end</div></div>' +
-        '</div>' +
-        '<h3 style="margin:18px 0 8px">Line-by-line</h3>' +
-        '<table><thead><tr>' +
-        '<th>Line item</th>' +
-        '<th class="num">Budget</th>' +
-        '<th class="num">Actual (MTD)</th>' +
-        '<th class="num">Delta</th>' +
-        '<th class="num">% used</th>' +
-        '<th>Notes</th>' +
-        '</tr></thead><tbody>' + linesHtml + '</tbody></table>' +
-        '<h3 style="margin:18px 0 8px">Actuals detail</h3>' +
-        '<table><thead><tr><th>Actual line</th><th class="num">Amount</th></tr></thead><tbody>' +
-          '<tr><td>Revenue</td><td class="num">' + inr(data.actuals.revenue) + '</td></tr>' +
-          '<tr><td>Ad spend</td><td class="num">' + inr(data.actuals.ad_spend) + '</td></tr>' +
-          '<tr><td>Storage fee</td><td class="num">' + inr(data.actuals.storage) + '</td></tr>' +
-          '<tr><td>Shipping fee</td><td class="num">' + inr(data.actuals.shipping) + '</td></tr>' +
-          '<tr><td>Commission fee</td><td class="num">' + inr(data.actuals.commission) + '</td></tr>' +
-          '<tr><td>TDS</td><td class="num">' + inr(data.actuals.tds) + '</td></tr>' +
-          '<tr><td>Lost/Damaged</td><td class="num">' + inr(data.actuals.lost_damaged) + '</td></tr>' +
-        '</tbody></table>';
-    }).catch(function(e) {
-      $('bud-body').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
-    });
-  });
-  $('bud-load').click();
+function goNext() {
+  saveFields();
+  var err = validate();
+  if (err) { showError(err); return; }
+  currentStep++;
+  renderStep();
 }
 
-function renderForecast(el) {
-  setLoading(el);
-  return api('forecast').then(function(rows) {
-    var html = rows.map(function(r) {
-      var f = +r.forecast_value || 0;
-      var a = r.actual_value == null || r.actual_value === '' ? null : +r.actual_value;
-      var v = a == null ? '\u2014' : (f ? Math.round((a-f)/f*100)+'%' : '\u2014');
-      return '<tr><td>' + escapeHtml(r.month) + '</td><td>' + escapeHtml(r.metric) + '</td>' +
-             '<td class="num">' + f.toLocaleString('en-IN') + '</td>' +
-             '<td class="num">' + (a == null ? '\u2014' : a.toLocaleString('en-IN')) + '</td>' +
-             '<td class="num">' + v + '</td>' +
-             '<td>' + escapeHtml(r.delta_note||'') + '</td></tr>';
-    }).join('');
-    el.innerHTML = '<div class="panel"><h2>Forecast vs Actual</h2>' +
-      '<table><thead><tr><th>Month</th><th>Metric</th><th class="num">Forecast</th><th class="num">Actual</th><th class="num">Variance</th><th>Note</th></tr></thead><tbody>' + html + '</tbody></table></div>';
-  });
+function goBack() {
+  saveFields();
+  currentStep--;
+  renderStep();
 }
 
-function renderIssues(el) {
-  setLoading(el);
-  return api('issues').then(function(rows) {
-    var html = rows.map(function(r) {
-      var cls = r.severity==='critical'?'pill-err':(r.severity==='high'?'pill-warn':'pill-info');
-      var rdate = String(r.raised_date||'').slice(0,10);
-      return '<tr data-id="' + escapeHtml(r.issue_id) + '">' +
-        '<td>' + escapeHtml(r.issue_id) + '</td>' +
-        '<td>' + escapeHtml(rdate) + '</td>' +
-        '<td><span class="pill ' + cls + '">' + escapeHtml(r.severity) + '</span></td>' +
-        '<td>' + escapeHtml(r.category) + '</td>' +
-        '<td>' + escapeHtml(r.description) + '</td>' +
-        '<td>' + escapeHtml(r.owner||'') + '</td>' +
-        '<td>' + escapeHtml(r.status) + '</td>' +
-        '<td>' + (r.status==='open' ? '<a href="#" class="close-issue">close</a>' : '') + '</td></tr>';
-    }).join('');
-    el.innerHTML =
-      '<div class="panel">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-      '<h2 style="margin:0">Open issues &amp; actions</h2>' +
-      '<button id="new-issue-btn" style="padding:6px 12px;border-radius:6px;border:0;background:var(--nh-navy);color:#fff;cursor:pointer">+ New issue</button></div>' +
-      '<table><thead><tr><th>ID</th><th>Raised</th><th>Severity</th><th>Category</th><th>Description</th><th>Owner</th><th>Status</th><th></th></tr></thead><tbody>' + html + '</tbody></table></div>';
+function doSubmit() {
+  var btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
 
-    $('new-issue-btn').addEventListener('click', function() {
-      showModal(
-        '<h3>Create issue</h3>' +
-        '<label>Severity</label>' +
-        '<select id="i-sev"><option>low</option><option>medium</option><option selected>high</option><option>critical</option></select>' +
-        '<label>Category</label>' +
-        '<select id="i-cat"><option>ops</option><option>storage</option><option>quality</option><option>inventory</option><option>finance</option><option>ads</option><option>complaint</option></select>' +
-        '<label>Description</label>' +
-        '<textarea id="i-desc" style="min-height:90px"></textarea>' +
-        '<label>Related SKU (optional)</label>' +
-        '<input id="i-sku" placeholder="SKU-001">' +
-        '<label>Owner</label>' +
-        '<input id="i-owner" placeholder="V">' +
-        '<div class="actions">' +
-        '<button class="secondary" onclick="hideModal()">Cancel</button>' +
-        '<button id="i-submit">Create</button></div>'
-      );
-      $('i-submit').addEventListener('click', function() {
-        $('i-submit').disabled = true; $('i-submit').textContent = 'Saving\u2026';
-        api('createIssue', {
-          severity: $('i-sev').value, category: $('i-cat').value,
-          description: $('i-desc').value, related_sku: $('i-sku').value, owner: $('i-owner').value
-        }, 'POST').then(function() {
-          hideModal(); renderIssues(el);
-        }).catch(function(e) {
-          alert('Error creating issue: ' + (e.message||e));
-          $('i-submit').disabled = false; $('i-submit').textContent = 'Create';
-        });
-      });
-    });
+  var payload = JSON.stringify({ action: "submitApplication", data: formData });
 
-    Array.prototype.forEach.call(el.querySelectorAll('.close-issue'), function(a) {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        var id = a.closest('tr').getAttribute('data-id');
-        api('updateIssueStatus', { issueId: id, status: 'resolved' }, 'POST').then(function() {
-          renderIssues(el);
-        }).catch(function(err) { alert('Failed: ' + (err.message||err)); });
-      });
-    });
-  });
-}
-
-function renderScenarios(el) {
-  setLoading(el);
-  // Pull the last-30d dashboard data as baseline
-  return api('dashboard', { from: new Date(Date.now() - 30*86400000).toISOString().slice(0,10), to: new Date().toISOString().slice(0,10) }).then(function(d) {
-    var k = d.kpis;
-    var units = k.units || 1;
-    // Derive current per-can economics to seed the scenario form
-    var cur = {
-      units: k.units || 0,
-      price: k.avg_price_per_unit || 78,
-      cogs: (k.cogs_per_unit && k.cogs_per_unit > 0) ? k.cogs_per_unit : 28,
-      platform_per_unit: k.platform_per_unit || 0,
-      ads_per_unit: k.ad_per_unit || 0,
-      platform_pct: k.revenue ? (k.platform_cost / k.revenue * 100) : 0,
-      ads_pct: k.revenue ? (k.ad_spend / k.revenue * 100) : 0,
-      revenue: k.revenue || 0,
-      cost_per_unit: k.cost_per_unit || 0,
-      cm_per_unit: k.cm_per_unit || 0,
-    };
-    var s = {
-      units: Math.max(600, Math.round(cur.units * 1.2)),  // +20% as a starting target
-      price: 85,      // target floor
-      cogs: cur.cogs,
-      platform_pct: Math.min(80, Math.round(cur.platform_pct * 0.6 * 10) / 10),  // aim to cut platform %
-      ads_pct: Math.max(15, Math.round(cur.ads_pct * 0.5 * 10) / 10),
-      logistics_per_can: 15,
-      buffer_pct: 10,
-    };
-
-    el.innerHTML =
-      '<div class="panel">' +
-      '<h2>Scenario Planner</h2>' +
-      '<div class="desc">Model a what-if month \u2014 set your target units, price, and cost targets, and see whether it clears break-even and what monthly budget you\'d need to fund it. The \"Current\" column is the last-30-day actual for reference. Nothing here is saved; this is a live calculator.</div>' +
-      '<div class="two-col" style="align-items:start">' +
-        '<div>' +
-          '<h3>Scenario inputs</h3>' +
-          '<div id="sc-form" style="display:grid;grid-template-columns:1fr auto;gap:8px 12px;font-size:13px">' +
-            inputRow('Target units / month',       'sc-units',       s.units, 'units', 'integer') +
-            inputRow('Realised price per can',     'sc-price',       s.price, '\u20B9', 'number', 0.5) +
-            inputRow('COGS per can (production)',  'sc-cogs',        s.cogs, '\u20B9', 'number', 0.5) +
-            inputRow('Platform fees (storage+ship+comm) as % of revenue', 'sc-platform-pct', s.platform_pct, '%', 'number', 0.5) +
-            inputRow('Ad spend as % of revenue',   'sc-ads-pct',     s.ads_pct, '%', 'number', 0.5) +
-            inputRow('Logistics per can (NH\u2192warehouse)', 'sc-log', s.logistics_per_can, '\u20B9', 'number', 0.5) +
-            inputRow('Safety buffer on budget',    'sc-buf',         s.buffer_pct, '%', 'number', 1) +
-          '</div>' +
-          '<div style="margin-top:14px;display:flex;gap:8px">' +
-            '<button id="sc-recalc" style="padding:8px 14px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer">Recalculate</button>' +
-            '<button id="sc-load-cur" class="secondary" style="padding:8px 14px;border:1px solid var(--nh-gray-line);background:#fff;color:var(--nh-navy);border-radius:6px;cursor:pointer">Reset to current</button>' +
-          '</div>' +
-          '<p class="muted" style="margin-top:10px;font-size:11px">Platform fees and ads are expressed as % of revenue because that\'s how Blinkit\'s economics scale. Storage fee of 55% of revenue was the February 2026 reality; you want to get that to under 25% to print money.</p>' +
-        '</div>' +
-        '<div>' +
-          '<h3>Projection</h3>' +
-          '<div id="sc-results"></div>' +
-        '</div>' +
-      '</div>' +
-      '</div>';
-
-    function inputRow(label, id, val, suffix, type, step) {
-      return '<label for="' + id + '" style="align-self:center">' + escapeHtml(label) + '</label>' +
-             '<div style="display:flex;align-items:center;gap:6px">' +
-             '<input id="' + id + '" type="number" value="' + val + '" step="' + (step || 1) + '" ' +
-             'style="width:110px;padding:6px 8px;border:1px solid var(--nh-gray-line);border-radius:6px;font-size:13px;text-align:right">' +
-             '<span class="muted" style="min-width:12px">' + escapeHtml(suffix) + '</span></div>';
-    }
-
-    function readScenario() {
-      return {
-        units: parseFloat($('sc-units').value) || 0,
-        price: parseFloat($('sc-price').value) || 0,
-        cogs: parseFloat($('sc-cogs').value) || 0,
-        platform_pct: parseFloat($('sc-platform-pct').value) || 0,
-        ads_pct: parseFloat($('sc-ads-pct').value) || 0,
-        logistics_per_can: parseFloat($('sc-log').value) || 0,
-        buffer_pct: parseFloat($('sc-buf').value) || 0,
-      };
-    }
-
-    function computeScenario(x) {
-      var revenue = x.units * x.price;
-      var cogsTotal = x.units * x.cogs;
-      var platformTotal = revenue * x.platform_pct / 100;
-      var adsTotal = revenue * x.ads_pct / 100;
-      var logisticsTotal = x.units * x.logistics_per_can;
-      var totalCost = cogsTotal + platformTotal + adsTotal + logisticsTotal;
-      var cm = revenue - totalCost;
-      var cm_per_can = x.units ? cm / x.units : 0;
-      var required_budget = Math.round((cogsTotal + platformTotal + adsTotal + logisticsTotal) * (1 + x.buffer_pct / 100));
-      // Break-even: what units at current CM/can would zero out a fixed overhead? (show the break-even price if CM negative)
-      var break_even_price = x.units ? (totalCost / x.units) : 0;
-      return {
-        revenue: revenue, cogsTotal: cogsTotal, platformTotal: platformTotal, adsTotal: adsTotal,
-        logisticsTotal: logisticsTotal, totalCost: totalCost, cm: cm, cm_per_can: cm_per_can,
-        required_budget: required_budget, break_even_price: break_even_price,
-      };
-    }
-
-    function render() {
-      var x = readScenario();
-      var r = computeScenario(x);
-      var cmCls = r.cm_per_can >= 0 ? 'ok' : (r.cm_per_can >= -20 ? 'warn' : 'err');
-      var curCmCls = cur.cm_per_unit >= 0 ? 'ok' : (cur.cm_per_unit >= -20 ? 'warn' : 'err');
-      var html = '';
-      // Headline KPIs for the scenario
-      html += '<div class="kpi-grid" style="margin-bottom:12px">' +
-        '<div class="kpi"><div class="label">Projected revenue</div><div class="value">' + inr(r.revenue) + '</div><div class="sub">' + x.units + ' \u00D7 \u20B9' + x.price + '</div></div>' +
-        '<div class="kpi"><div class="label">Total cost</div><div class="value">' + inr(r.totalCost) + '</div><div class="sub">COGS + platform + ads + logistics</div></div>' +
-        '<div class="kpi ' + cmCls + '"><div class="label">CM / can</div><div class="value">\u20B9' + r.cm_per_can.toFixed(2) + '</div><div class="sub">' + (r.cm >= 0 ? '+' : '') + inr(r.cm) + ' total</div></div>' +
-        '<div class="kpi"><div class="label">Required monthly budget</div><div class="value">' + inr(r.required_budget) + '</div><div class="sub">incl. ' + x.buffer_pct + '% buffer</div></div>' +
-      '</div>';
-      // Side-by-side comparison
-      html += '<h3 style="margin:10px 0 8px">Scenario vs. Current (last 30d)</h3>';
-      html += '<table><thead><tr><th>Line</th><th class="num">Current</th><th class="num">Scenario</th><th class="num">\u0394</th></tr></thead><tbody>';
-      var rows = [
-        ['Units sold / month', cur.units, x.units, 0],
-        ['Realised price / can', cur.price, x.price, 2],
-        ['COGS / can', cur.cogs, x.cogs, 2],
-        ['Platform fees (% of rev)', cur.platform_pct, x.platform_pct, 1, '%'],
-        ['Ad spend (% of rev)', cur.ads_pct, x.ads_pct, 1, '%'],
-        ['Cost / can', cur.cost_per_unit, x.price - r.cm_per_can, 2],
-        ['CM / can', cur.cm_per_unit, r.cm_per_can, 2],
-      ];
-      rows.forEach(function(row) {
-        var cu = row[1], sc = row[2], dp = row[3], suffix = row[4] || '';
-        var fmt = function(v) { return (suffix === '%') ? (v.toFixed(dp) + '%') : (dp > 0 ? '\u20B9' + v.toFixed(dp) : Math.round(v).toLocaleString('en-IN')); };
-        var delta = sc - cu;
-        var deltaCls = delta >= 0 ? 'pill-ok' : 'pill-err';
-        // For "costs" rising is bad — flip the semantic
-        var costLines = ['COGS / can', 'Platform fees (% of rev)', 'Ad spend (% of rev)', 'Cost / can'];
-        if (costLines.indexOf(row[0]) >= 0) deltaCls = delta <= 0 ? 'pill-ok' : 'pill-err';
-        var deltaTxt = (delta >= 0 ? '+' : '') + fmt(delta);
-        html += '<tr><td>' + row[0] + '</td>' +
-          '<td class="num">' + fmt(cu) + '</td>' +
-          '<td class="num"><b>' + fmt(sc) + '</b></td>' +
-          '<td class="num"><span class="pill ' + deltaCls + '">' + deltaTxt + '</span></td></tr>';
-      });
-      html += '</tbody></table>';
-      // Cost breakdown table
-      html += '<h3 style="margin:14px 0 8px">Required budget breakdown</h3>';
-      html += '<table><thead><tr><th>Category</th><th class="num">Amount</th><th class="num">Per can</th></tr></thead><tbody>' +
-        '<tr><td>COGS (production)</td><td class="num">' + inr(r.cogsTotal) + '</td><td class="num">\u20B9' + x.cogs.toFixed(2) + '</td></tr>' +
-        '<tr><td>Platform fees</td><td class="num">' + inr(r.platformTotal) + '</td><td class="num">\u20B9' + (x.units ? r.platformTotal/x.units : 0).toFixed(2) + '</td></tr>' +
-        '<tr><td>Ad spend</td><td class="num">' + inr(r.adsTotal) + '</td><td class="num">\u20B9' + (x.units ? r.adsTotal/x.units : 0).toFixed(2) + '</td></tr>' +
-        '<tr><td>Logistics</td><td class="num">' + inr(r.logisticsTotal) + '</td><td class="num">\u20B9' + x.logistics_per_can.toFixed(2) + '</td></tr>' +
-        '<tr><td><b>Subtotal</b></td><td class="num"><b>' + inr(r.totalCost) + '</b></td><td class="num"><b>\u20B9' + (x.units ? r.totalCost/x.units : 0).toFixed(2) + '</b></td></tr>' +
-        '<tr><td>Safety buffer (' + x.buffer_pct + '%)</td><td class="num">' + inr(r.required_budget - r.totalCost) + '</td><td class="num">\u2014</td></tr>' +
-        '<tr><td><b>Required monthly budget</b></td><td class="num"><b>' + inr(r.required_budget) + '</b></td><td class="num">\u2014</td></tr>' +
-      '</tbody></table>';
-      // Insight
-      var insight = '';
-      if (r.cm_per_can > 0) {
-        insight = '<div class="alert low"><div class="sev">OK</div><div class="msg"><b>Unit-profitable at this scenario</b>Each can makes \u20B9' + r.cm_per_can.toFixed(2) + '. Scale + fixed overheads are now the next question.</div></div>';
-      } else if (r.cm_per_can >= -20) {
-        insight = '<div class="alert medium"><div class="sev">Warn</div><div class="msg"><b>Close to break-even</b>CM/can of \u20B9' + r.cm_per_can.toFixed(2) + ' \u2014 you\'d need price of \u20B9' + r.break_even_price.toFixed(2) + ' to break even at these costs.</div></div>';
+  fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: payload,
+    redirect: "follow"
+  })
+  .then(function(res) { return res.text(); })
+  .then(function(text) {
+    try {
+      var json = JSON.parse(text);
+      if (json.success) {
+        showSuccess(json.appId || "");
       } else {
-        insight = '<div class="alert high"><div class="sev">Loss</div><div class="msg"><b>Still loss-making</b>CM/can of \u20B9' + r.cm_per_can.toFixed(2) + '. To break even you\'d need price \u20B9' + r.break_even_price.toFixed(2) + ' OR cut total cost/can by \u20B9' + (-r.cm_per_can).toFixed(2) + '.</div></div>';
+        showError(json.error || "Submission failed. Please try again.");
+        btn.disabled = false;
+        btn.textContent = "✓ Submit Application";
       }
-      html = insight + html;
-      $('sc-results').innerHTML = html;
+    } catch(e) {
+      // Got non-JSON response — likely redirect HTML, assume success
+      showSuccess("");
     }
-
-    // Wire events
-    $('sc-recalc').addEventListener('click', render);
-    ['sc-units','sc-price','sc-cogs','sc-platform-pct','sc-ads-pct','sc-log','sc-buf'].forEach(function(id) {
-      $(id).addEventListener('input', render);
-    });
-    $('sc-load-cur').addEventListener('click', function() {
-      $('sc-units').value = Math.round(cur.units);
-      $('sc-price').value = cur.price.toFixed(2);
-      $('sc-cogs').value = cur.cogs.toFixed(2);
-      $('sc-platform-pct').value = cur.platform_pct.toFixed(1);
-      $('sc-ads-pct').value = cur.ads_pct.toFixed(1);
-      render();
-    });
-    render();
+  })
+  .catch(function(err) {
+    // Network error — try iframe fallback
+    iframeFallback(payload, btn);
   });
 }
 
-// ---------- Daily Brief ----------
-// ---------- AI Strategist ----------
-// Session memory lives in window.nhAISession (cleared after 30 min idle or explicit reset).
-function getOrCreateAISession() {
-  var now = Date.now();
-  var s = window.nhAISession;
-  if (!s || (now - s.last_activity) > 30 * 60 * 1000) {
-    s = {
-      id: 'sess-' + now + '-' + Math.random().toString(36).slice(2, 8),
-      started: now,
-      last_activity: now,
-      messages: [],
-      total_in: 0,
-      total_out: 0,
-    };
-    window.nhAISession = s;
-  }
-  return s;
-}
-function resetAISession() {
-  window.nhAISession = null;
-  return getOrCreateAISession();
-}
+function iframeFallback(payload, btn) {
+  var iframe = document.createElement("iframe");
+  iframe.name = "sf_" + Date.now();
+  iframe.style.display = "none";
+  document.body.appendChild(iframe);
 
-function renderAI(el) {
-  var s = getOrCreateAISession();
+  var form = document.createElement("form");
+  form.method = "POST";
+  form.action = SCRIPT_URL;
+  form.target = iframe.name;
+  var input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "payload";
+  input.value = payload;
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
 
-  // Simple markdown to HTML: **bold**, bullets, code, paragraphs
-  function md(text) {
-    var t = escapeHtml(String(text || ''));
-    // bold
-    t = t.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    // inline code
-    t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // bullet list lines starting with - or •
-    var lines = t.split('\n');
-    var out = []; var inList = false;
-    for (var i = 0; i < lines.length; i++) {
-      var ln = lines[i];
-      var isBullet = /^\s*[-\u2022]\s+/.test(ln);
-      if (isBullet) {
-        if (!inList) { out.push('<ul class="ai-bullets">'); inList = true; }
-        out.push('<li>' + ln.replace(/^\s*[-\u2022]\s+/, '') + '</li>');
-      } else {
-        if (inList) { out.push('</ul>'); inList = false; }
-        if (ln.trim().length === 0) {
-          out.push('');
-        } else if (/^#{1,3}\s+/.test(ln)) {
-          var level = (ln.match(/^#+/) || [''])[0].length;
-          var text = ln.replace(/^#+\s+/, '');
-          out.push('<h' + (level+2) + ' class="ai-h">' + text + '</h' + (level+2) + '>');
-        } else {
-          out.push('<p class="ai-p">' + ln + '</p>');
-        }
-      }
-    }
-    if (inList) out.push('</ul>');
-    return out.join('\n');
-  }
-
-  function renderHistory() {
-    var sess = getOrCreateAISession();
-    var histEl = document.getElementById('ai-history');
-    if (!histEl) return;
-    if (!sess.messages.length) {
-      histEl.innerHTML = '<div class="ai-empty">' +
-        '<div style="font-size:40px;margin-bottom:8px">\u26A1</div>' +
-        '<div style="font-size:15px;color:var(--nh-navy);font-weight:600;margin-bottom:4px">Your Night Hawk sales leader, on demand</div>' +
-        '<div class="muted" style="max-width:560px;margin:0 auto;line-height:1.6">Ask about anything in your business. This advisor has read the dashboard. Try: <i>"what\'s the biggest risk right now?"</i>, <i>"should I expand to Mumbai?"</i>, <i>"where is the storage fee coming from?"</i>, <i>"how do I get to CM-positive by June?"</i></div>' +
-        '<div style="margin-top:18px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">' +
-          '<button class="ai-starter" data-q="What\'s the single biggest risk in my business right now?">Biggest risk?</button>' +
-          '<button class="ai-starter" data-q="Which SKU should I pause and which should I double-down on?">Which SKU?</button>' +
-          '<button class="ai-starter" data-q="Give me the 3 things I should do this week.">Top 3 this week</button>' +
-          '<button class="ai-starter" data-q="Walk me through my unit economics and what needs to change.">Unit economics</button>' +
-        '</div></div>';
-      return;
-    }
-    histEl.innerHTML = sess.messages.map(function(m) {
-      if (m.role === 'user') {
-        return '<div class="ai-msg ai-user"><div class="ai-bubble">' + escapeHtml(m.content) + '</div></div>';
-      } else {
-        return '<div class="ai-msg ai-assistant"><div class="ai-avatar">NH</div><div class="ai-bubble ai-strategist">' + md(m.content) + '</div></div>';
-      }
-    }).join('') +
-    (sess.pending ? '<div class="ai-msg ai-assistant"><div class="ai-avatar">NH</div><div class="ai-bubble ai-strategist"><span class="loading"></span> Thinking\u2026</div></div>' : '');
-    histEl.scrollTop = histEl.scrollHeight;
-  }
-
-  el.innerHTML =
-    '<style>' +
-    '.ai-wrap { display:flex; flex-direction:column; height:calc(100vh - 140px); max-height:900px; }' +
-    '.ai-header-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }' +
-    '.ai-session-info { font-size:11px; color:var(--nh-gray-text); }' +
-    '.ai-reset-btn { padding:5px 10px; border:1px solid var(--nh-gray-line); background:#fff; color:var(--nh-navy); border-radius:5px; font-size:12px; cursor:pointer; }' +
-    '.ai-history { flex:1; overflow-y:auto; background:#fff; border:1px solid var(--nh-gray-line); border-radius:10px; padding:18px; margin-bottom:10px; scroll-behavior:smooth; }' +
-    '.ai-empty { text-align:center; padding:40px 20px; }' +
-    '.ai-starter { padding:7px 12px; border:1px solid var(--nh-gray-line); background:#fff; color:var(--nh-navy); border-radius:999px; font-size:12px; cursor:pointer; }' +
-    '.ai-starter:hover { background:var(--nh-gray-bg); }' +
-    '.ai-msg { display:flex; gap:10px; margin-bottom:14px; align-items:flex-start; }' +
-    '.ai-user { justify-content:flex-end; }' +
-    '.ai-avatar { width:32px; height:32px; border-radius:50%; background:var(--nh-navy); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; flex-shrink:0; }' +
-    '.ai-bubble { max-width:760px; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.55; word-wrap:break-word; }' +
-    '.ai-user .ai-bubble { background:var(--nh-navy); color:#fff; border-bottom-right-radius:3px; }' +
-    '.ai-strategist { background:var(--nh-gray-bg); color:#1a202c; border:1px solid var(--nh-gray-line); border-bottom-left-radius:3px; }' +
-    '.ai-strategist .ai-h { font-size:13px; margin:10px 0 6px; color:var(--nh-navy); }' +
-    '.ai-strategist .ai-p { margin:0 0 6px; }' +
-    '.ai-strategist .ai-bullets { margin:4px 0 8px 20px; }' +
-    '.ai-strategist .ai-bullets li { margin-bottom:3px; }' +
-    '.ai-strategist code { background:#E8EEF2; padding:1px 5px; border-radius:3px; font-size:12px; }' +
-    '.ai-input-row { display:flex; gap:8px; align-items:flex-end; }' +
-    '.ai-input { flex:1; padding:12px; border:1px solid var(--nh-gray-line); border-radius:8px; font-family:inherit; font-size:13px; resize:none; min-height:48px; max-height:160px; }' +
-    '.ai-input:focus { outline:none; border-color:var(--nh-navy); }' +
-    '.ai-send { padding:12px 20px; border:0; background:var(--nh-navy); color:#fff; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; height:48px; }' +
-    '.ai-send:disabled { background:var(--nh-gray-line); cursor:not-allowed; }' +
-    '.ai-footer-info { font-size:10px; color:var(--nh-gray-text); margin-top:6px; text-align:right; }' +
-    '</style>' +
-    '<div class="ai-wrap">' +
-      '<div class="ai-header-bar">' +
-        '<div class="ai-session-info" id="ai-session-info">Session <code>' + escapeHtml(s.id.slice(0,16)) + '\u2026</code> \u00B7 Memory within 30 minutes</div>' +
-        '<button class="ai-reset-btn" id="ai-reset">\u21BB Clear session</button>' +
-      '</div>' +
-      '<div class="ai-history" id="ai-history"></div>' +
-      '<div class="ai-input-row">' +
-        '<textarea class="ai-input" id="ai-input" placeholder="Ask your sales leader\u2026 (Shift+Enter for new line, Enter to send)"></textarea>' +
-        '<button class="ai-send" id="ai-send">Ask</button>' +
-      '</div>' +
-      '<div class="ai-footer-info" id="ai-footer-info">Powered by Claude. Your data is sent only to Claude\'s API; not stored by Anthropic past the API call.</div>' +
-    '</div>';
-
-  renderHistory();
-
-  function wireStarters() {
-    Array.prototype.forEach.call(el.querySelectorAll('.ai-starter'), function(b) {
-      b.addEventListener('click', function() {
-        document.getElementById('ai-input').value = b.getAttribute('data-q');
-        sendQuestion();
-      });
-    });
-  }
-  wireStarters();
-
-  function sendQuestion() {
-    var input = document.getElementById('ai-input');
-    var q = (input.value || '').trim();
-    if (!q) return;
-    var sess = getOrCreateAISession();
-    sess.messages.push({ role: 'user', content: q });
-    sess.last_activity = Date.now();
-    sess.pending = true;
-    input.value = '';
-    document.getElementById('ai-send').disabled = true;
-    renderHistory();
-
-    api('askClaude', { question: q, session_id: sess.id }, 'POST').then(function(r) {
-      sess.messages.push({ role: 'assistant', content: r.reply });
-      sess.last_activity = Date.now();
-      sess.pending = false;
-      sess.total_in += (r.usage && r.usage.input_tokens) || 0;
-      sess.total_out += (r.usage && r.usage.output_tokens) || 0;
-      document.getElementById('ai-send').disabled = false;
-      renderHistory();
-      wireStarters();
-      document.getElementById('ai-footer-info').textContent =
-        'Session total: ' + sess.total_in.toLocaleString('en-IN') + ' in + ' +
-        sess.total_out.toLocaleString('en-IN') + ' out tokens \u00B7 powered by Claude';
-    }).catch(function(e) {
-      sess.messages.push({ role: 'assistant', content: '**Error:** ' + (e.message || String(e)) + '\n\nCheck: (1) ANTHROPIC_API_KEY is set in Apps Script Project Settings \u2192 Script Properties. (2) ai_conversations tab exists (run Night Hawk OS \u2192 Create missing tabs if not). (3) Your Anthropic account has credits.' });
-      sess.pending = false;
-      document.getElementById('ai-send').disabled = false;
-      renderHistory();
-      wireStarters();
-    });
-  }
-
-  document.getElementById('ai-send').addEventListener('click', sendQuestion);
-  document.getElementById('ai-input').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendQuestion();
-    }
-  });
-  document.getElementById('ai-reset').addEventListener('click', function() {
-    if (confirm('Clear the conversation and start a new session?')) {
-      resetAISession();
-      renderAI(el);
-    }
-  });
-
-  // Auto-focus the input
-  setTimeout(function() { var inp = document.getElementById('ai-input'); if (inp) inp.focus(); }, 50);
+  setTimeout(function() {
+    try { document.body.removeChild(iframe); } catch(e) {}
+    try { document.body.removeChild(form); } catch(e) {}
+    showSuccess("");
+  }, 4000);
 }
 
-function renderBrief(el) {
-  setLoading(el);
-  return api('dailyBrief').then(function(d) {
-    var staleBadge = d.is_stale
-      ? '<span class="pill pill-warn" style="margin-left:10px">Latest data: ' + escapeHtml(d.latest_date) + ' (not today)</span>'
-      : '<span class="pill pill-ok" style="margin-left:10px">Fresh \u2014 ' + escapeHtml(d.latest_date) + '</span>';
-
-    // Lightweight markdown -> HTML for the AI brief body. Mirrors renderAI's md() handler.
-    function mdBrief(text) {
-      var t = escapeHtml(String(text || ''));
-      t = t.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-      t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-      var lines = t.split('\n');
-      var out = []; var inUl = false; var inOl = false;
-      for (var i = 0; i < lines.length; i++) {
-        var ln = lines[i];
-        var isUl = /^\s*[-\u2022]\s+/.test(ln);
-        var isOl = /^\s*\d+[\.\)]\s+/.test(ln);
-        if (isUl) {
-          if (inOl) { out.push('</ol>'); inOl = false; }
-          if (!inUl) { out.push('<ul class="nh-brief-ul">'); inUl = true; }
-          out.push('<li>' + ln.replace(/^\s*[-\u2022]\s+/, '') + '</li>');
-        } else if (isOl) {
-          if (inUl) { out.push('</ul>'); inUl = false; }
-          if (!inOl) { out.push('<ol class="nh-brief-ol">'); inOl = true; }
-          out.push('<li>' + ln.replace(/^\s*\d+[\.\)]\s+/, '') + '</li>');
-        } else {
-          if (inUl) { out.push('</ul>'); inUl = false; }
-          if (inOl) { out.push('</ol>'); inOl = false; }
-          if (ln.trim().length === 0) {
-            out.push('');
-          } else if (/^#{1,3}\s+/.test(ln)) {
-            var level = (ln.match(/^#+/) || [''])[0].length;
-            var txt = ln.replace(/^#+\s+/, '');
-            out.push('<h' + (level+2) + ' class="nh-brief-h">' + txt + '</h' + (level+2) + '>');
-          } else {
-            out.push('<p class="nh-brief-p">' + ln + '</p>');
-          }
-        }
-      }
-      if (inUl) out.push('</ul>');
-      if (inOl) out.push('</ol>');
-      return out.join('\n');
-    }
-
-    function briefPanelHtml(b, state) {
-      // state: 'ok' | 'empty' | 'error' | 'loading'
-      var styleBlock =
-        '<style>' +
-        '.nh-brief-panel { border:1px solid var(--nh-gray-line); border-radius:10px; padding:16px 18px; margin-bottom:16px; background:linear-gradient(180deg,#F6F9FC 0%,#FFFFFF 100%); }' +
-        '.nh-brief-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; flex-wrap:wrap; }' +
-        '.nh-brief-title { display:flex; align-items:center; gap:8px; color:var(--nh-navy); font-weight:700; font-size:14px; }' +
-        '.nh-brief-title .nh-brief-bolt { width:22px; height:22px; border-radius:50%; background:var(--nh-navy); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:12px; }' +
-        '.nh-brief-actions { display:flex; gap:8px; }' +
-        '.nh-brief-btn { padding:6px 12px; border:1px solid var(--nh-gray-line); background:#fff; color:var(--nh-navy); border-radius:6px; font-size:12px; cursor:pointer; }' +
-        '.nh-brief-btn:hover { background:var(--nh-gray-bg); }' +
-        '.nh-brief-btn:disabled { opacity:0.6; cursor:wait; }' +
-        '.nh-brief-btn-primary { background:var(--nh-navy); color:#fff; border-color:var(--nh-navy); }' +
-        '.nh-brief-btn-primary:hover { background:#083A6E; }' +
-        '.nh-brief-body { font-size:13px; line-height:1.6; color:#1a202c; }' +
-        '.nh-brief-body .nh-brief-h { font-size:13px; margin:10px 0 4px; color:var(--nh-navy); }' +
-        '.nh-brief-body .nh-brief-p { margin:0 0 6px; }' +
-        '.nh-brief-body .nh-brief-ul, .nh-brief-body .nh-brief-ol { margin:4px 0 8px 20px; }' +
-        '.nh-brief-body .nh-brief-ul li, .nh-brief-body .nh-brief-ol li { margin-bottom:3px; }' +
-        '.nh-brief-body code { background:#E8EEF2; padding:1px 5px; border-radius:3px; font-size:12px; }' +
-        '.nh-brief-meta { font-size:11px; color:var(--nh-gray-text); margin-top:8px; }' +
-        '</style>';
-
-      var actions = '';
-      if (state === 'ok') {
-        actions = '<button class="nh-brief-btn" id="nh-brief-regen">\u21BB Regenerate</button>';
-      } else if (state === 'empty' || state === 'error') {
-        actions = '<button class="nh-brief-btn nh-brief-btn-primary" id="nh-brief-regen">Generate now</button>';
-      } else {
-        actions = '<button class="nh-brief-btn" disabled>Working\u2026</button>';
-      }
-
-      var body;
-      if (state === 'loading') {
-        body = '<div class="muted"><span class="loading"></span> Generating your morning brief\u2026 (usually 5-10s)</div>';
-      } else if (state === 'empty') {
-        body = '<div class="muted">No morning brief yet for today. Click <b>Generate now</b> to have Claude analyse your dashboard and write one.</div>';
-      } else if (state === 'error') {
-        body = '<div class="alert high" style="margin:0"><div class="sev">Error</div><div class="msg"><b>Morning brief failed</b>' + escapeHtml(b && b.error || 'unknown error') + '</div></div>';
-      } else {
-        var meta = '';
-        if (b.created_at) {
-          var dt = new Date(b.created_at);
-          var timeStr = isNaN(dt) ? '' : dt.toLocaleString();
-          meta = 'Generated ' + escapeHtml(timeStr) + (b.tokens_in ? ' \u00B7 ' + (b.tokens_in + b.tokens_out).toLocaleString('en-IN') + ' tokens' : '');
-        }
-        body = '<div class="nh-brief-body">' + mdBrief(b.full_markdown) + '</div>' +
-               (meta ? '<div class="nh-brief-meta">' + meta + '</div>' : '');
-      }
-
-      return styleBlock +
-        '<div class="nh-brief-panel" id="nh-brief-panel">' +
-          '<div class="nh-brief-head">' +
-            '<div class="nh-brief-title"><span class="nh-brief-bolt">\u26A1</span> AI morning brief' +
-              (b && b.date ? ' \u2014 ' + escapeHtml(b.date) : '') +
-            '</div>' +
-            '<div class="nh-brief-actions">' + actions + '</div>' +
-          '</div>' +
-          body +
-        '</div>';
-    }
-
-    function wireBriefActions() {
-      var btn = document.getElementById('nh-brief-regen');
-      if (!btn) return;
-      btn.addEventListener('click', function() {
-        var panel = document.getElementById('nh-brief-panel');
-        if (!panel) return;
-        panel.outerHTML = briefPanelHtml(null, 'loading');
-        api('generateBriefNow', {}, 'POST').then(function(r) {
-          var panel2 = document.getElementById('nh-brief-panel');
-          if (!panel2) return;
-          if (r && r.status === 'ok') {
-            panel2.outerHTML = briefPanelHtml({
-              date: r.date,
-              full_markdown: r.full_markdown,
-              tokens_in: r.tokens_in,
-              tokens_out: r.tokens_out,
-              created_at: new Date().toISOString(),
-            }, 'ok');
-          } else {
-            panel2.outerHTML = briefPanelHtml({ error: (r && r.error) || 'Generation failed' }, 'error');
-          }
-          wireBriefActions();
-        }).catch(function(e) {
-          var panel2 = document.getElementById('nh-brief-panel');
-          if (panel2) {
-            panel2.outerHTML = briefPanelHtml({ error: (e && e.message) || String(e) }, 'error');
-            wireBriefActions();
-          }
-        });
-      });
-    }
-
-    // Kick off AI brief fetch in parallel — inject once it resolves.
-    api('getTodaysBrief').then(function(res) {
-      var host = document.getElementById('nh-brief-slot');
-      if (!host) return;
-      if (res && res.missing_tab) {
-        host.innerHTML = briefPanelHtml({ error: 'ai_morning_briefs tab not found. Run Night Hawk OS \u2192 Create missing tabs.' }, 'error');
-      } else if (res && res.exists && res.brief && res.brief.status === 'ok') {
-        host.innerHTML = briefPanelHtml(res.brief, 'ok');
-      } else if (res && res.exists && res.brief && res.brief.status === 'error') {
-        host.innerHTML = briefPanelHtml(res.brief, 'error');
-      } else {
-        host.innerHTML = briefPanelHtml(null, 'empty');
-      }
-      wireBriefActions();
-    }).catch(function(e) {
-      var host = document.getElementById('nh-brief-slot');
-      if (host) {
-        host.innerHTML = briefPanelHtml({ error: (e && e.message) || String(e) }, 'error');
-        wireBriefActions();
-      }
-    });
-
-    function deltaPill(delta, invert) {
-      var pos = invert ? delta <= 0 : delta >= 0;
-      var cls = pos ? 'pill-ok' : 'pill-err';
-      var sign = delta > 0 ? '+' : '';
-      return '<span class="pill ' + cls + '">' + sign + delta + '</span>';
-    }
-
-    // Headline cards
-    var s = d.sales.latest, p = d.sales.previous, w = d.week;
-    var html =
-      '<div id="nh-brief-slot"></div>' +
-      '<div style="display:flex;align-items:center;margin-bottom:14px">' +
-      '<div class="muted">Good morning. Here\'s what happened on <b>' + escapeHtml(d.latest_date) + '</b>' +
-      (d.previous_date ? ' vs <b>' + escapeHtml(d.previous_date) + '</b>' : '') + '.</div>' +
-      staleBadge + '</div>' +
-      '<div class="kpi-grid">' +
-        '<div class="kpi"><div class="label">Units sold</div><div class="value">' + s.units + '</div>' +
-          '<div class="sub">' + deltaPill(d.sales.delta_units) + ' vs prev. Week avg ' + w.avg_units + '/d</div></div>' +
-        '<div class="kpi"><div class="label">Revenue</div><div class="value">' + inr(s.revenue) + '</div>' +
-          '<div class="sub">' + deltaPill(Math.round(d.sales.delta_revenue)) + ' vs prev. Week ' + inr(w.revenue) + '</div></div>' +
-        '<div class="kpi"><div class="label">Ad spend</div><div class="value">' + inr(d.ad_spend.latest) + '</div>' +
-          '<div class="sub">' + deltaPill(Math.round(d.ad_spend.delta), true) + ' vs prev</div></div>' +
-        '<div class="kpi ' + (d.stockouts.length ? 'err' : 'ok') + '"><div class="label">Stockout alerts</div><div class="value">' + d.stockouts.length + '</div>' +
-          '<div class="sub">SKUs needing reorder</div></div>' +
-        '<div class="kpi ' + (d.complaints.length ? 'warn' : 'ok') + '"><div class="label">New complaints</div><div class="value">' + d.complaints.length + '</div>' +
-          '<div class="sub">in last 2 days</div></div>' +
-        '<div class="kpi ' + (d.issues.length ? 'warn' : 'ok') + '"><div class="label">New issues</div><div class="value">' + d.issues.length + '</div>' +
-          '<div class="sub">raised recently</div></div>' +
-      '</div>';
-
-    // Top SKUs
-    var topSkusRows = (d.top_skus || []).map(function(s) {
-      return '<tr><td>' + escapeHtml(s.sku) + '</td>' +
-             '<td class="num">' + s.units + '</td>' +
-             '<td class="num">' + deltaPill(s.delta_units) + '</td>' +
-             '<td class="num">' + inr(s.value) + '</td></tr>';
-    }).join('');
-    var topCitiesRows = (d.top_cities || []).map(function(c) {
-      return '<tr><td>' + escapeHtml(c.city) + '</td>' +
-             '<td class="num">' + c.units + '</td>' +
-             '<td class="num">' + deltaPill(c.delta_units) + '</td>' +
-             '<td class="num">' + inr(c.value) + '</td></tr>';
-    }).join('');
-    html += '<div class="two-col">' +
-      '<div class="panel"><h2>Top SKUs yesterday</h2>' +
-        (topSkusRows ? '<table><thead><tr><th>SKU</th><th class="num">Units</th><th class="num">\u0394</th><th class="num">Revenue</th></tr></thead><tbody>' + topSkusRows + '</tbody></table>' : '<div class="muted">No sales.</div>') +
-      '</div>' +
-      '<div class="panel"><h2>Top cities yesterday</h2>' +
-        (topCitiesRows ? '<table><thead><tr><th>City</th><th class="num">Units</th><th class="num">\u0394</th><th class="num">Revenue</th></tr></thead><tbody>' + topCitiesRows + '</tbody></table>' : '<div class="muted">No sales.</div>') +
-      '</div></div>';
-
-    // Stockout alerts
-    var stockoutsHtml = '';
-    if (d.stockouts && d.stockouts.length) {
-      var soRows = d.stockouts.map(function(r) {
-        var u = r.reorder.urgency;
-        var pillCls = u === 'critical' ? 'pill-err' : (u === 'high' ? 'pill-warn' : 'pill-info');
-        return '<tr><td><span class="pill ' + pillCls + '">' + escapeHtml(u) + '</span></td>' +
-          '<td>' + escapeHtml(r.sku) + '</td><td>' + escapeHtml(r.warehouse) + '</td>' +
-          '<td class="num">' + r.sellable + '</td>' +
-          '<td class="num">' + r.cover_days + 'd</td>' +
-          '<td class="num"><b>' + r.reorder.recommended_qty + '</b></td>' +
-          '<td>' + escapeHtml(r.reorder.reorder_by_date) + '</td></tr>';
-      }).join('');
-      stockoutsHtml = '<div class="panel">' +
-        '<h2>Stockout alerts</h2>' +
-        '<div class="desc">Click Inventory for 1-click "log as issue" on any of these.</div>' +
-        '<table><thead><tr><th>Urgency</th><th>SKU</th><th>Warehouse</th><th class="num">Sellable</th><th class="num">Cover</th><th class="num">Order qty</th><th>By date</th></tr></thead><tbody>' + soRows + '</tbody></table>' +
-        '</div>';
-    }
-
-    // New complaints
-    var compHtml = '';
-    if (d.complaints && d.complaints.length) {
-      var cRows = d.complaints.map(function(c) {
-        return '<tr><td>' + escapeHtml(c.date) + '</td><td>' + escapeHtml(c.sku) + '</td>' +
-          '<td>' + escapeHtml(c.city) + '</td>' +
-          '<td><span class="pill ' + (c.type==='return'?'pill-warn':'pill-info') + '">' + escapeHtml(c.type) + '</span></td>' +
-          '<td class="num">' + c.units + '</td><td>' + escapeHtml(c.reason) + '</td></tr>';
-      }).join('');
-      compHtml = '<div class="panel">' +
-        '<h2>Recent complaints &amp; returns</h2>' +
-        '<table><thead><tr><th>Date</th><th>SKU</th><th>City</th><th>Type</th><th class="num">Units</th><th>Reason</th></tr></thead><tbody>' + cRows + '</tbody></table>' +
-        '</div>';
-    }
-
-    // New issues
-    var issueHtml = '';
-    if (d.issues && d.issues.length) {
-      var iRows = d.issues.map(function(i) {
-        var cls = i.severity === 'critical' ? 'pill-err' : (i.severity === 'high' ? 'pill-warn' : 'pill-info');
-        return '<tr><td>' + escapeHtml(i.issue_id) + '</td>' +
-          '<td><span class="pill ' + cls + '">' + escapeHtml(i.severity) + '</span></td>' +
-          '<td>' + escapeHtml(i.category) + '</td>' +
-          '<td>' + escapeHtml(i.description) + '</td>' +
-          '<td>' + escapeHtml(i.owner || '') + '</td></tr>';
-      }).join('');
-      issueHtml = '<div class="panel">' +
-        '<h2>New issues raised</h2>' +
-        '<table><thead><tr><th>ID</th><th>Severity</th><th>Category</th><th>Description</th><th>Owner</th></tr></thead><tbody>' + iRows + '</tbody></table>' +
-        '</div>';
-    }
-
-    // If nothing to report
-    if (!stockoutsHtml && !compHtml && !issueHtml && (!d.top_skus || !d.top_skus.length)) {
-      html += '<div class="alert low" style="margin-top:10px"><div class="sev">Quiet</div><div class="msg"><b>Nothing unusual overnight</b>No stockouts, complaints, or issues. Enjoy the coffee.</div></div>';
-    }
-
-    el.innerHTML = html + stockoutsHtml + compHtml + issueHtml;
-  });
+function showSuccess(appId) {
+  document.getElementById("formPage").classList.add("hidden");
+  document.getElementById("successPage").classList.remove("hidden");
+  if (appId) {
+    document.getElementById("refId").textContent = appId;
+    document.getElementById("refBox").classList.remove("hidden");
+  }
 }
 
-// ---------- Cash & Runway ----------
-function renderCash(el) {
-  setLoading(el);
-  return api('cashRunway').then(function(d) {
-    if (d.missing_tab) {
-      el.innerHTML = '<div class="panel"><h2>Cash &amp; Runway</h2>' +
-        '<div class="alert medium"><div class="sev">Setup</div><div class="msg"><b>cash_ledger tab not found</b>Open your Google Sheet, then Night Hawk OS menu &rarr; "Create missing tabs (upgrade)" to add it. Or add a tab named <code>cash_ledger</code> with columns: entry_id, date, type, amount, category, notes.</div></div></div>';
-      return;
-    }
-
-    var bal = d.balance;
-    var burn = d.avg_net_burn;
-    var runway = d.runway_months;
-    var burnCls = burn <= 0 ? 'ok' : 'warn';
-    var runwayCls = (runway === null) ? 'ok' : (runway < 6 ? 'err' : (runway < 12 ? 'warn' : 'ok'));
-    var runwayValue = (runway === null) ? '\u221E' : (runway + ' mo');
-    var runwaySub = (runway === null) ? 'Net-positive or near break-even' : 'At current ' + d.lookback_months + '-mo avg burn';
-
-    var html = '<div class="kpi-grid">' +
-      '<div class="kpi"><div class="label">Cash balance</div><div class="value">' + inr(bal) + '</div><div class="sub">as of latest entry</div></div>' +
-      '<div class="kpi ' + burnCls + '"><div class="label">Avg monthly burn</div><div class="value">' + inr(burn) + '</div><div class="sub">last ' + d.lookback_months + ' months</div></div>' +
-      '<div class="kpi"><div class="label">Avg inflow</div><div class="value">' + inr(d.avg_monthly_inflow) + '</div><div class="sub">per month</div></div>' +
-      '<div class="kpi"><div class="label">Avg outflow</div><div class="value">' + inr(d.avg_monthly_outflow) + '</div><div class="sub">per month</div></div>' +
-      '<div class="kpi ' + runwayCls + '"><div class="label">Runway</div><div class="value">' + runwayValue + '</div><div class="sub">' + runwaySub + '</div></div>' +
-      (d.projected_breakeven_month ?
-        '<div class="kpi ok"><div class="label">Projected break-even</div><div class="value">' + escapeHtml(d.projected_breakeven_month) + '</div><div class="sub">if burn-reduction trend continues</div></div>'
-        : '') +
-    '</div>';
-
-    html += '<div class="panel">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-        '<h2 style="margin:0">Monthly flow</h2>' +
-        '<button id="add-cash-btn" style="padding:7px 14px;border:0;background:var(--nh-navy);color:#fff;border-radius:6px;cursor:pointer">+ Add entry</button>' +
-      '</div>' +
-      (d.byMonth.length ? (
-        '<table><thead><tr><th>Month</th><th class="num">Inflow</th><th class="num">Outflow</th><th class="num">Net</th></tr></thead><tbody>' +
-        d.byMonth.slice().reverse().map(function(m) {
-          var netCls = m.net >= 0 ? 'pill-ok' : 'pill-err';
-          return '<tr><td>' + escapeHtml(m.month) + '</td>' +
-            '<td class="num">' + inr(m.inflow) + '</td>' +
-            '<td class="num">' + inr(m.outflow) + '</td>' +
-            '<td class="num"><span class="pill ' + netCls + '">' + inr(m.net) + '</span></td></tr>';
-        }).join('') + '</tbody></table>'
-      ) : '<div class="muted">No entries yet. Click "+ Add entry" to record your opening balance.</div>') +
-    '</div>';
-
-    html += '<div class="panel">' +
-      '<h2>Ledger (newest first)</h2>' +
-      '<table><thead><tr><th>Date</th><th>Type</th><th>Category</th><th class="num">Amount</th><th class="num">Balance</th><th>Notes</th></tr></thead><tbody>' +
-      d.entries.map(function(e) {
-        var typeCls = e.type === 'inflow' ? 'pill-ok' : (e.type === 'outflow' ? 'pill-err' : 'pill-info');
-        return '<tr><td>' + escapeHtml(e.date) + '</td>' +
-          '<td><span class="pill ' + typeCls + '">' + escapeHtml(e.type) + '</span></td>' +
-          '<td>' + escapeHtml(e.category) + '</td>' +
-          '<td class="num">' + inr(e.amount) + '</td>' +
-          '<td class="num">' + inr(e.balance) + '</td>' +
-          '<td>' + escapeHtml(e.notes) + '</td></tr>';
-      }).join('') +
-      '</tbody></table></div>';
-
-    el.innerHTML = html;
-
-    $('add-cash-btn').addEventListener('click', function() {
-      var today = (new Date()).toISOString().slice(0,10);
-      showModal(
-        '<h3>Add cash entry</h3>' +
-        '<label>Date</label><input type="date" id="cash-date" value="' + today + '">' +
-        '<label>Type</label><select id="cash-type"><option>outflow</option><option>inflow</option><option>opening</option></select>' +
-        '<label>Amount (\u20B9)</label><input id="cash-amt" type="number" placeholder="e.g. 25000">' +
-        '<label>Category</label><input id="cash-cat" placeholder="e.g. ads, production, founder_capital">' +
-        '<label>Notes</label><input id="cash-notes" placeholder="optional">' +
-        '<div class="actions">' +
-        '<button class="secondary" onclick="hideModal()">Cancel</button>' +
-        '<button id="cash-save">Save</button></div>'
-      );
-      $('cash-save').addEventListener('click', function() {
-        var btn = $('cash-save');
-        btn.disabled = true; btn.textContent = 'Saving\u2026';
-        api('addCashEntry', {
-          date: $('cash-date').value,
-          type: $('cash-type').value,
-          amount: parseFloat($('cash-amt').value) || 0,
-          category: $('cash-cat').value,
-          notes: $('cash-notes').value,
-        }, 'POST').then(function() {
-          hideModal();
-          renderCash(el);
-        }).catch(function(e) {
-          btn.disabled = false; btn.textContent = 'Save';
-          alert('Failed: ' + e.message);
-        });
-      });
-    });
-  });
-}
-
-// ---------- Decisions & Experiments ----------
-function renderDecisions(el) {
-  setLoading(el);
-  return api('decisions').then(function(d) {
-    if (d.missing_tab) {
-      el.innerHTML = '<div class="panel"><h2>Decisions &amp; Experiments</h2>' +
-        '<div class="alert medium"><div class="sev">Setup</div><div class="msg"><b>decisions tab not found</b>Open your Google Sheet, then Night Hawk OS menu &rarr; "Create missing tabs (upgrade)".</div></div></div>';
-      return;
-    }
-
-    var rows = d.rows || [];
-    var summary = { planned: 0, running: 0, win: 0, loss: 0, mixed: 0, cancelled: 0 };
-    rows.forEach(function(r) { if (summary[r.status] !== undefined) summary[r.status]++; });
-
-    var statusPill = {
-      planned: 'pill-info', running: 'pill-warn', win: 'pill-ok', loss: 'pill-err', mixed: 'pill-warn', cancelled: 'pill-info'
-    };
-
-    el.innerHTML =
-      '<div class="panel">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-        '<h2 style="margin:0">Decisions &amp; Experiments</h2>' +
-        '<button id="new-decision-btn" style="padding:7px 14px;border:0;background:var(--nh-navy);color:#fff;border-radius:6px;cursor:pointer">+ New decision</button>' +
-      '</div>' +
-      '<div class="desc">Log every meaningful decision or experiment \u2014 hypothesis, success criterion, outcome, learnings. Your future self (and investors) will thank you.</div>' +
-      '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
-        '<span class="pill pill-ok">Win: ' + summary.win + '</span>' +
-        '<span class="pill pill-err">Loss: ' + summary.loss + '</span>' +
-        '<span class="pill pill-warn">Running: ' + summary.running + '</span>' +
-        '<span class="pill pill-warn">Mixed: ' + summary.mixed + '</span>' +
-        '<span class="pill pill-info">Planned: ' + summary.planned + '</span>' +
-        '<span class="pill pill-info">Cancelled: ' + summary.cancelled + '</span>' +
-      '</div>' +
-      (rows.length ? (
-        '<table><thead><tr>' +
-        '<th>ID</th><th>Created</th><th>Title</th><th>Category</th><th>Owner</th><th>Status</th><th>Outcome</th><th></th>' +
-        '</tr></thead><tbody>' +
-        rows.map(function(r) {
-          var cls = statusPill[r.status] || 'pill-info';
-          return '<tr data-id="' + escapeHtml(r.decision_id) + '">' +
-            '<td>' + escapeHtml(r.decision_id) + '</td>' +
-            '<td>' + escapeHtml(r.created_date) + '</td>' +
-            '<td><b>' + escapeHtml(r.title) + '</b><br><span class="muted" style="font-size:11px">' + escapeHtml((r.hypothesis || '').slice(0, 100)) + (r.hypothesis && r.hypothesis.length > 100 ? '\u2026' : '') + '</span></td>' +
-            '<td>' + escapeHtml(r.category) + '</td>' +
-            '<td>' + escapeHtml(r.owner || '') + '</td>' +
-            '<td><span class="pill ' + cls + '">' + escapeHtml(r.status) + '</span></td>' +
-            '<td style="max-width:240px;font-size:12px">' + escapeHtml((r.outcome || '').slice(0, 140)) + (r.outcome && r.outcome.length > 140 ? '\u2026' : '') + '</td>' +
-            '<td><a href="#" class="dec-view">view</a></td>' +
-            '</tr>';
-        }).join('') +
-        '</tbody></table>'
-      ) : '<div class="muted">No decisions logged yet. Click + New decision to add one.</div>') +
-      '</div>';
-
-    $('new-decision-btn').addEventListener('click', function() {
-      showModal(decisionFormHtml(null));
-      wireDecisionForm(null, el);
-    });
-    Array.prototype.forEach.call(el.querySelectorAll('.dec-view'), function(a) {
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        var id = a.closest('tr').getAttribute('data-id');
-        var row = rows.filter(function(x) { return x.decision_id === id; })[0];
-        if (!row) return;
-        showModal(decisionFormHtml(row));
-        wireDecisionForm(row, el);
-      });
-    });
-  });
-}
-
-function decisionFormHtml(r) {
-  r = r || {};
-  function val(k, d) { return escapeHtml(r[k] != null ? r[k] : (d || '')); }
-  var isEdit = !!r.decision_id;
-  return '<h3>' + (isEdit ? 'Decision ' + escapeHtml(r.decision_id) : 'New decision') + '</h3>' +
-    '<label>Title</label>' +
-    '<input id="d-title" value="' + val('title') + '" ' + (isEdit ? 'disabled' : '') + ' placeholder="e.g. Launch BB Single in Mumbai">' +
-    '<label>Hypothesis</label>' +
-    '<textarea id="d-hypo" ' + (isEdit ? 'disabled' : '') + ' style="min-height:80px">' + val('hypothesis') + '</textarea>' +
-    '<label>Category</label>' +
-    '<select id="d-cat" ' + (isEdit ? 'disabled' : '') + '>' +
-      ['pricing','sku','expansion','ads','ops','quality','finance'].map(function(c) {
-        return '<option' + (r.category === c ? ' selected' : '') + '>' + c + '</option>';
-      }).join('') +
-    '</select>' +
-    '<label>Owner</label>' +
-    '<input id="d-owner" value="' + val('owner') + '" ' + (isEdit ? 'disabled' : '') + '>' +
-    '<label>Start date</label>' +
-    '<input id="d-start" type="date" value="' + val('start_date') + '" ' + (isEdit ? 'disabled' : '') + '>' +
-    '<label>Target end date</label>' +
-    '<input id="d-end" type="date" value="' + val('end_date') + '">' +
-    '<label>Success criterion</label>' +
-    '<textarea id="d-crit" ' + (isEdit ? 'disabled' : '') + ' style="min-height:60px">' + val('success_criterion') + '</textarea>' +
-    '<label>Status</label>' +
-    '<select id="d-status">' +
-      ['planned','running','win','loss','mixed','cancelled'].map(function(s) {
-        return '<option' + (r.status === s ? ' selected' : '') + '>' + s + '</option>';
-      }).join('') +
-    '</select>' +
-    '<label>Outcome (update when done)</label>' +
-    '<textarea id="d-outcome" style="min-height:80px">' + val('outcome') + '</textarea>' +
-    '<label>Learnings</label>' +
-    '<textarea id="d-learn" style="min-height:80px">' + val('learnings') + '</textarea>' +
-    '<div class="actions">' +
-      '<button class="secondary" onclick="hideModal()">Cancel</button>' +
-      '<button id="d-save">' + (isEdit ? 'Update' : 'Create') + '</button>' +
-    '</div>';
-}
-
-function wireDecisionForm(existing, parentEl) {
-  $('d-save').addEventListener('click', function() {
-    var btn = $('d-save');
-    btn.disabled = true; btn.textContent = 'Saving\u2026';
-    if (existing && existing.decision_id) {
-      api('updateDecision', {
-        decision_id: existing.decision_id,
-        status: $('d-status').value,
-        outcome: $('d-outcome').value,
-        learnings: $('d-learn').value,
-        end_date: $('d-end').value,
-      }, 'POST').then(function() {
-        hideModal(); renderDecisions(parentEl);
-      }).catch(function(e) {
-        btn.disabled = false; btn.textContent = 'Update'; alert('Failed: ' + e.message);
-      });
-    } else {
-      api('createDecision', {
-        title: $('d-title').value,
-        hypothesis: $('d-hypo').value,
-        category: $('d-cat').value,
-        owner: $('d-owner').value,
-        start_date: $('d-start').value,
-        end_date: $('d-end').value,
-        success_criterion: $('d-crit').value,
-        status: $('d-status').value,
-      }, 'POST').then(function() {
-        hideModal(); renderDecisions(parentEl);
-      }).catch(function(e) {
-        btn.disabled = false; btn.textContent = 'Create'; alert('Failed: ' + e.message);
-      });
-    }
-  });
-}
-
-function renderImport(el) {
-  el.innerHTML =
-    '<div class="panel"><h2>Import data</h2>' +
-    '<div class="desc">Upload a CSV or Excel file (or paste CSV text). The importer understands Blinkit\'s native column names (Item ID, Warehouse Facility ID, Last 7 days, etc.) and auto-translates Blinkit IDs to your internal IDs. It also de-duplicates by default so you can re-import the same month safely.</div>' +
-
-    '<div class="two-col" style="align-items:start;margin-bottom:14px">' +
-      '<div>' +
-        '<label class="muted" style="display:block;margin-bottom:4px">Target tab</label>' +
-        '<select id="imp-target" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;display:block;width:100%">' +
-          '<option>daily_sales</option><option>daily_fees</option><option>daily_ad_spend</option>' +
-          '<option>inventory_snapshots</option><option>complaints_returns</option>' +
-          '<option>expansion_plan</option><option>monthly_budget</option><option>monthly_forecast</option>' +
-        '</select>' +
-
-        '<label class="muted" style="display:block;margin:10px 0 4px">Duplicate handling</label>' +
-        '<select id="imp-dedupe" style="padding:8px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;display:block;width:100%">' +
-          '<option value="skip" selected>Skip duplicates (safe, recommended)</option>' +
-          '<option value="replace">Replace duplicates (use for corrections)</option>' +
-          '<option value="append">Append all (no de-dup, may create duplicates)</option>' +
-        '</select>' +
-
-        '<div style="margin-top:10px">' +
-          '<label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer">' +
-            '<input type="checkbox" id="imp-dryrun"> Dry run \u2014 count only, don\'t write' +
-          '</label>' +
-        '</div>' +
-      '</div>' +
-      '<div>' +
-        '<label class="muted" style="display:block;margin-bottom:4px">Defaults (used for empty/missing fields)</label>' +
-        '<div id="imp-defaults" style="display:flex;flex-direction:column;gap:6px"></div>' +
-        '<div class="muted" style="font-size:11px;margin-top:6px">These values fill in for rows where the column is missing or empty. e.g. if your Blinkit XLSX doesn\'t have a snapshot_date column, enter the date here.</div>' +
-      '</div>' +
-    '</div>' +
-
-    '<div style="display:flex;gap:0;border-bottom:1px solid var(--nh-gray-line);margin-bottom:14px">' +
-      '<button id="imp-mode-upload" type="button" style="padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px">\u2B06 Upload file</button>' +
-      '<button id="imp-mode-paste" type="button" style="padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px;margin-left:4px">Paste CSV</button>' +
-    '</div>' +
-    // Upload panel
-    '<div id="imp-upload-panel">' +
-      '<label class="muted" style="display:block;margin-bottom:6px">Pick a file (CSV, XLSX, or XLS)</label>' +
-      '<input type="file" id="imp-file" accept=".csv,.xlsx,.xls,text/csv" style="margin-bottom:4px">' +
-      '<div class="muted" style="font-size:11px">Tip: if you exported from Blinkit as XLSX, you can upload it directly \u2014 the app will convert it to CSV in your browser and send only rows to the sheet.</div>' +
-      '<div id="imp-sheet-picker" class="hidden" style="margin-top:12px">' +
-        '<label class="muted" style="display:block;margin-bottom:4px">This Excel file has multiple sheets \u2014 pick one</label>' +
-        '<select id="imp-sheet-sel" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;min-width:220px"></select>' +
-      '</div>' +
-      '<div id="imp-preview" style="margin-top:14px"></div>' +
-    '</div>' +
-    // Paste panel
-    '<div id="imp-paste-panel" class="hidden">' +
-      '<label class="muted" style="display:block;margin-bottom:6px">Paste CSV below (first row = headers)</label>' +
-      '<textarea id="imp-csv" style="width:100%;min-height:200px;font-family:Menlo,monospace;font-size:12px;padding:8px;border:1px solid var(--nh-gray-line);border-radius:6px" placeholder="date,platform_id,city_id,sku_id,units,value\n2026-04-15,PLT-001,CTY-002,SKU-001,5,390"></textarea>' +
-    '</div>' +
-    '<div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:8px">' +
-      '<div id="imp-summary" class="muted"></div>' +
-      '<button id="imp-run" style="padding:9px 18px;border:0;background:var(--nh-navy);color:white;border-radius:6px;cursor:pointer;font-size:13px" disabled>Import</button>' +
-    '</div>' +
-    '<div id="imp-out" style="margin-top:14px"></div></div>';
-
-  var currentCsv = '';
-  var currentMode = 'upload';
-  var parsedWorkbook = null;
-
-  // Target-specific default-value fields
-  var DEFAULTS_FIELDS = {
-    inventory_snapshots: [
-      { id: 'def-snapshot-date', label: 'Snapshot date', col: 'snapshot_date', type: 'date',
-        help: 'Blinkit inventory exports don\'t include a per-row date. Set the date this snapshot was taken.' }
-    ],
-    daily_sales:    [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
-    daily_fees:     [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
-    daily_ad_spend: [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
-    complaints_returns: [{ id: 'def-plat', label: 'Platform', col: 'platform_id', type: 'platform', help: 'Used if platform_id column is missing.' }],
-  };
-
-  function renderDefaultsFields() {
-    var target = $('imp-target').value;
-    var fields = DEFAULTS_FIELDS[target] || [];
-    var platforms = (state.boot.platforms || []).filter(function(p){return p.status==='active';});
-    var todayStr = (new Date()).toISOString().slice(0, 10);
-    $('imp-defaults').innerHTML = fields.length ? fields.map(function(f) {
-      var inputHtml = '';
-      if (f.type === 'date') {
-        inputHtml = '<input id="' + f.id + '" type="date" value="' + todayStr + '" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">';
-      } else if (f.type === 'platform') {
-        inputHtml = '<select id="' + f.id + '" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">' +
-          (platforms.length ? platforms.map(function(p){return '<option value="'+escapeHtml(p.platform_id)+'">'+escapeHtml(p.name)+'</option>';}).join('')
-            : '<option value="PLT-001">Blinkit</option>') +
-          '</select>';
-      } else {
-        inputHtml = '<input id="' + f.id + '" type="text" style="padding:7px;border:1px solid var(--nh-gray-line);border-radius:6px;width:100%">';
-      }
-      return '<div>' +
-             '<label class="muted" style="font-size:11px;display:block;margin-bottom:2px">' + escapeHtml(f.label) + '</label>' +
-             inputHtml +
-             (f.help ? '<div class="muted" style="font-size:10px;margin-top:2px">' + escapeHtml(f.help) + '</div>' : '') +
-             '</div>';
-    }).join('') : '<div class="muted" style="font-size:12px">No defaults required for this target.</div>';
-  }
-
-  function collectDefaults() {
-    var target = $('imp-target').value;
-    var fields = DEFAULTS_FIELDS[target] || [];
-    var out = {};
-    fields.forEach(function(f) {
-      var v = $(f.id) ? $(f.id).value : '';
-      if (v) out[f.col] = v;
-    });
-    return out;
-  }
-
-  $('imp-target').addEventListener('change', function() { renderDefaultsFields(); updateRunState(); });
-  renderDefaultsFields();
-
-  function setMode(mode) {
-    currentMode = mode;
-    $('imp-upload-panel').classList.toggle('hidden', mode !== 'upload');
-    $('imp-paste-panel').classList.toggle('hidden', mode !== 'paste');
-    var tu = $('imp-mode-upload'), tp = $('imp-mode-paste');
-    var activeStyle = 'padding:9px 16px;border:0;background:var(--nh-navy);color:white;border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
-    var inactiveStyle = 'padding:9px 16px;border:1px solid var(--nh-gray-line);border-bottom:0;background:#fff;color:var(--nh-navy);border-radius:6px 6px 0 0;cursor:pointer;font-size:13px';
-    if (mode === 'upload') {
-      tu.setAttribute('style', activeStyle);
-      tp.setAttribute('style', inactiveStyle + ';margin-left:4px');
-    } else {
-      tu.setAttribute('style', inactiveStyle);
-      tp.setAttribute('style', activeStyle + ';margin-left:4px');
-    }
-    updateRunState();
-  }
-  function csvForSubmit() {
-    return currentMode === 'upload' ? currentCsv : $('imp-csv').value;
-  }
-  function updateRunState() {
-    var csv = csvForSubmit();
-    var rowCount = 0;
-    if (csv && csv.trim()) {
-      var lines = csv.split(/\r?\n/).filter(function(l){return l.trim().length;});
-      rowCount = Math.max(0, lines.length - 1);
-    }
-    $('imp-run').disabled = rowCount === 0;
-    $('imp-summary').textContent = rowCount > 0 ? ('Ready to import ' + rowCount + ' row' + (rowCount===1?'':'s')) : '';
-  }
-
-  $('imp-mode-upload').addEventListener('click', function() { setMode('upload'); });
-  $('imp-mode-paste').addEventListener('click', function() { setMode('paste'); });
-  $('imp-csv').addEventListener('input', updateRunState);
-
-  $('imp-file').addEventListener('change', function(e) {
-    var f = e.target.files && e.target.files[0];
-    if (!f) {
-      currentCsv = ''; parsedWorkbook = null;
-      $('imp-preview').innerHTML = '';
-      $('imp-sheet-picker').classList.add('hidden');
-      updateRunState();
-      return;
-    }
-    var name = f.name.toLowerCase();
-    $('imp-preview').innerHTML = '<div class="muted"><span class="loading"></span> Reading ' + escapeHtml(f.name) + '\u2026</div>';
-    var reader = new FileReader();
-
-    var isCsv = name.endsWith('.csv') || f.type === 'text/csv';
-    if (isCsv) {
-      reader.onload = function(ev) {
-        currentCsv = String(ev.target.result || '');
-        parsedWorkbook = null;
-        $('imp-sheet-picker').classList.add('hidden');
-        renderPreview(f.name);
-        updateRunState();
-      };
-      reader.onerror = function() {
-        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Could not read the CSV file.</div></div>';
-        currentCsv = ''; updateRunState();
-      };
-      reader.readAsText(f);
-    } else {
-      if (typeof XLSX === 'undefined') {
-        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Excel parser did not load. Check your internet connection and refresh.</div></div>';
-        return;
-      }
-      reader.onload = function(ev) {
-        try {
-          var data = new Uint8Array(ev.target.result);
-          parsedWorkbook = XLSX.read(data, { type: 'array' });
-          var sheets = parsedWorkbook.SheetNames || [];
-          if (!sheets.length) throw new Error('No sheets found');
-          if (sheets.length > 1) {
-            var sel = $('imp-sheet-sel');
-            sel.innerHTML = sheets.map(function(s){return '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';}).join('');
-            sel.onchange = function() { selectSheet(sel.value, f.name); };
-            $('imp-sheet-picker').classList.remove('hidden');
-          } else {
-            $('imp-sheet-picker').classList.add('hidden');
-          }
-          selectSheet(sheets[0], f.name);
-        } catch (err) {
-          $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Failed to parse Excel file: ' + escapeHtml(err.message || err) + '</div></div>';
-          currentCsv = ''; updateRunState();
-        }
-      };
-      reader.onerror = function() {
-        $('imp-preview').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">Could not read the Excel file.</div></div>';
-        currentCsv = ''; updateRunState();
-      };
-      reader.readAsArrayBuffer(f);
-    }
-  });
-
-  function selectSheet(sheetName, fileName) {
-    if (!parsedWorkbook) return;
-    var sheet = parsedWorkbook.Sheets[sheetName];
-    currentCsv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
-    renderPreview(fileName + '  \u2192  ' + sheetName);
-    updateRunState();
-  }
-
-  function renderPreview(label) {
-    if (!currentCsv || !currentCsv.trim()) {
-      $('imp-preview').innerHTML = '<div class="alert medium"><div class="sev">Warn</div><div class="msg">This file/sheet looks empty.</div></div>';
-      return;
-    }
-    var lines = currentCsv.split(/\r?\n/).filter(function(l){return l.trim().length;});
-    var headerCells = splitCsvLinePreview(lines[0]);
-    var body = lines.slice(1, 6).map(splitCsvLinePreview);
-    var rowCount = lines.length - 1;
-    var html = '<div class="muted" style="margin-bottom:6px">' + escapeHtml(label||'') + ' \u00B7 ' + rowCount + ' data row' + (rowCount===1?'':'s') + ' detected (showing first ' + body.length + ')</div>';
-    html += '<div style="overflow:auto;border:1px solid var(--nh-gray-line);border-radius:6px;max-height:260px">' +
-            '<table style="font-size:12px"><thead><tr>' +
-            headerCells.map(function(h){return '<th>' + escapeHtml(h) + '</th>';}).join('') +
-            '</tr></thead><tbody>' +
-            body.map(function(r){
-              return '<tr>' + r.map(function(c){return '<td>' + escapeHtml(c) + '</td>';}).join('') + '</tr>';
-            }).join('') +
-            '</tbody></table></div>';
-    $('imp-preview').innerHTML = html;
-  }
-
-  function splitCsvLinePreview(line) {
-    var out = []; var cur = ''; var inQ = false;
-    for (var i = 0; i < line.length; i++) {
-      var c = line[i];
-      if (inQ) {
-        if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
-        else if (c === '"') inQ = false;
-        else cur += c;
-      } else {
-        if (c === '"') inQ = true;
-        else if (c === ',') { out.push(cur); cur = ''; }
-        else cur += c;
-      }
-    }
-    out.push(cur);
-    return out;
-  }
-
-  function updateRunButtonLabel() {
-    var dry = $('imp-dryrun') && $('imp-dryrun').checked;
-    $('imp-run').textContent = dry ? 'Dry run' : 'Import';
-  }
-  if ($('imp-dryrun')) $('imp-dryrun').addEventListener('change', updateRunButtonLabel);
-  updateRunButtonLabel();
-
-  $('imp-run').addEventListener('click', function() {
-    var csv = csvForSubmit();
-    if (!csv || !csv.trim()) {
-      $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">No data to import.</div></div>';
-      return;
-    }
-    var dedupe = $('imp-dedupe').value;
-    var dryRun = $('imp-dryrun').checked;
-    var defaults = collectDefaults();
-
-    $('imp-run').disabled = true;
-    $('imp-out').innerHTML = '<span class="loading"></span> ' + (dryRun ? 'Dry-running' : 'Importing') + '\u2026';
-
-    api('importCsv', {
-      target: $('imp-target').value,
-      csv: csv,
-      options: { dedupe: dedupe, defaults: defaults, dry_run: dryRun, source_file: 'upload' }
-    }, 'POST').then(function(r) {
-      var errs = (r.errors || []).length;
-      var cls = errs ? 'medium' : (dryRun ? 'low' : 'low');
-
-      // Summary pills
-      var pills = [];
-      if (r.added > 0) pills.push('<span class="pill pill-ok">' + r.added + ' added</span>');
-      if (r.updated > 0) pills.push('<span class="pill pill-info">' + r.updated + ' updated</span>');
-      if (r.skipped_duplicate > 0) pills.push('<span class="pill pill-warn">' + r.skipped_duplicate + ' dup skipped</span>');
-      if (r.skipped_empty > 0) pills.push('<span class="pill pill-info">' + r.skipped_empty + ' empty skipped</span>');
-      if (errs > 0) pills.push('<span class="pill pill-err">' + errs + ' errors</span>');
-
-      // Column map display
-      var mapRows = Object.keys(r.map || {}).map(function(k) {
-        var v = r.map[k];
-        var vCls = (!v || v === '__ignore__') ? 'pill-warn' : 'pill-ok';
-        var vTxt = !v ? '(unmapped)' : (v === '__ignore__' ? '(ignored)' : v);
-        return '<tr><td style="padding:2px 8px">' + escapeHtml(k) + '</td>' +
-               '<td style="padding:2px 8px">\u2192</td>' +
-               '<td style="padding:2px 8px"><span class="pill ' + vCls + '">' + escapeHtml(vTxt) + '</span></td></tr>';
-      }).join('');
-      var mapTable = '<details style="margin-top:8px"><summary class="muted" style="cursor:pointer;font-size:12px">Column mapping (click to expand)</summary>' +
-                     '<table style="margin-top:6px;font-size:12px"><tbody>' + mapRows + '</tbody></table></details>';
-
-      var heading = dryRun ? 'Dry run complete' : 'Import complete';
-      var body = '<b>' + escapeHtml(heading) + '</b>' +
-                 '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' + pills.join(' ') + '</div>' +
-                 (r.total_rows ? '<div class="muted" style="font-size:11px;margin-top:4px">' + r.total_rows + ' rows processed \u00B7 dedupe: ' + escapeHtml(r.dedupe_mode || 'skip') + '</div>' : '') +
-                 mapTable;
-
-      if (errs > 0) {
-        body += '<div style="margin-top:8px"><details><summary class="muted" style="cursor:pointer;font-size:12px">' + errs + ' error detail' + (errs===1?'':'s') + '</summary>' +
-                '<ul style="font-size:12px">' + r.errors.slice(0, 20).map(function(e){return '<li>Row ' + escapeHtml(String(e.row)) + ': ' + escapeHtml(e.error) + '</li>';}).join('') + '</ul></details></div>';
-      }
-
-      $('imp-out').innerHTML = '<div class="alert ' + cls + '"><div class="sev">' + (dryRun ? 'Preview' : 'Done') + '</div><div class="msg">' + body + '</div></div>';
-      updateRunState();
-    }).catch(function(e) {
-      $('imp-out').innerHTML = '<div class="alert high"><div class="sev">Error</div><div class="msg">' + escapeHtml(e.message || e) + '</div></div>';
-      updateRunState();
-    });
-  });
-}
-
-function renderMaster(el) {
-  var b = state.boot;
-  function escRow(cells) { return '<tr>' + cells.map(function(c) { return '<td>' + escapeHtml(c) + '</td>'; }).join('') + '</tr>'; }
-  var skuRows = (b.skus||[]).map(function(s) { return escRow([s.sku_id, s.name, '\u20B9'+s.mrp, s.status]); }).join('');
-  var cityRows = (b.cities||[]).map(function(c) { return escRow([c.city_id, c.name, c.state, c.status]); }).join('');
-  var whRows = (b.warehouses||[]).map(function(w) { return escRow([w.warehouse_id, w.facility_id, w.name]); }).join('');
-  var plRows = (b.platforms||[]).map(function(p) { return escRow([p.platform_id, p.name, p.status]); }).join('');
-  el.innerHTML =
-    '<div class="panel"><h2>Master Data (read-only view)</h2>' +
-    '<div class="desc">Edit these tabs directly in the Google Sheet. The app reads them on every refresh.</div>' +
-    '<div class="two-col">' +
-    '<div><h3>SKUs</h3>' +
-    '<table><thead><tr><th>ID</th><th>Name</th><th>MRP</th><th>Status</th></tr></thead><tbody>' + skuRows + '</tbody></table>' +
-    '<h3 style="margin-top:16px">Cities</h3>' +
-    '<table><thead><tr><th>ID</th><th>Name</th><th>State</th><th>Status</th></tr></thead><tbody>' + cityRows + '</tbody></table></div>' +
-    '<div><h3>Warehouses</h3>' +
-    '<table><thead><tr><th>ID</th><th>Facility</th><th>Name</th></tr></thead><tbody>' + whRows + '</tbody></table>' +
-    '<h3 style="margin-top:16px">Platforms</h3>' +
-    '<table><thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead><tbody>' + plRows + '</tbody></table></div>' +
-    '</div></div>';
-}
-
-init();
+// Initial render
+renderStep();
 </script>
 </body>
 </html>
