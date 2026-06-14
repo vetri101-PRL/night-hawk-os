@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Night Hawk — Digital Marketing OS</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--nh-navy:#0B3954;--nh-sky:#087E8B;--nh-red:#BF1A2F;--nh-yellow:#F5B700;--nh-gray-bg:#F7F8FA;--nh-gray-line:#E5E8EC;--nh-gray-text:#4A5568;--nh-ok:#1E8449;--nh-warn:#B7950B;--nh-err:#C0392B;--mkt-red:#C8272D;--mkt-orange:#E85D26;--mkt-gold:#F0A500;}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--nh-gray-bg);color:#1a202c;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;}
+a{color:var(--nh-sky);text-decoration:none;}button{font-family:inherit;cursor:pointer;}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;}
+@media(max-width:720px){.app{grid-template-columns:1fr;}.sidebar{position:sticky;top:0;z-index:10;height:auto;}}
+.sidebar{background:var(--nh-navy);color:white;padding:20px 0;height:100vh;position:sticky;top:0;display:flex;flex-direction:column;overflow-y:auto;}
+.brand{padding:8px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.12);}
+.brand-mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;letter-spacing:0.3px;}
+.dot{width:28px;height:28px;border-radius:50%;background:var(--nh-yellow);display:inline-block;box-shadow:0 0 0 3px rgba(245,183,0,0.3);}
+.brand sub{display:block;margin-top:4px;font-weight:400;font-size:12px;opacity:0.75;}
+.nav{list-style:none;padding:10px 0;margin:0;flex:1;}
+.nav li{padding:10px 20px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:10px;border-left:3px solid transparent;color:rgba(255,255,255,0.8);}
+.nav li:hover{background:rgba(255,255,255,0.05);color:white;}
+.nav li.active{background:rgba(8,126,139,0.25);border-left-color:var(--nh-yellow);color:white;}
+.nav li .ico{font-size:16px;width:20px;text-align:center;}
+.nav-section{padding:12px 20px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;opacity:0.5;font-weight:600;}
+.sidebar-foot{padding:12px 20px;border-top:1px solid rgba(255,255,255,0.12);font-size:11px;opacity:0.75;}
+.sidebar-foot a{color:var(--nh-yellow);}
+.main{padding:24px 28px;overflow-x:auto;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
+.topbar h1{margin:0;font-size:22px;font-weight:700;}
+.filters{display:flex;align-items:center;gap:8px;}
+input[type=date]{padding:6px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;font-size:13px;background:white;}
+select{padding:6px 10px;border:1px solid var(--nh-gray-line);border-radius:6px;font-size:13px;background:white;}
+.btn{padding:7px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-primary{background:var(--nh-navy);color:white;}.btn-primary:hover{background:#0d4a6e;}
+.btn-sm{padding:4px 10px;font-size:12px;}
+.btn-red{background:var(--mkt-red);color:white;}
+.btn-outline{background:white;border:1px solid var(--nh-gray-line);color:var(--nh-gray-text);}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.kpi{background:white;padding:14px 16px;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.04);border:1px solid var(--nh-gray-line);}
+.kpi .label{font-size:11px;color:var(--nh-gray-text);text-transform:uppercase;letter-spacing:0.5px;}
+.kpi .value{font-size:24px;font-weight:700;margin-top:4px;}
+.kpi .sub{font-size:12px;color:var(--nh-gray-text);margin-top:4px;}
+.kpi.ok .value{color:var(--nh-ok);}.kpi.warn .value{color:var(--nh-warn);}.kpi.err .value{color:var(--nh-err);}
+.panel{background:white;border:1px solid var(--nh-gray-line);border-radius:10px;padding:16px 18px;margin-bottom:16px;}
+.panel h2{margin:0 0 4px;font-size:15px;font-weight:700;}
+.panel .desc{font-size:12px;color:var(--nh-gray-text);margin-bottom:14px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+@media(max-width:1100px){.three-col{grid-template-columns:1fr 1fr;}}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--nh-gray-line);}
+th{background:#FAFBFC;font-weight:600;color:var(--nh-gray-text);font-size:12px;text-transform:uppercase;letter-spacing:0.3px;}
+tbody tr:hover{background:#FAFCFF;}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+.pill-ok{background:#E7F6EE;color:var(--nh-ok);}.pill-warn{background:#FDF6D7;color:var(--nh-warn);}
+.pill-err{background:#FDEAEB;color:var(--nh-err);}.pill-info{background:#E6F3F5;color:var(--nh-sky);}
+.pill-navy{background:#E6EEF3;color:var(--nh-navy);}
+.alert{display:flex;gap:12px;padding:12px 14px;border-radius:8px;margin-bottom:10px;font-size:13px;align-items:flex-start;}
+.alert.high{background:#FEF3F2;border-left:4px solid var(--nh-err);}
+.alert.warn{background:#FFFBEB;border-left:4px solid var(--nh-warn);}
+.alert.ok{background:#F0FDF4;border-left:4px solid var(--nh-ok);}
+.alert.info{background:#E6F3F5;border-left:4px solid var(--nh-sky);}
+.alert .sev{font-weight:700;font-size:11px;text-transform:uppercase;min-width:50px;margin-top:1px;}
+.alert.high .sev{color:var(--nh-err);}.alert.warn .sev{color:var(--nh-warn);}
+.alert.ok .sev{color:var(--nh-ok);}.alert.info .sev{color:var(--nh-sky);}
+.chart-wrap{position:relative;height:220px;}
+.loading{padding:60px;text-align:center;color:var(--nh-gray-text);font-size:14px;}
+.muted{color:var(--nh-gray-text);}
+.creative-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin-top:8px;}
+.creative-card{background:white;border:1px solid var(--nh-gray-line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.creative-thumb{height:130px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;position:relative;flex-shrink:0;}
+.creative-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;}
+.creative-body .headline{font-weight:700;font-size:14px;margin-bottom:4px;}
+.creative-meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.creative-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
+.creative-stat{text-align:center;background:#F7F8FA;border-radius:6px;padding:6px;}
+.creative-stat .cs-label{font-size:10px;color:var(--nh-gray-text);text-transform:uppercase;}
+.creative-stat .cs-value{font-size:14px;font-weight:700;margin-top:2px;}
+.ai-box{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:10px 12px;font-size:12px;color:#166534;margin-top:auto;}
+.ai-box strong{color:#14532D;}
+.listing-score{display:flex;align-items:center;gap:6px;}
+.listing-score .bar-bg{flex:1;height:6px;background:#E5E8EC;border-radius:3px;min-width:60px;}
+.listing-score .bar-fill{height:6px;border-radius:3px;}
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 140px);min-height:400px;}
+.chat-history{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;background:white;border:1px solid var(--nh-gray-line);border-radius:10px 10px 0 0;}
+.chat-msg{display:flex;gap:10px;align-items:flex-start;}
+.chat-msg.user{flex-direction:row-reverse;}
+.chat-bubble{max-width:75%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;}
+.chat-msg.user .chat-bubble{background:var(--nh-navy);color:white;border-bottom-right-radius:2px;}
+.chat-msg.ai .chat-bubble{background:#F7F8FA;border:1px solid var(--nh-gray-line);border-bottom-left-radius:2px;}
+.chat-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.chat-msg.ai .chat-avatar{background:var(--nh-yellow);}
+.chat-msg.user .chat-avatar{background:var(--nh-navy);color:white;font-size:11px;font-weight:700;}
+.chat-starters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border:1px solid var(--nh-gray-line);border-top:none;background:#FAFBFC;}
+.chat-starter{background:white;border:1px solid var(--nh-gray-line);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;color:var(--nh-navy);}
+.chat-starter:hover{background:#EEF6F8;border-color:var(--nh-sky);}
+.chat-input-row{display:flex;gap:8px;padding:12px;border:1px solid var(--nh-gray-line);border-top:none;border-radius:0 0 10px 10px;background:white;}
+.chat-input{flex:1;padding:10px 14px;border:1px solid var(--nh-gray-line);border-radius:8px;font-size:13px;resize:none;font-family:inherit;}
+.chat-input:focus{outline:none;border-color:var(--nh-sky);}
+.chat-send{padding:10px 18px;background:var(--nh-navy);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;}
+.chat-send:hover{background:#0d4a6e;}
+.chat-footer{text-align:center;font-size:11px;color:#9CA3AF;padding:8px;}
+.budget-input-group{margin-bottom:14px;}
+.budget-input-group label{display:block;font-size:12px;font-weight:600;color:var(--nh-gray-text);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;}
+.budget-input-group input,.budget-input-group select{width:100%;padding:8px 12px;border:1px solid var(--nh-gray-line);border-radius:6px;font-size:14px;}
+.budget-input-group input:focus{outline:none;border-color:var(--nh-sky);}
+.channel-bar{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.channel-bar .ch-name{width:140px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.channel-bar .ch-bar-wrap{flex:1;height:10px;background:#E5E8EC;border-radius:5px;}
+.channel-bar .ch-bar-fill{height:10px;border-radius:5px;transition:width 0.5s ease;}
+.channel-bar .ch-pct{width:45px;font-size:12px;text-align:right;color:var(--nh-gray-text);}
+.channel-bar .ch-amt{width:80px;font-size:13px;font-weight:600;text-align:right;}
+.no-data{padding:30px;text-align:center;color:var(--nh-gray-text);font-size:13px;}
+.setup-box{background:#1a202c;color:white;border-radius:10px;padding:20px 24px;margin-bottom:16px;font-family:monospace;font-size:13px;line-height:1.8;}
+.setup-box .setup-title{font-family:-apple-system,sans-serif;font-weight:700;font-size:15px;margin-bottom:12px;color:var(--nh-yellow);}
+.setup-box code{background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark"><span class="dot"></span>NIGHT HAWK</div>
+    <sub>Digital Marketing OS</sub>
+  </div>
+  <ul class="nav" id="nav">
+    <div class="nav-section">Overview</div>
+    <li class="active" onclick="switchView('overview')" id="nav-overview"><span class="ico">📊</span>Marketing Overview</li>
+    <li onclick="switchView('ai')" id="nav-ai"><span class="ico">🧠</span>Ask Marketing AI</li>
+    <div class="nav-section">Campaigns</div>
+    <li onclick="switchView('campaigns')" id="nav-campaigns"><span class="ico">🎯</span>Campaign Manager</li>
+    <li onclick="switchView('creative')" id="nav-creative"><span class="ico">🎨</span>Creative Lab</li>
+    <div class="nav-section">Intelligence</div>
+    <li onclick="switchView('listing')" id="nav-listing"><span class="ico">🏪</span>Listing Health</li>
+    <li onclick="switchView('audience')" id="nav-audience"><span class="ico">👥</span>Audience &amp; Cohorts</li>
+    <li onclick="switchView('budget')" id="nav-budget"><span class="ico">💸</span>Budget Planner</li>
+    <div class="nav-section">Links</div>
+    <li onclick="window.open('https://vetri101-prl.github.io/night-hawk-os/','_blank')"><span class="ico">↗</span>Q-Commerce OS</li>
+  </ul>
+  <div class="sidebar-foot">Org: Night Hawk Energy Drink<br><a href="#" onclick="promptApiKey()">Set Claude API Key</a></div>
+</aside>
+<main class="main" id="main-content">
+  <div class="loading">⚡ Loading marketing data...</div>
+</main>
+</div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbxw_AE0A4Ej_aa-iR5ZnkbbwjeYfS1zQi6k-OrAcYjSLFT4L04d_kJ4_5MQUlbt_iPA/exec';
+const SKU_MAP={'SKU-001':'Pineapple Passion Single Can','SKU-002':'Berry Burst Single Can','SKU-003':'PP 6-Pack','SKU-004':'BB 6-Pack','SKU-005':'PP 2-Pack','SKU-006':'BB 2-Pack'};
+const CITY_MAP={'CTY-001':'Chennai','CTY-002':'Bangalore','CTY-003':'Hyderabad','CTY-004':'Coimbatore','CTY-005':'Vellore','CTY-006':'Hosur','CTY-007':'Mumbai','CTY-008':'Pune','CTY-009':'Delhi','CTY-010':'Ahmedabad','CTY-011':'Kolkata','CTY-012':'Gurgaon','CTY-013':'Ghaziabad','CTY-014':'Faridabad'};
+let _charts={},_view='overview',_from='2026-03-17',_to='2026-06-14',_plat='all',_chatHistory=[],_salesCache=null,_dashCache=null;
+
+function inr(n){return '\u20B9'+(Math.round(n||0)).toLocaleString('en-IN');}
+function pct(n){return (+(n||0)).toFixed(1)+'%';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function mc(id,cfg){if(_charts[id]){_charts[id].destroy();delete _charts[id];}const c=document.getElementById(id);if(c)_charts[id]=new Chart(c,cfg);}
+function setLoad(m){const el=document.getElementById('main-content');if(el)el.innerHTML='<div class="loading">'+esc(m)+'</div>';}
+function promptApiKey(){const k=prompt('Enter your Claude API key (from console.anthropic.com):');if(k&&k.startsWith('sk-')){localStorage.setItem('nh_claude_key',k);alert('API key saved! The Ask Marketing AI is now active.');}else if(k){alert('That does not look like a valid Claude key (should start with sk-). Try again.');}}
+
+async function apiCall(action,extra){
+  const url=API_URL+'?action='+action+'&from='+_from+'&to='+_to+'&platform='+_plat+(extra||'');
+  const r=await fetch(url);const j=await r.json();
+  if(!j.ok)throw new Error(j.error||'API error');return j.data;
+}
+
+async function getSales(){if(!_salesCache)_salesCache=await apiCall('sales');return _salesCache;}
+async function getDash(){if(!_dashCache)_dashCache=await apiCall('dashboard');return _dashCache;}
+
+function switchView(v){
+  _view=v;
+  document.querySelectorAll('.nav li').forEach(li=>li.classList.remove('active'));
+  const n=document.getElementById('nav-'+v);if(n)n.classList.add('active');
+  loadView(v);
+}
+
+function applyFilters(){
+  const f=document.getElementById('f-from'),t=document.getElementById('f-to'),p=document.getElementById('f-plat');
+  if(f)_from=f.value||_from;if(t)_to=t.value||_to;if(p)_plat=p.value||_plat;
+  _salesCache=null;_dashCache=null;loadView(_view);
+}
+
+function loadView(v){
+  _view=v;
+  const views={overview:renderOverview,campaigns:renderCampaigns,creative:renderCreative,listing:renderListing,audience:renderAudience,budget:renderBudget,ai:renderAI};
+  if(views[v])views[v]();
+  else{const el=document.getElementById('main-content');if(el)el.innerHTML='<div class="loading">Module not found: '+esc(v)+'</div>';}
+}
+
+// ─── OVERVIEW ─────────────────────────────────────────────────────
+async function renderOverview(){
+  setLoad('Loading marketing data...');
+  try{
+    const[dash,sales]=await Promise.all([getDash(),getSales()]);
+    const k=dash.kpis;
+    const bySku={},byCity={},monthly={};
+    sales.rows.forEach(r=>{
+      const sk=SKU_MAP[r.sku_id]||r.sku_id,ci=CITY_MAP[r.city_id]||r.city_id;
+      if(!bySku[sk])bySku[sk]={units:0,rev:0};bySku[sk].units+=r.units;bySku[sk].rev+=r.value;
+      if(!byCity[ci])byCity[ci]={units:0,rev:0};byCity[ci].units+=r.units;byCity[ci].rev+=r.value;
+    });
+    dash.series.forEach(s=>{
+      const m=s.date.substring(0,7);if(!monthly[m])monthly[m]={rev:0,units:0};
+      monthly[m].rev+=s.revenue;monthly[m].units+=s.units;
+    });
+    const months=Object.keys(monthly).sort();
+    const topSku=Object.entries(bySku).sort((a,b)=>b[1].rev-a[1].rev);
+    const topCity=Object.entries(byCity).sort((a,b)=>b[1].rev-a[1].rev);
+    const el=document.getElementById('main-content');
+    if(!el)return;
+    el.innerHTML=`<div class="topbar"><h1>📊 Marketing Overview</h1><div class="filters"><input type="date" id="f-from" value="${_from}"><input type="date" id="f-to" value="${_to}"><select id="f-plat"><option value="all">All platforms</option><option value="PLT-001">Blinkit</option></select><button class="btn btn-primary" onclick="applyFilters()">Apply</button><button class="btn btn-outline" onclick="loadView('overview')">↻</button></div></div>
+    <div class="alert high"><span class="sev">⚠ Alert</span><span><strong>No paid ads running.</strong> All ${inr(k.revenue)} revenue is organic. Blinkit Sponsored Listings for Berry Burst in Bangalore + Hyderabad could unlock 2–3x revenue growth.</span></div>
+    <div class="alert warn"><span class="sev">⚡ Action</span><span><strong>Storage fee at ${pct(k.storage_pct)} of revenue</strong> (target &lt;25%). Run a BB 2-Pack promotion to clear stock and reduce storage costs.</span></div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Total Revenue</div><div class="value">${inr(k.revenue)}</div><div class="sub">${_from} → ${_to}</div></div>
+      <div class="kpi"><div class="label">Units Sold</div><div class="value">${k.units}</div><div class="sub">Avg ${inr(k.avg_price_per_unit)}/unit</div></div>
+      <div class="kpi err"><div class="label">Ad Spend</div><div class="value">${inr(k.ad_spend)}</div><div class="sub">No paid campaigns yet</div></div>
+      <div class="kpi err"><div class="label">Blended ROAS</div><div class="value">0x</div><div class="sub">No ad spend</div></div>
+      <div class="kpi warn"><div class="label">CM / Can</div><div class="value">${inr(k.cm_per_unit)}</div><div class="sub">After platform costs</div></div>
+      <div class="kpi warn"><div class="label">Storage / Revenue</div><div class="value">${pct(k.storage_pct)}</div><div class="sub">Target &lt;25%</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel"><h2>Revenue by Month</h2><div class="desc">Monthly revenue trend across all SKUs and cities.</div><div class="chart-wrap"><canvas id="ch-monthly"></canvas></div></div>
+      <div class="panel"><h2>Revenue by SKU</h2><div class="desc">Contribution of each SKU to total revenue.</div><div class="chart-wrap"><canvas id="ch-sku"></canvas></div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel"><h2>Top Cities by Revenue</h2><div class="desc">City-level revenue performance. Top 8 shown.</div>
+        <table><thead><tr><th>City</th><th class="num">Units</th><th class="num">Revenue</th><th class="num">Rev/Unit</th></tr></thead><tbody>
+        ${topCity.slice(0,8).map(([c,d])=>'<tr><td>'+esc(c)+'</td><td class="num">'+d.units+'</td><td class="num">'+inr(d.rev)+'</td><td class="num">'+inr(d.rev/d.units)+'</td></tr>').join('')}</tbody></table>
+      </div>
+      <div class="panel"><h2>SKU Performance</h2><div class="desc">Units and revenue contribution per SKU.</div>
+        <table><thead><tr><th>SKU</th><th class="num">Units</th><th class="num">Revenue</th><th>Share</th></tr></thead><tbody>
+        ${topSku.map(([s,d])=>{const sh=Math.round(d.rev/k.revenue*100);return '<tr><td>'+esc(s)+'</td><td class="num">'+d.units+'</td><td class="num">'+inr(d.rev)+'</td><td><span class="pill '+(sh>50?'pill-ok':sh>15?'pill-info':'pill-warn')+'">'+sh+'%</span></td></tr>';}).join('')}</tbody></table>
+      </div>
+    </div>
+    <div class="panel"><h2>📍 Where to Spend Your First Marketing Budget</h2><div class="desc">AI recommendation based on your current sales data.</div>
+      <div class="alert ok"><span class="sev">✓ Rec 1</span><span><strong>Blinkit Sponsored Listings — Berry Burst Single Can in Bangalore + Hyderabad.</strong> These two cities drive ${inr((byCity['Bangalore']?.rev||0)+(byCity['Hyderabad']?.rev||0))} organically. Adding ₹8–12K/month in Blinkit ads here should yield 3–4x ROAS based on category benchmarks.</span></div>
+      <div class="alert ok"><span class="sev">✓ Rec 2</span><span><strong>Run a ₹10 off 2-Pack promotion to clear Berry Burst 2-Pack stock.</strong> 3% complaint rate is pausing expansion. A limited promotion clears inventory, reduces storage fees, and generates review velocity.</span></div>
+      <div class="alert warn"><span class="sev">⚡ Rec 3</span><span><strong>Mumbai is growing (${byCity['Mumbai']?.units||0} units organic) but needs inventory pre-positioning before running ads.</strong> Stock up first, then launch Blinkit ads in Mumbai as city 3.</span></div>
+    </div>`;
+    const colors=['#0B3954','#087E8B','#BF1A2F','#F5B700','#1E8449','#4A5568'];
+    mc('ch-monthly',{type:'bar',data:{labels:months,datasets:[{label:'Revenue',data:months.map(m=>monthly[m].rev),backgroundColor:'rgba(11,57,84,0.85)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'₹'+Number(v).toLocaleString('en-IN')}}}}});
+    mc('ch-sku',{type:'doughnut',data:{labels:topSku.map(x=>x[0]),datasets:[{data:topSku.map(x=>x[1].rev),backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10}}}}}});
+  }catch(e){setLoad('Error loading data: '+esc(e.message));}
+}
+// ─── CAMPAIGNS ─────────────────────────────────────────────────────
+function renderCampaigns(){
+  const camps=[
+    {id:'C001',name:'Berry Burst — Blinkit Search',platform:'Blinkit Ads',type:'Sponsored Listing',status:'planned',sku:'Berry Burst Single Can',cities:'Bangalore, Hyderabad, Mumbai',verdict:'Launch first',priority:1},
+    {id:'C002',name:'PP Single — Blinkit Search',platform:'Blinkit Ads',type:'Sponsored Listing',status:'planned',sku:'Pineapple Passion Single',cities:'Bangalore, Chennai',verdict:'Launch second',priority:2},
+    {id:'C003',name:'BB 2-Pack Clearance Promo',platform:'Blinkit',type:'Discount Promotion',status:'recommended',sku:'Berry Burst 2-Pack',cities:'All cities',verdict:'Build now',priority:1},
+    {id:'C004',name:'Night Shift Coders — Meta',platform:'Meta (Instagram)',type:'Social Media',status:'concept',sku:'Berry Burst Single Can',cities:'Bangalore, Hyderabad',verdict:'Phase 2',priority:3},
+    {id:'C005',name:'STAY LIT — Reels Campaign',platform:'Meta (Instagram)',type:'Brand Awareness',status:'concept',sku:'Full Range',cities:'Pan India',verdict:'Phase 3',priority:4},
+  ];
+  const sc={'planned':'pill-info','recommended':'pill-ok','concept':'pill-warn'};
+  const el=document.getElementById('main-content');if(!el)return;
+  el.innerHTML='<div class="topbar"><h1>🎯 Campaign Manager</h1></div>'+
+  '<div class="alert high"><span class="sev">⚠ Notice</span><span><strong>Zero campaigns running.</strong> All ₹54,028 revenue is organic. Set up Blinkit Sponsored Listings first — highest ROAS channel for Q-commerce brands at your stage.</span></div>'+
+  '<div class="kpi-grid">'+
+  '<div class="kpi err"><div class="label">Active Campaigns</div><div class="value">0</div><div class="sub">None running</div></div>'+
+  '<div class="kpi err"><div class="label">Total Ad Spend</div><div class="value">₹0</div><div class="sub">This period</div></div>'+
+  '<div class="kpi err"><div class="label">Blended ROAS</div><div class="value">0x</div><div class="sub">No spend</div></div>'+
+  '<div class="kpi"><div class="label">Campaigns Planned</div><div class="value">5</div><div class="sub">Ready to launch</div></div>'+
+  '<div class="kpi warn"><div class="label">Est. Budget Needed</div><div class="value">₹25K/mo</div><div class="sub">To start testing</div></div>'+
+  '<div class="kpi ok"><div class="label">Organic Revenue</div><div class="value">₹54,028</div><div class="sub">Your baseline</div></div>'+
+  '</div>'+
+  '<div class="panel"><h2>Campaign Pipeline</h2><div class="desc">Planned campaigns based on your sales data. Launch in priority order.</div>'+
+  '<table><thead><tr><th>#</th><th>Campaign</th><th>Platform</th><th>SKU</th><th>Cities</th><th class="num">Status</th><th class="num">Verdict</th><th class="num">Action</th></tr></thead><tbody>'+
+  camps.map(c=>'<tr><td style="color:#9CA3AF;font-size:11px">'+esc(c.id)+'</td>'+
+    '<td><strong>'+esc(c.name)+'</strong><br><span style="font-size:11px;color:#4A5568">'+esc(c.type)+'</span></td>'+
+    '<td><span class="pill pill-navy">'+esc(c.platform)+'</span></td>'+
+    '<td style="font-size:12px">'+esc(c.sku)+'</td>'+
+    '<td style="font-size:12px">'+esc(c.cities)+'</td>'+
+    '<td class="num"><span class="pill '+(sc[c.status]||'pill-navy')+'">'+esc(c.status)+'</span></td>'+
+    '<td class="num"><span class="pill pill-ok">'+esc(c.verdict)+'</span></td>'+
+    '<td class="num"><button class="btn btn-sm btn-outline" onclick="showCampDetail(''+c.id+'')">Details</button></td></tr>').join('')+
+  '</tbody></table></div>'+
+  '<div class="panel"><h2>📋 How to Launch Your First Blinkit Campaign</h2><div class="desc">Step-by-step for Night Hawk's first paid campaign.</div>'+
+  '<ol style="font-size:13px;line-height:2.2;padding-left:20px">'+
+  '<li>Log in to <strong>Blinkit Seller Portal</strong> → Ads section</li>'+
+  '<li>Select <strong>Sponsored Products</strong> → Choose <em>Berry Burst Single Can</em></li>'+
+  '<li>Target keywords: <em>"energy drink", "sugar free energy drink", "can energy drink", "night hawk"</em></li>'+
+  '<li>Set daily budget: <strong>₹300–500/day</strong> to start</li>'+
+  '<li>Target cities: <strong>Bangalore + Hyderabad first</strong></li>'+
+  '<li>Set bid: Start at <strong>₹8–12 per click</strong>, adjust after first week</li>'+
+  '<li>Log spend weekly in the Q-Commerce OS → Ad Spend tab</li>'+
+  '</ol></div>';
+}
+
+function showCampDetail(id){
+  const d={'C001':'Berry Burst Single Can is your hero SKU (434 units, ₹33,852 revenue). Sponsoring on Blinkit search in Bangalore + Hyderabad — where it already sells organically — should generate 3–5x ROAS. Recommended starting budget: ₹10,000/month. Target keywords: energy drink, sugar free energy drink, 250ml energy drink.',
+  'C002':'Pineapple Passion Single (129 units, ₹10,062). Launch after Berry Burst is profitable. Same setup, same keywords, different product. Budget: ₹5,000/month.',
+  'C003':'BB 2-Pack has 3.03% complaint rate. A ₹10 discount across Blinkit moves stock, reduces storage fees (currently 27.5% of revenue), and generates reviews. Cost: ~₹5,000 in discount value. Net positive after storage savings.',
+  'C004':'Target night-shift coders and gamers on Instagram. Run 4–5 short Reels using CRASH PROOF concept. Works best after Blinkit ads are profitable — social drives search intent.',
+  'C005':'Brand awareness using STAY LIT tagline. Run once you have ₹50K+/month revenue and need recognition beyond Q-commerce. Too early right now.'};
+  alert('Campaign: '+id+'\n\n'+(d[id]||'No details.'));
+}
+
+// ─── CREATIVE LAB ─────────────────────────────────────────────────
+function renderCreative(){
+  const cr=[
+    {id:'CR-001',name:'CRASH PROOF',platform:'Instagram Reels',sku:'Berry Burst Single',hook:'You work while they sleep. Fuel accordingly.',status:'concept',bg:'linear-gradient(135deg,#C8272D,#E85D26)',icon:'🥤',note:'Your strongest concept. CRASH PROOF directly addresses the night-shift coder — your #1 audience. Prioritise for first social campaign.'},
+    {id:'CR-002',name:'Pool Party Energy',platform:'Instagram Feed',sku:'Berry Burst Single',hook:'Summer energy. No crash.',status:'concept',bg:'linear-gradient(135deg,#087E8B,#0B3954)',icon:'🏊',note:'Good lifestyle creative for summer. Builds brand recognition. Lower conversion intent than CRASH PROOF — run as awareness, not conversion.'},
+    {id:'CR-003',name:"Don't Trust Anyone",platform:'Instagram Reels',sku:'BB + PP Single',hook:"Your energy drink shouldn't let you down.",status:'concept',bg:'linear-gradient(135deg,#1a202c,#4A5568)',icon:'🦅',note:'Bold challenger brand. High risk, high reward. Test with ₹3,000 before scaling. If CTR exceeds 2%, scale aggressively.'},
+    {id:'CR-004',name:'Blinkit Search Ad — BB',platform:'Blinkit Sponsored',sku:'Berry Burst Single Can',hook:'Energy drink. Fast delivery.',status:'ready',bg:'linear-gradient(135deg,#F5B700,#E85D26)',icon:'🏪',note:'THIS is your first campaign. Simple product-focused search ad. No creative production needed. Set up in Blinkit Seller Portal today.'},
+    {id:'CR-005',name:'Blinkit Search Ad — PP',platform:'Blinkit Sponsored',sku:'Pineapple Passion Single',hook:'Energy drink. Fast delivery.',status:'ready',bg:'linear-gradient(135deg,#F5B700,#1E8449)',icon:'🍍',note:'Launch after Berry Burst Blinkit campaign is profitable. Same format, same keywords, Pineapple Passion variant.'},
+    {id:'CR-006',name:'2-Pack Clearance',platform:'Blinkit / Zepto',sku:'Berry Burst 2-Pack',hook:'Limited time: ₹10 off Berry Burst 2-Pack',status:'urgent',bg:'linear-gradient(135deg,#BF1A2F,#0B3954)',icon:'📦',note:'URGENT: BB 2-Pack has 3% complaint rate and storage is eating margin. Run ₹10 off promotion NOW. Pays for itself via reduced storage fees alone.'},
+  ];
+  const sc={'concept':'pill-warn','ready':'pill-ok','urgent':'pill-err'};
+  const el=document.getElementById('main-content');if(!el)return;
+  el.innerHTML='<div class="topbar"><h1>🎨 Creative Lab</h1></div>'+
+  '<div class="alert ok"><span class="sev">💡 Tip</span><span>Prioritise <strong>CR-004 (Blinkit Search)</strong> and <strong>CR-006 (2-Pack Clearance)</strong> first — both tie directly to immediate revenue and margin improvements with zero creative production required.</span></div>'+
+  '<div class="creative-grid">'+
+  cr.map(c=>'<div class="creative-card">'+
+    '<div class="creative-thumb" style="background:'+c.bg+'">'+
+      '<div style="text-align:center"><div style="font-size:36px">'+c.icon+'</div><div style="font-size:11px;margin-top:4px;opacity:0.9">'+esc(c.platform)+'</div></div>'+
+      '<div style="position:absolute;top:8px;right:8px"><span class="pill '+(sc[c.status]||'pill-navy')+'">'+c.status+'</span></div>'+
+    '</div>'+
+    '<div class="creative-body">'+
+      '<div class="creative-meta"><span class="pill pill-navy" style="font-size:10px">'+esc(c.sku)+'</span></div>'+
+      '<div class="headline">'+esc(c.name)+'</div>'+
+      '<div style="font-size:12px;color:#4A5568;margin-bottom:8px;font-style:italic">"'+esc(c.hook)+'"</div>'+
+      '<div class="creative-stats">'+
+        '<div class="creative-stat"><div class="cs-label">Spend</div><div class="cs-value" style="color:#BF1A2F">₹0</div></div>'+
+        '<div class="creative-stat"><div class="cs-label">ROAS</div><div class="cs-value">—</div></div>'+
+        '<div class="creative-stat"><div class="cs-label">CTR</div><div class="cs-value">—</div></div>'+
+      '</div>'+
+      '<div class="ai-box"><strong>🤖 AI Note:</strong> '+esc(c.note)+'</div>'+
+    '</div>'+
+  '</div>').join('')+
+  '</div>';
+}
+// ─── LISTING HEALTH ──────────────────────────────────────────────
+function renderListing(){
+  const ls=[
+    {sku:'Berry Burst Single Can',platform:'Blinkit',ts:72,is:85,ov:78,rev:0,rat:'—',missing:['sugar free','250ml','night shift'],rec:'Add "250ml Sugar Free Energy Drink" to title. This single change can improve search rank by 2–3 positions on Blinkit.'},
+    {sku:'Berry Burst Single Can',platform:'Zepto',ts:65,is:80,ov:72,rev:0,rat:'—',missing:['250ml','night hawk','boost'],rec:'Rewrite to: "Night Hawk Berry Burst Energy Drink 250ml Can | Boost & Focus". Zepto allows up to 200 chars.'},
+    {sku:'Pineapple Passion Single Can',platform:'Blinkit',ts:68,is:82,ov:74,rev:0,rat:'—',missing:['passion','250ml','tropical'],rec:'Add flavour: "Tropical Pineapple Passion Energy Drink 250ml — Natural Caffeine Boost".'},
+    {sku:'Berry Burst 2-Pack',platform:'Blinkit',ts:55,is:60,ov:57,rev:1,rat:'3.0★',missing:['value pack','save'],rec:'PAUSE: Resolve quality complaint before optimising. Once resolved, relaunch with "Berry Burst 2-Can Value Pack | Save 10%".'},
+    {sku:'BB 6-Pack',platform:'Blinkit',ts:62,is:78,ov:68,rev:0,rat:'—',missing:['bulk','office','subscribe'],rec:'Retitle: "Night Hawk Berry Burst 6-Can Pack | Office & Home Supply | Bulk Value"'},
+    {sku:'PP 6-Pack',platform:'Blinkit',ts:60,is:75,ov:66,rev:0,rat:'—',missing:['tropical','summer','bulk'],rec:'Retitle: "Night Hawk Pineapple Passion 6-Can Pack | Tropical Bulk Value | Sugar Free"'},
+  ];
+  function sc(v){return v>=75?'#1E8449':v>=60?'#B7950B':'#C0392B';}
+  function pill(v){return v>=75?'pill-ok':v>=65?'pill-info':'pill-err';}
+  const el=document.getElementById('main-content');if(!el)return;
+  el.innerHTML='<div class="topbar"><h1>🏪 Listing Health (Q-Commerce SEO)</h1></div>'+
+  '<div class="alert warn"><span class="sev">📝 Note</span><span><strong>Q-Commerce SEO matters.</strong> Title keywords and image quality directly affect search rank on Blinkit and Zepto. You currently have only 1 review — reviews are the #1 ranking factor.</span></div>'+
+  '<div class="kpi-grid">'+
+  '<div class="kpi warn"><div class="label">Avg Title Score</div><div class="value">64/100</div><div class="sub">Below 75 target</div></div>'+
+  '<div class="kpi warn"><div class="label">Avg Image Score</div><div class="value">77/100</div><div class="sub">Acceptable</div></div>'+
+  '<div class="kpi err"><div class="label">Total Reviews</div><div class="value">1</div><div class="sub">Need 10+ for visibility</div></div>'+
+  '<div class="kpi err"><div class="label">Listings Paused</div><div class="value">1</div><div class="sub">BB 2-Pack (complaint)</div></div>'+
+  '</div>'+
+  '<div class="panel"><h2>Listing Scores</h2><div class="desc">Title score, image quality, and AI recommendations per SKU-platform listing.</div>'+
+  '<table><thead><tr><th>SKU</th><th>Platform</th><th>Title Score</th><th>Image Score</th><th>Overall</th><th class="num">Reviews</th><th class="num">Action</th></tr></thead><tbody>'+
+  ls.map(l=>'<tr>'+
+    '<td><strong>'+esc(l.sku)+'</strong></td>'+
+    '<td><span class="pill pill-navy">'+esc(l.platform)+'</span></td>'+
+    '<td><div class="listing-score"><div class="bar-bg"><div class="bar-fill" style="width:'+l.ts+'%;background:'+sc(l.ts)+'"></div></div><span style="font-size:12px;font-weight:600;color:'+sc(l.ts)+'">'+l.ts+'</span></div></td>'+
+    '<td><div class="listing-score"><div class="bar-bg"><div class="bar-fill" style="width:'+l.is+'%;background:'+sc(l.is)+'"></div></div><span style="font-size:12px;font-weight:600;color:'+sc(l.is)+'">'+l.is+'</span></div></td>'+
+    '<td><span class="pill '+pill(l.ov)+'">'+l.ov+'/100</span></td>'+
+    '<td class="num">'+l.rev+(l.rat!=='—'?' ('+l.rat+')':'')+'</td>'+
+    '<td class="num"><button class="btn btn-sm btn-outline" onclick="alert('Fix: '+esc(l.sku)+' on '+esc(l.platform)+'\\n\\n'+esc(l.rec)+'')">Fix</button></td>'+
+  '</tr>').join('')+
+  '</tbody></table></div>'+
+  '<div class="panel"><h2>🔑 Missing Keywords</h2><div class="desc">High-value search terms currently missing from your listings.</div>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+  ls.slice(0,4).map(l=>'<div><div style="font-size:13px;font-weight:600;margin-bottom:6px">'+esc(l.sku)+' — '+esc(l.platform)+'</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:4px">'+
+    l.missing.map(k=>'<span class="pill pill-err">❌ '+esc(k)+'</span>').join('')+
+    '</div></div>').join('')+
+  '</div></div>'+
+  '<div class="panel"><h2>🌟 Review Generation Strategy</h2><div class="desc">You have 1 review total. Reviews are the #1 factor for Blinkit search ranking.</div>'+
+  '<div class="alert ok"><span class="sev">✓ Play 1</span><span><strong>Message every buyer within 24h of delivery via Blinkit Seller Portal:</strong> "Hi! Hope you're loving Night Hawk. A quick review helps us a lot — takes 10 seconds." Target: 20 reviews in 30 days.</span></div>'+
+  '<div class="alert ok"><span class="sev">✓ Play 2</span><span><strong>Add a QR code card inside packaging</strong> — "Leave a review, get ₹10 off your next order." Generates 15–25% review rate on deliveries.</span></div>'+
+  '<div class="alert warn"><span class="sev">⚡ Play 3</span><span><strong>Resolve BB 2-Pack complaint first.</strong> 1 negative review can suppress all your listings. Fix the product, then re-launch and generate reviews.</span></div>'+
+  '</div>';
+}
+
+// ─── AUDIENCE ────────────────────────────────────────────────────
+async function renderAudience(){
+  setLoad('Analysing audience data...');
+  try{
+    const sales=await getSales();
+    const byCity={},bySku={};
+    sales.rows.forEach(r=>{
+      const ci=CITY_MAP[r.city_id]||r.city_id,sk=SKU_MAP[r.sku_id]||r.sku_id;
+      if(!byCity[ci])byCity[ci]={units:0,rev:0};byCity[ci].units+=r.units;byCity[ci].rev+=r.value;
+      if(!bySku[sk])bySku[sk]={units:0,rev:0};bySku[sk].units+=r.units;bySku[sk].rev+=r.value;
+    });
+    const topCity=Object.entries(byCity).sort((a,b)=>b[1].units-a[1].units);
+    const total=Object.values(byCity).reduce((s,c)=>s+c.units,0);
+    const colors=['#0B3954','#087E8B','#BF1A2F','#F5B700','#1E8449','#4A5568','#B7950B','#C0392B','#2980B9','#8E44AD','#27AE60','#E67E22','#95A5A6','#D35400'];
+    const el=document.getElementById('main-content');if(!el)return;
+    el.innerHTML='<div class="topbar"><h1>👥 Audience &amp; Cohorts</h1><div class="filters"><input type="date" id="f-from" value="'+_from+'"><input type="date" id="f-to" value="'+_to+'"><button class="btn btn-primary" onclick="applyFilters()">Apply</button><button class="btn btn-outline" onclick="loadView('audience')">↻</button></div></div>'+
+    '<div class="alert ok"><span class="sev">💡 Insight</span><span><strong>Your natural buyer is the urban night-shift professional.</strong> Hyderabad and Bangalore dominate volume. Berry Burst Single Can is your hero SKU (71% of units). Build all campaigns around this person.</span></div>'+
+    '<div class="kpi-grid">'+
+    '<div class="kpi ok"><div class="label">Active Cities</div><div class="value">14</div><div class="sub">Organic only</div></div>'+
+    '<div class="kpi ok"><div class="label">Hero SKU Share</div><div class="value">71%</div><div class="sub">Berry Burst Single</div></div>'+
+    '<div class="kpi"><div class="label">Top City (Volume)</div><div class="value">Hyd</div><div class="sub">'+(byCity['Hyderabad']?.units||0)+' units</div></div>'+
+    '<div class="kpi"><div class="label">Avg Rev / City</div><div class="value">'+inr(Object.values(byCity).reduce((s,c)=>s+c.rev,0)/Object.keys(byCity).length)+'</div><div class="sub">Across 14 cities</div></div>'+
+    '</div>'+
+    '<div class="two-col">'+
+    '<div class="panel"><h2>City Volume Distribution</h2><div class="desc">Units sold per city as % of total.</div><canvas id="ch-city" style="max-height:280px"></canvas></div>'+
+    '<div class="panel"><h2>City Performance</h2><div class="desc">Revenue and units per city.</div>'+
+    '<table><thead><tr><th>City</th><th class="num">Units</th><th class="num">Revenue</th><th class="num">% Total</th></tr></thead><tbody>'+
+    topCity.map(([c,d])=>{const sh=Math.round(d.units/total*100);return '<tr><td>'+esc(c)+'</td><td class="num">'+d.units+'</td><td class="num">'+inr(d.rev)+'</td><td class="num"><span class="pill '+(sh>15?'pill-ok':sh>8?'pill-info':'pill-warn')+'">'+sh+'%</span></td></tr>';}).join('')+
+    '</tbody></table></div></div>'+
+    '<div class="panel"><h2>🎯 Audience Personas</h2><div class="desc">Based on your city mix, SKU preferences, and brand positioning.</div>'+
+    '<div class="three-col">'+
+    '<div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:14px"><div style="font-size:20px;margin-bottom:4px">🖥️ Night-Shift Coder</div><div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:8px">PRIMARY SEGMENT</div><div style="font-size:12px;line-height:1.6">Tech professional, 22–32, Bangalore/Hyderabad. Orders 9pm–2am. Berry Burst Single. High repeat purchase potential. Your brand was literally built for this person.</div><div style="margin-top:8px"><span class="pill pill-ok">LTV: High</span> <span class="pill pill-ok">CAC: Low</span></div></div>'+
+    '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:14px"><div style="font-size:20px;margin-bottom:4px">💪 Gym &amp; Performance</div><div style="font-size:12px;font-weight:700;color:#1e40af;margin-bottom:8px">SECONDARY SEGMENT</div><div style="font-size:12px;line-height:1.6">Fitness buyer, 20–35, orders pre-workout. Pineapple Passion preference. Mumbai and Delhi lean this way.</div><div style="margin-top:8px"><span class="pill pill-info">LTV: Medium</span> <span class="pill pill-info">CAC: Medium</span></div></div>'+
+    '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:14px"><div style="font-size:20px;margin-bottom:4px">📚 Campus / Exam Season</div><div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:8px">EMERGING SEGMENT</div><div style="font-size:12px;line-height:1.6">Student, 18–24, Chennai/Kolkata. High volume during exams (Jan–Mar, Oct–Nov). Value-conscious — 2-Pack buyers. Vellore and Coimbatore presence.</div><div style="margin-top:8px"><span class="pill pill-warn">LTV: Low-Med</span> <span class="pill pill-warn">CAC: Low</span></div></div>'+
+    '</div></div>'+
+    '<div class="panel"><h2>📅 Daily Volume (Last 30 Days)</h2><div class="desc">Units sold pattern — identifying your peak sales days.</div><div class="chart-wrap"><canvas id="ch-daily"></canvas></div></div>';
+    mc('ch-city',{type:'doughnut',data:{labels:topCity.map(x=>x[0]),datasets:[{data:topCity.map(x=>x[1].units),backgroundColor:colors}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10}}}}}});
+    const dash=await getDash();
+    const last30=dash.series.slice(-30);
+    mc('ch-daily',{type:'bar',data:{labels:last30.map(s=>s.date.substring(5)),datasets:[{label:'Units',data:last30.map(s=>s.units),backgroundColor:'rgba(8,126,139,0.75)',borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{maxTicksLimit:15}},y:{beginAtZero:true}}}});
+  }catch(e){setLoad('Error: '+esc(e.message));}
+}
+// ─── BUDGET PLANNER ──────────────────────────────────────────────
+function renderBudget(){
+  const el=document.getElementById('main-content');if(!el)return;
+  el.innerHTML='<div class="topbar"><h1>💸 Marketing Budget Planner</h1></div>'+
+  '<div class="two-col">'+
+  '<div class="panel"><h2>Budget Inputs</h2><div class="desc">Set your monthly marketing budget and revenue target.</div>'+
+  '<div class="budget-input-group"><label>Monthly Marketing Budget (₹)</label><input type="number" id="bp-budget" value="25000" min="0" step="1000"></div>'+
+  '<div class="budget-input-group"><label>Revenue Target This Month (₹)</label><input type="number" id="bp-target" value="80000" min="0" step="5000"></div>'+
+  '<div class="budget-input-group"><label>Current Monthly Revenue (₹)</label><input type="number" id="bp-current" value="18000" min="0" step="1000"></div>'+
+  '<div class="budget-input-group"><label>Primary Channel Focus</label><select id="bp-ch"><option value="blinkit">Blinkit First (recommended)</option><option value="social">Social Media First</option><option value="mixed">Balanced Mix</option></select></div>'+
+  '<button class="btn btn-primary" style="width:100%" onclick="calcBudget()">Calculate Allocation</button></div>'+
+  '<div class="panel" id="bp-out"><h2>Recommended Allocation</h2><div class="desc">Fill in your budget and click Calculate.</div><div class="no-data">👆 Enter budget details and click Calculate</div></div>'+
+  '</div>'+
+  '<div class="panel"><h2>📊 Channel Benchmarks — Indian Q-Commerce Energy Drinks</h2><div class="desc">Industry benchmarks to set expectations.</div>'+
+  '<table><thead><tr><th>Channel</th><th>Typical ROAS</th><th>Min Budget</th><th>Time to Results</th><th>Best For</th><th>NH Fit</th></tr></thead><tbody>'+
+  [['Blinkit Sponsored Listings','3–6x','₹5,000/mo','1–2 weeks','Direct sales','★★★★★','pill-ok'],
+   ['Zepto Ads','2.5–5x','₹3,000/mo','1–2 weeks','Direct sales','★★★★★','pill-ok'],
+   ['Swiggy Instamart Ads','2–4x','₹3,000/mo','2–3 weeks','Direct sales','★★★★☆','pill-info'],
+   ['Meta (Instagram Reels)','1.5–3x','₹15,000/mo','4–6 weeks','Brand + reach','★★★☆☆','pill-warn'],
+   ['Google Search','2–4x','₹10,000/mo','2–4 weeks','Intent capture','★★★☆☆','pill-warn'],
+   ['Influencer (Nano)','Hard to track','₹5,000/mo','4–8 weeks','Credibility','★★★☆☆','pill-warn']].map(r=>'<tr><td><strong>'+r[0]+'</strong></td><td class="num"><span class="pill '+r[6]+'">'+r[1]+'</span></td><td class="num">'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td><td>'+r[5]+'</td></tr>').join('')+
+  '</tbody></table></div>';
+}
+
+function calcBudget(){
+  const budget=parseFloat(document.getElementById('bp-budget').value)||0;
+  const target=parseFloat(document.getElementById('bp-target').value)||0;
+  const current=parseFloat(document.getElementById('bp-current').value)||0;
+  const ch=document.getElementById('bp-ch').value;
+  if(budget<=0){alert('Please enter a budget');return;}
+  const alloc=ch==='blinkit'
+    ?[{n:'Blinkit Sponsored Listings',p:55,c:'#0B3954',r:'3–5x',note:'Start with BB Single in Bangalore + Hyderabad.'},
+      {n:'Zepto Ads',p:20,c:'#087E8B',r:'2.5–4x',note:'Set up once Blinkit is profitable.'},
+      {n:'Instagram Boosts',p:15,c:'#BF1A2F',r:'1.5–2.5x',note:'Boost existing organic posts only.'},
+      {n:'BB 2-Pack Clearance Promo',p:10,c:'#F5B700',r:'Saves storage cost',note:'Discount to clear inventory.'}]
+    :ch==='social'
+    ?[{n:'Instagram Reels Campaign',p:45,c:'#BF1A2F',r:'1.5–2.5x',note:'CRASH PROOF concept. Bangalore/Hyderabad.'},
+      {n:'Blinkit Sponsored Listings',p:35,c:'#0B3954',r:'3–5x',note:'Capture search intent from social.'},
+      {n:'Influencer Seeding',p:20,c:'#087E8B',r:'Hard to track',note:'5–10 nano-influencers in gaming/fitness.'}]
+    :[{n:'Blinkit Sponsored Listings',p:40,c:'#0B3954',r:'3–5x',note:'Core performance channel.'},
+      {n:'Zepto Ads',p:20,c:'#087E8B',r:'2.5–4x',note:'Second platform expansion.'},
+      {n:'Instagram Campaign',p:25,c:'#BF1A2F',r:'1.5–2.5x',note:'Brand building alongside performance.'},
+      {n:'Promotions',p:15,c:'#F5B700',r:'Long-term value',note:'Clearance promos + sampling.'}];
+  const totalAdRev=alloc.reduce((s,a)=>s+(budget*a.p/100)*(parseFloat(a.r.split('–')[0]||0)||0),0);
+  const projected=Math.round(totalAdRev+current);
+  const out=document.getElementById('bp-out');if(!out)return;
+  out.innerHTML='<h2>Recommended Allocation</h2><div class="desc">For a ₹'+budget.toLocaleString('en-IN')+' budget targeting ₹'+target.toLocaleString('en-IN')+' revenue.</div>'+
+  alloc.map(a=>{const amt=Math.round(budget*a.p/100);return '<div class="channel-bar"><div class="ch-name">'+esc(a.n)+'</div><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:'+a.p+'%;background:'+a.c+'"></div></div><div class="ch-pct">'+a.p+'%</div><div class="ch-amt">₹'+amt.toLocaleString('en-IN')+'</div></div><div style="font-size:11px;color:#4A5568;margin:-2px 0 10px 152px">'+esc(a.note)+' · Est. ROAS: '+esc(a.r)+'</div>';}).join('')+
+  '<div style="border-top:1px solid var(--nh-gray-line);padding-top:12px;margin-top:8px">'+
+  '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Total Budget:</span><strong>₹'+budget.toLocaleString('en-IN')+'</strong></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Est. Revenue from Ads:</span><strong>₹'+Math.round(totalAdRev).toLocaleString('en-IN')+'</strong></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Organic Revenue (baseline):</span><strong>₹'+current.toLocaleString('en-IN')+'</strong></div>'+
+  '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;margin-top:8px;color:'+(projected>=target?'#1E8449':'#C0392B')+'"><span>Projected Total:</span><span>₹'+projected.toLocaleString('en-IN')+'</span></div>'+
+  (projected>=target
+    ?'<div class="alert ok" style="margin-top:10px"><span class="sev">✓</span><span>Budget sufficient to reach ₹'+target.toLocaleString('en-IN')+' target if ROAS benchmarks hold.</span></div>'
+    :'<div class="alert warn" style="margin-top:10px"><span class="sev">⚠</span><span>May fall short of target by ₹'+(target-projected).toLocaleString('en-IN')+'. Consider increasing budget by ₹'+Math.round((target-projected)/3).toLocaleString('en-IN')+' or lowering target.</span></div>')+
+  '</div>';
+}
+// ─── ASK MARKETING AI ────────────────────────────────────────────
+function renderAI(){
+  const el=document.getElementById('main-content');if(!el)return;
+  const hasKey=!!localStorage.getItem('nh_claude_key');
+  el.innerHTML='<div class="topbar"><h1>🧠 Ask Marketing AI</h1><div class="filters"><button class="btn btn-outline btn-sm" onclick="resetChat()">Clear session</button></div></div>'+
+  (!hasKey?'<div class="setup-box"><div class="setup-title">⚡ Activate the Marketing AI</div>1. Get your API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--nh-yellow)">console.anthropic.com</a><br>2. Open browser console (F12) and run:<br><br><code>localStorage.setItem("nh_claude_key", "sk-ant-your-key-here")</code><br><br>3. Click the button below or refresh the page.<br><br><button class="btn btn-primary" onclick="promptApiKey()">Set API Key Now</button></div>':'')+
+  '<div class="chat-wrap">'+
+    '<div class="chat-history" id="chat-history">'+
+      '<div style="text-align:center;padding:40px 20px">'+
+        '<div style="font-size:40px">⚡</div>'+
+        '<div style="font-size:15px;font-weight:600;margin:8px 0">Your Night Hawk Marketing Strategist</div>'+
+        '<div style="font-size:13px;color:#4A5568;max-width:420px;margin:0 auto">Ask anything about your marketing strategy. This AI knows your real sales data — 615 units, ₹54K revenue, 14 cities, 6 SKUs, and your brand story.</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="chat-starters" id="chat-starters">'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">Which SKU should I advertise first?</button>'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">Best city for a Blinkit promotion?</button>'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">How do I improve Blinkit search ranking?</button>'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">Should I run a 2-pack discount?</button>'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">What's my biggest marketing opportunity?</button>'+
+      '<button class="chat-starter" onclick="sendChat(this.textContent)">How should I spend ₹25,000 on marketing?</button>'+
+    '</div>'+
+    '<div class="chat-input-row">'+
+      '<textarea class="chat-input" id="chat-input" rows="2" placeholder="Ask about campaigns, budgets, listings, audiences..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatInput();}"></textarea>'+
+      '<button class="chat-send" onclick="sendChatInput()">Ask</button>'+
+    '</div>'+
+    '<div class="chat-footer">Powered by Claude · Connected to your real sales data · Not stored by Anthropic</div>'+
+  '</div>';
+}
+
+function sendChatInput(){const i=document.getElementById('chat-input');const q=(i.value||'').trim();if(!q)return;i.value='';sendChat(q);}
+function resetChat(){_chatHistory=[];renderAI();}
+
+function appendMsg(role,text){
+  const h=document.getElementById('chat-history');if(!h)return;
+  const st=document.getElementById('chat-starters');if(st&&role==='user')st.style.display='none';
+  const d=document.createElement('div');d.className='chat-msg '+role;
+  d.innerHTML='<div class="chat-avatar">'+(role==='user'?'V':'⚡')+'</div><div class="chat-bubble">'+esc(text).replace(/\n/g,'<br>')+'</div>';
+  h.appendChild(d);h.scrollTop=h.scrollHeight;
+}
+
+async function sendChat(q){
+  if(!q)return;
+  appendMsg('user',q);
+  const h=document.getElementById('chat-history');
+  const th=document.createElement('div');th.className='chat-msg ai';th.id='chat-thinking';
+  th.innerHTML='<div class="chat-avatar">⚡</div><div class="chat-bubble" style="color:#9CA3AF;font-style:italic">Thinking...</div>';
+  if(h){h.appendChild(th);h.scrollTop=h.scrollHeight;}
+  _chatHistory.push({role:'user',content:q});
+  
+  const ctx='You are a marketing strategist for Night Hawk Energy Drink, an Indian Q-commerce beverage brand. 3 years old, bootstrapped, pivoting to AI-operated brand.\n\nREAL BUSINESS DATA:\n- Revenue: ₹54,028 over 90 days (Blinkit only, 100% organic)\n- Units: 615 | Avg price: ₹87.85 | CM/can: ₹8.44 | Storage fee: 27.55% (target <25%)\n- No paid ads running — ROAS is 0x\n\nSKU PERFORMANCE:\n- Berry Burst Single Can: 434 units, ₹33,852 — HERO SKU (71% revenue)\n- Pineapple Passion Single Can: 129 units, ₹10,062 — #2 SKU\n- Berry Burst 2-Pack: 33 units, ₹4,044 — HAS 3% COMPLAINT RATE (quality issue, paused)\n- BB 6-Pack: 9 units | PP 6-Pack: 7 units | PP 2-Pack: 3 units\n\nTOP CITIES:\n- Hyderabad: 138 units, ₹12,234 | Bangalore: 133 units, ₹14,406 | Mumbai: 74 units, ₹5,772\n- Kolkata: 65 units | Chennai: 56 units | Delhi: 50 units\n\nBRAND: Tagline: STAY LIT WHEN EVERYONE ELSE CRASHES. Target: night-shift coders, gamers, gym-goers, students. Instagram @nighthawkenergy (2,681 followers). Products: Berry Burst (red can) + Pineapple Passion (blue can).\n\nKEY PRIORITIES: 1) Start Blinkit Sponsored Listings (BB Single, Bangalore+Hyderabad), 2) Fix storage fee by clearing slow inventory, 3) Resolve BB 2-Pack quality complaint, 4) Expand to Zepto/Swiggy.\n\nAnswer directly, specifically, actionably. Use Indian rupee amounts. Keep under 200 words.';
+  
+  const apiKey=localStorage.getItem('nh_claude_key')||'';
+  if(!apiKey){
+    document.getElementById('chat-thinking')?.remove();
+    appendMsg('ai','The Marketing AI needs a Claude API key to activate.\n\nTo set it up:\n1. Go to console.anthropic.com\n2. Create an API key\n3. Open browser console (F12) and run:\n\nlocalStorage.setItem("nh_claude_key", "sk-ant-your-key")\n\nOr click "Set Claude API Key" in the sidebar footer.');
+    return;
+  }
+  try{
+    const msgs=_chatHistory.length===1
+      ?[{role:'user',content:ctx+'\n\nQuestion: '+q}]
+      :[{role:'user',content:ctx+'\n\nQuestion: '+_chatHistory[0].content},..._chatHistory.slice(1)];
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':apiKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-ipc':'true'},body:JSON.stringify({model:'claude-3-5-sonnet-20241022',max_tokens:600,messages:msgs})});
+    const data=await resp.json();
+    const reply=data.content?.[0]?.text||'No response. Check your API key.';
+    document.getElementById('chat-thinking')?.remove();
+    appendMsg('ai',reply);_chatHistory.push({role:'assistant',content:reply});
+  }catch(e){
+    document.getElementById('chat-thinking')?.remove();
+    appendMsg('ai','Error: '+e.message);
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>loadView('overview'));
+if(document.readyState!=='loading')loadView('overview');
+</script>
+</body>
+</html>
