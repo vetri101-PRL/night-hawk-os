@@ -2820,31 +2820,34 @@ function renderAIStrategy(){
 }
 
 function markdownToHtml(md){
-  var h=md
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/^### (.+)$/gm,'<h3 style="color:#0B3954;font-size:15px;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid #E5E8EC;letter-spacing:0.05em">$1</h3>')
-    .replace(/^## (.+)$/gm,'<h2 style="color:#087E8B;font-size:17px;margin:28px 0 10px;padding:10px 0 8px;border-bottom:2px solid #087E8B;font-weight:700">$1</h2>')
-    .replace(/^# (.+)$/gm,'<h1 style="color:#0B3954;font-size:20px;margin:0 0 16px;font-weight:700">$1</h1>')
-    .replace(/**([^*]+)**/g,'<strong>$1</strong>')
-    .replace(/*([^*]+)*/g,'<em>$1</em>')
-    .replace(/^[OPTION ([123])] **([^*]+)** | ([^|
-]+) | ([^
-]+)$/gm,
-      '<div style="margin:10px 0;padding:14px 16px;background:#fff;border:1px solid #E5E8EC;border-radius:8px;border-left:4px solid #087E8B">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
-      '<div><span style="background:#0B3954;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-right:8px">OPTION $1</span>'+
-      '<strong style="color:#1a202c">$2</strong></div>'+
-      '<button onclick="triggerAgentAction('$2',$1)" style="padding:6px 14px;background:#087E8B;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">&#x25B6; Execute</button></div>'+
-      '<div style="margin-top:8px;color:#4A5568;font-size:13px">$3</div>'+
-      '<div style="margin-top:6px;color:#087E8B;font-size:12px;font-weight:600">$4</div></div>')
-    .replace(/^- (.+)$/gm,'<div style="display:flex;gap:8px;margin:5px 0;padding:8px 12px;background:#F7F8FA;border-left:3px solid #087E8B;border-radius:0 4px 4px 0"><span style="color:#087E8B;font-weight:700;flex-shrink:0">&#x2713;</span><span>$1</span></div>')
-    .replace(/^d+. (.+)$/gm,'<div style="margin:5px 0;padding:8px 12px;background:#F7F8FA;border-radius:4px;border-left:3px solid #0B3954">$1</div>')
-    .replace(/^---$/gm,'<hr style="border:none;border-top:1px solid #E5E8EC;margin:16px 0">')
-    .replace(/
-
-+/g,'</p><p style="margin:8px 0;color:#1a202c;line-height:1.6">')
-    .replace(/
-/g,'<br>');
+  var boldRx=/\*\*([^*]+)\*\*/g;
+  var italRx=/\*([^*]+)\*/g;
+  var h3Rx=/^### (.+)$/gm;
+  var h2Rx=/^## (.+)$/gm;
+  var h1Rx=/^# (.+)$/gm;
+  var optRx=/^\[OPTION ([123])\] \*\*([^*]+)\*\* \| ([^|\n]+) \| ([^\n]+)$/gm;
+  var liRx=/^- (.+)$/gm;
+  var numRx=/^\d+\. (.+)$/gm;
+  var hrRx=/^---$/gm;
+  var h=md.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  h=h.replace(h3Rx,'<h3 style="color:#0B3954;font-size:15px;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid #E5E8EC;letter-spacing:0.05em">$1</h3>');
+  h=h.replace(h2Rx,'<h2 style="color:#087E8B;font-size:17px;margin:28px 0 10px;padding:10px 0 8px;border-bottom:2px solid #087E8B;font-weight:700">$1</h2>');
+  h=h.replace(h1Rx,'<h1 style="color:#0B3954;font-size:20px;margin:0 0 16px;font-weight:700">$1</h1>');
+  h=h.replace(optRx,
+    '<div style="margin:10px 0;padding:14px 16px;background:#fff;border:1px solid #E5E8EC;border-radius:8px;border-left:4px solid #087E8B">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+    '<div><span style="background:#0B3954;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-right:8px">OPTION $1</span>'+
+    '<strong style="color:#1a202c">$2</strong></div>'+
+    '<button onclick="triggerAgentAction('$2',$1)" style="padding:6px 14px;background:#087E8B;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">&#x25B6; Execute</button></div>'+
+    '<div style="margin-top:8px;color:#4A5568;font-size:13px">$3</div>'+
+    '<div style="margin-top:6px;color:#087E8B;font-size:12px;font-weight:600">$4</div></div>');
+  h=h.replace(boldRx,'<strong>$1</strong>');
+  h=h.replace(italRx,'<em>$1</em>');
+  h=h.replace(liRx,'<div style="display:flex;gap:8px;margin:5px 0;padding:8px 12px;background:#F7F8FA;border-left:3px solid #087E8B;border-radius:0 4px 4px 0"><span style="color:#087E8B;font-weight:700;flex-shrink:0">&#x2713;</span><span>$1</span></div>');
+  h=h.replace(numRx,'<div style="margin:5px 0;padding:8px 12px;background:#F7F8FA;border-radius:4px;border-left:3px solid #0B3954">$1</div>');
+  h=h.replace(hrRx,'<hr style="border:none;border-top:1px solid #E5E8EC;margin:16px 0">');
+  h=h.replace(/\n\n+/g,'</p><p style="margin:8px 0;color:#1a202c;line-height:1.6">');
+  h=h.replace(/\n/g,'<br>');
   return '<p style="margin:8px 0;color:#1a202c;line-height:1.6">'+h+'</p>';
 }
 
@@ -2852,7 +2855,7 @@ function generateAIStrategy(){
   var key=localStorage.getItem('nh_claude_key');
   if(!key){
     var out=document.getElementById('ai-strategy-output');
-    if(out)out.innerHTML='<div style="color:#C0392B;text-align:center;padding:40px">No Claude API key. Click "Set Claude API Key" in sidebar.</div>';
+    if(out)out.innerHTML='<div style="color:#C0392B;text-align:center;padding:40px">No Claude API key set. Click \"Set Claude API Key\" in the sidebar.</div>';
     return;
   }
   var focus='all';
@@ -2867,45 +2870,19 @@ function generateAIStrategy(){
   var cityList=Object.entries(MKT.byCity||{}).slice(0,8).map(function(e){return e[0]+': ₹'+mktFmt(e[1].rev);}).join(', ');
   var focusNote=focus==='all'?'':' Focus area: '+focus+'.';
   var prompt='You are a Q-Commerce growth advisor for Night Hawk Energy Drink, a D2C brand selling on Blinkit, Swiggy Instamart, and Zepto in India.'+
-    '
-
-Business Data (last 90 days):
-- Total Revenue: ₹'+mktFmt(rev)+'
-- Total Units: '+mktN(units)+
-    '
-- Active Cities: '+cities+'
-- Active SKUs: '+skus+
-    '
-- By SKU: '+skuList+'
-- By City (top 8): '+cityList+
-    '
-
-Generate a structured 90-day action plan.'+focusNote+
-    ' Format with these exact ## headers:
-
-## 30 DAYS: FIX FUNDAMENTALS & ACTIVATE DORMANT PLATFORMS
-## 60 DAYS: SCALE WINNERS & EXPAND PLATFORMS
-## 90 DAYS: PROFITABLE SCALE & MARKET POSITION
-
-'+
+    '\n\nBusiness Data (last 90 days):\n- Total Revenue: ₹'+mktFmt(rev)+'\n- Total Units: '+mktN(units)+
+    '\n- Active Cities: '+cities+'\n- Active SKUs: '+skus+
+    '\n- By SKU: '+skuList+'\n- By City (top 8): '+cityList+
+    '\n\nGenerate a structured 90-day action plan.'+focusNote+
+    ' Format with these exact ## headers:\n\n## 30 DAYS: FIX FUNDAMENTALS & ACTIVATE DORMANT PLATFORMS\n## 60 DAYS: SCALE WINNERS & EXPAND PLATFORMS\n## 90 DAYS: PROFITABLE SCALE & MARKET POSITION\n\n'+
     'For each section add ### subsections: SALES/REVENUE, MARKETING/PAID ADS, OPERATIONS/INVENTORY, PRODUCT/SKUS, CITY/PLATFORM EXPANSION.'+
-    ' Use - bullet points. Make each action specific with rupee amounts and percentages.
-
-'+
-    'After the 90-day plan add:
-
-## AI CHIEF ADVISOR RECOMMENDS
-'+
-    'Provide exactly 3 options using this EXACT format (one per line):
-'+
-    '[OPTION 1] **Conservative: Title** | Brief description | Expected: target
-'+
-    '[OPTION 2] **Balanced: Title** | Brief description | Expected: target
-'+
-    '[OPTION 3] **Aggressive: Title** | Brief description | Expected: target
-
-'+
-    'Then state MY RECOMMENDATION: OPTION [N] with 2-sentence rationale and one immediate next step.';
+    ' Use - bullet points. Each action must include rupee amounts or percentages.\n\n'+
+    'After the 90-day plan add:\n\n## AI CHIEF ADVISOR RECOMMENDS\n'+
+    'Give exactly 3 strategic options in this EXACT format (one per line, no variation):\n'+
+    '[OPTION 1] **Conservative: Title** | Brief description of approach | Expected: specific target\n'+
+    '[OPTION 2] **Balanced: Title** | Brief description of approach | Expected: specific target\n'+
+    '[OPTION 3] **Aggressive: Title** | Brief description of approach | Expected: specific target\n\n'+
+    'Then state: MY RECOMMENDATION: OPTION [N] with a 2-sentence rationale and one immediate next step.';
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
