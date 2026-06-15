@@ -351,6 +351,7 @@ function init() {
   api('boot').then(function(boot) {
     state.boot = boot;
     $('app-root').classList.remove('hidden');
+    document.querySelector('main.main') && $('app-root').appendChild(document.querySelector('main.main'));
     $('setup-root').classList.add('hidden');
 
     var sel = $('platform-sel');
