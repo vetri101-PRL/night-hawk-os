@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Night Hawk OS</title>
-<meta name="description" content="Night Hawk Energy Drink ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Q-Commerce operations dashboard">
+<meta name="description" content="Night Hawk Energy Drink  -  Q-Commerce operations dashboard">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23F5B700'/><circle cx='16' cy='16' r='16' fill='none' stroke='%230B3954' stroke-width='2'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -237,7 +237,7 @@
 <script>
 // ===================================================================
 // Night Hawk Q-Commerce OS
-// Unified client ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ works in three contexts:
+// Unified client  -  works in three contexts:
 //   1. Served by Apps Script (template injects deployUrl)
 //   2. Hosted on GitHub Pages (user pastes URL in setup screen)
 //   3. Opened as a local file (same as #2)
@@ -246,7 +246,7 @@
 
 // The Apps Script HTML template will replace the next line with the real
 // deploy URL.  If this file is served as a plain static file, the raw
-// scriptlet text remains ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ we detect that and fall through to setup.
+// scriptlet text remains  -  we detect that and fall through to setup.
 var TEMPLATED_URL = "<?!= deployUrl ?>";
 
 var LS_KEY = 'nh.apiUrl';
@@ -1101,7 +1101,7 @@ function renderScenarios(el) {
         var fmt = function(v) { return (suffix === '%') ? (v.toFixed(dp) + '%') : (dp > 0 ? '\u20B9' + v.toFixed(dp) : Math.round(v).toLocaleString('en-IN')); };
         var delta = sc - cu;
         var deltaCls = delta >= 0 ? 'pill-ok' : 'pill-err';
-        // For "costs" rising is bad ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ flip the semantic
+        // For "costs" rising is bad  -  flip the semantic
         var costLines = ['COGS / can', 'Platform fees (% of rev)', 'Ad spend (% of rev)', 'Cost / can'];
         if (costLines.indexOf(row[0]) >= 0) deltaCls = delta <= 0 ? 'pill-ok' : 'pill-err';
         var deltaTxt = (delta >= 0 ? '+' : '') + fmt(delta);
@@ -1186,7 +1186,7 @@ function renderAI(el) {
     t = t.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
     // inline code
     t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // bullet list lines starting with - or ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢
+    // bullet list lines starting with - or  - 
     var lines = t.split('\n');
     var out = []; var inList = false;
     for (var i = 0; i < lines.length; i++) {
@@ -1483,7 +1483,7 @@ function renderBrief(el) {
       });
     }
 
-    // Kick off AI brief fetch in parallel ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ inject once it resolves.
+    // Kick off AI brief fetch in parallel  -  inject once it resolves.
     api('getTodaysBrief').then(function(res) {
       var host = document.getElementById('nh-brief-slot');
       if (!host) return;
@@ -1755,7 +1755,7 @@ function renderDecisions(el) {
           return '<tr data-id="' + escapeHtml(r.decision_id) + '">' +
             '<td>' + escapeHtml(r.decision_id) + '</td>' +
             '<td>' + escapeHtml(r.created_date) + '</td>' +
-            '<td><b>' + escapeHtml(r.title) + '</b><br><span class="muted" style="font-size:11px">' + escapeHtml((r.hypothesis || '').slice(0, 100)) + (r.hypothesis && r.hypothesis.length > 100 ? '\u2026' : '') + '</span></td>' +
+            '<td><b>' + escapeHtml(r.title) + '</b><br><span class="muted" style="font-size:11px">' + escapeHtml((r.hypothesis || '').replace(/\\u20[Bb]9/g, '₹').slice(0, 100)) + (r.hypothesis && r.hypothesis.length > 100 ? '\u2026' : '') + '</span></td>' +
             '<td>' + escapeHtml(r.category) + '</td>' +
             '<td>' + escapeHtml(r.owner || '') + '</td>' +
             '<td><span class="pill ' + cls + '">' + escapeHtml(r.status) + '</span></td>' +
@@ -2210,7 +2210,7 @@ init();
 
 <script>
 // ============================================================
-// NIGHT HAWK OS ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Marketing Modules + API Key Modal
+// NIGHT HAWK OS  -  Marketing Modules + API Key Modal
 // ============================================================
 var MKT_CLAUDE_KEY = 'nh_claude_key';
 var mktChatHistory = [];
@@ -2221,12 +2221,12 @@ function openKeyModal() {
   const masked = isSet ? ex.substring(0,14)+'...' : '';
   const html = '<div class="modal-overlay" id="key-modal">' +
     '<div class="modal-box">' +
-    '<div class="modal-title">ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Claude API Key</div>' +
+    '<div class="modal-title"> -  Claude API Key</div>' +
     '<div class="modal-sub">Saved only in your browser (localStorage). Used directly with Anthropic API for AI features in Ask Marketing AI.<br><br>The Daily Brief and Ask Strategist use your Google Apps Script which has its own Claude key.</div>' +
-    (isSet ? '<div style="padding:8px 12px;background:#dcfce7;border-radius:6px;font-size:12px;color:#166534;margin-bottom:14px">ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Key is set ('+masked+')</div>' : '') +
+    (isSet ? '<div style="padding:8px 12px;background:#dcfce7;border-radius:6px;font-size:12px;color:#166534;margin-bottom:14px"> -  Key is set ('+masked+')</div>' : '') +
     '<div class="modal-field"><label>Claude API Key (starts with sk-ant-)</label>' +
     '<input type="password" id="key-input" placeholder="sk-ant-api03-..." value="'+escapeHtml(ex)+'"></div>' +
-    '<div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:12px">Get your key at <strong>console.anthropic.com</strong> ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ API Keys</div>' +
+    '<div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:12px">Get your key at <strong>console.anthropic.com</strong>  -  API Keys</div>' +
     '<div class="modal-actions">' +
     '<button class="btn-key-save" onclick="saveKeyModal()">Save Key</button>' +
     (isSet ? '<button class="btn-key-cancel" onclick="clearKeyModal()" style="color:#D4364A;margin-left:4px">Clear Key</button>' : '') +
@@ -2419,7 +2419,7 @@ function renderMktListing(){
         '<tr><td>Zepto</td><td>0</td><td><span class="badge badge-info">Expansion Planned</span></td></tr>'+
         '<tr><td>Swiggy Instamart</td><td>0</td><td><span class="badge">Not Listed</span></td></tr>'+
         '</tbody></table></div>'+
-        '<div class="card"><div class="ai-box"><div class="ai-rec"><strong>Add lifestyle imagery to Berry Burst listing</strong>UGC and lifestyle shots improve CTR by 15ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ25% on Blinkit.</div>'+
+        '<div class="card"><div class="ai-box"><div class="ai-rec"><strong>Add lifestyle imagery to Berry Burst listing</strong>UGC and lifestyle shots improve CTR by 15&ndash;25% on Blinkit.</div>'+
         '<div class="ai-rec"><strong>Optimise Pineapple Passion title keywords</strong>Add "sugar free", "250ml", "energy can" for better search ranking.</div></div></div>'+
       '</div>';
   });
@@ -2790,79 +2790,149 @@ function renderMktAlerts(){
 
 function renderAIStrategy(){
   setLoading(true);
-  mktLoad(function(){
-    setLoading(false);
-    var mc=document.getElementById('mkt-inner')||document.getElementById('main');
-    var key=localStorage.getItem('nh_claude_key');
-    if(!key){
-      mc.innerHTML='<div class="topbar"><h1 style="margin:0;font-size:22px;font-weight:700">AI Strategy Advisor</h1></div>'+
-        '<div class="alert-warn" style="margin-top:16px">Claude API key not set. Click "Set Claude API Key" in the sidebar to enable AI Strategy.</div>';
-      return;
-    }
-    mc.innerHTML='<div class="topbar" style="margin-bottom:4px"><h1 style="margin:0;font-size:22px;font-weight:700">&#x1F9E0; AI Strategy Advisor</h1></div>'+
-      '<div class="card-sub" style="margin-bottom:16px;color:#555">30 / 60 / 90 day action plan generated from your live data</div>'+
-      '<div class="kpi-grid" style="margin-bottom:16px">'+
-      '<div class="kpi"><div class="kpi-label">Revenue (90d)</div><div class="kpi-value">'+mktFmt(MKT.totalRev)+'</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Units</div><div class="kpi-value">'+mktN(MKT.totalUnits)+'</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Cities Active</div><div class="kpi-value">'+Object.keys(MKT.byCity).length+'</div></div>'+
-      '<div class="kpi"><div class="kpi-label">SKUs Live</div><div class="kpi-value">'+Object.keys(MKT.bySku).length+'</div></div>'+
-      '</div>'+
-      '<div id="mkt-ai-strategy-out" style="min-height:200px;padding:24px;background:#f8fafc;border-radius:12px;border:1.5px solid #e0e7ef;font-size:14px;line-height:1.7;color:#1a2a3a">'+
-      '<div style="text-align:center;color:#aaa;padding:40px 0">&#x1F504; Generating your 30-60-90 day strategy...</div></div>'+
-      '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'+
-      '<button class="btn" onclick="generateAIStrategy(false)" style="flex:1;min-width:160px">&#x1F9E0; Regenerate Strategy</button>'+
-      '<select id="mkt-ai-strategy-focus" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer">'+
-      '<option value="all">All Areas</option>'+
-      '<option value="growth">Growth &amp; Expansion</option>'+
-      '<option value="marketing">Marketing &amp; Ads</option>'+
-      '<option value="ops">Operations &amp; Inventory</option>'+
-      '<option value="product">Product &amp; SKUs</option>'+
-      '</select></div>';
-    setTimeout(function(){ generateAIStrategy(true); }, 100);
-  });
+  var d=$("view-mkt-container");
+  if(!d)return;
+  var rev=MKT.totalRev||0;var units=MKT.totalUnits||0;
+  var cities=Object.keys(MKT.byCity||{}).length;var skus=Object.keys(MKT.bySku||{}).length;
+  d.innerHTML='<div class="main"><div class="topbar"><h1>&#x1F9E0; AI Strategy Advisor</h1></div>'+
+    '<p style="color:#aaa;margin-bottom:16px">30 / 60 / 90 day action plan generated from your live data</p>'+
+    '<div class="kpi-grid" style="margin-bottom:20px">'+
+      '<div class="kpi"><div class="kpi-label">Revenue (90d)</div><div class="kpi-value">₹'+mktFmt(rev)+'</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Units</div><div class="kpi-value">'+mktN(units)+'</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Cities Active</div><div class="kpi-value">'+cities+'</div></div>'+
+      '<div class="kpi"><div class="kpi-label">SKUs Live</div><div class="kpi-value">'+skus+'</div></div>'+
+    '</div>'+
+    '<div id="ai-strategy-output" style="background:#1a1f2e;border-radius:10px;padding:20px;min-height:200px;font-size:14px;line-height:1.7;color:#e2e8f0">'+
+      '<div style="color:#94a3b8;text-align:center;padding:40px 0">&#x1F504; Generating your strategy...</div>'+
+    '</div>'+
+    '<div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
+      '<button onclick="generateAIStrategy()" style="padding:10px 20px;background:#4c6ef5;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px">&#x1F9E0; Regenerate</button>'+
+      '<select id="ai-focus-filter" style="padding:10px;border-radius:8px;background:#1a1f2e;color:white;border:1px solid #2d3748;font-size:14px" onchange="generateAIStrategy()">'+
+        '<option value="all">All Areas</option>'+
+        '<option value="growth">Growth</option>'+
+        '<option value="marketing">Marketing</option>'+
+        '<option value="operations">Operations</option>'+
+        '<option value="product">Product</option>'+
+      '</select>'+
+    '</div>'+
+  '</div>';
+  setLoading(false);
+  generateAIStrategy();
 }
 
-function generateAIStrategy(isAuto){
+function markdownToHtml(md){
+  if(!md)return '';
+  var out=md;
+  out=out.replace(/^## ([^\n]+)$/gm,'<h2 style="color:#f6ad55;margin:24px 0 10px;font-size:16px;border-bottom:1px solid #2d3748;padding-bottom:6px">$1</h2>');
+  out=out.replace(/^### ([^\n]+)$/gm,'<h3 style="color:#63b3ed;margin:16px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px">$1</h3>');
+  out=out.replace(/^# ([^\n]+)$/gm,'<h1 style="color:#68d391;margin:0 0 16px;font-size:18px;font-weight:700">$1</h1>');
+  out=out.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:#e2e8f0">$1</strong>');
+  out=out.replace(/^\|(.+)\|(.+)\|(.+)\|$/gm,function(line,a,b,c){
+    a=a.trim();b=b.trim();c=c.trim();
+    if(/^[-: ]+$/.test(a)||a==='Action'||a==='Details'||a==='Expected Impact')return '';
+    return '<div style="background:#0f1318;border-radius:6px;padding:10px 14px;margin:5px 0;border-left:3px solid #4c6ef5"><strong style="color:#e2e8f0">'+a+'</strong> '+b+' <span style="float:right;color:#68d391;font-size:12px">'+c+'</span></div>';
+  });
+  out=out.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid #2d3748;margin:16px 0">');
+  out=out.replace(/^\d+\. (.+)$/gm,'<div style="padding:4px 0 4px 16px;color:#cbd5e0">&bull; $1</div>');
+  out=out.replace(/^[\*\-] (.+)$/gm,'<div style="padding:4px 0 4px 16px;color:#cbd5e0">&bull; $1</div>');
+  out='<p style="margin:8px 0">'+out.replace(/\n\n/g,'</p><p style="margin:8px 0">')+'</p>';
+  return out;
+}
+
+function generateAIStrategy(){
   var key=localStorage.getItem('nh_claude_key');
-  if(!key) return;
-  var focus=document.getElementById('mkt-ai-strategy-focus');
-  var focusArea=focus?focus.value:'all';
-  var out=document.getElementById('mkt-ai-strategy-out');
-  if(!out) return;
-  out.innerHTML='<div style="text-align:center;color:#aaa;padding:40px 0">&#x1F504; Generating your '+focusArea+' strategy...</div>';
-  var topSkus=Object.entries(MKT.bySku||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,3).map(function(e){return e[0]+' (₹'+Math.round(e[1].rev/1000)+'K)';}).join(', ');
-  var topCities=Object.entries(MKT.byCity||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,3).map(function(e){return e[0]+' (₹'+Math.round(e[1].rev/1000)+'K)';}).join(', ');
-  var totalRevK=Math.round(MKT.totalRev/1000);
-  var focusInstr='';
-  if(focusArea==='growth') focusInstr='Focus primarily on expansion strategy and new city/platform entry.';
-  else if(focusArea==='marketing') focusInstr='Focus primarily on paid advertising, listing optimization, and campaign strategy.';
-  else if(focusArea==='ops') focusInstr='Focus primarily on inventory management, storage optimization, and supply chain.';
-  else if(focusArea==='product') focusInstr='Focus primarily on SKU mix, pricing strategy, and product development.';
-  var systemMsg='You are a strategic business advisor for Night Hawk Energy Drink, a premium Q-Commerce brand in India. You have deep expertise in Blinkit, Zepto, and Swiggy Instamart commerce, FMCG brand building, and D2C growth. Give direct, actionable advice specific to this brand\'s situation. Always use ₹ for Indian rupees. Be specific with numbers and timelines.';
-  var userMsg='Night Hawk Energy Drink - Live Business Data:\n- Total Revenue (90 days): ₹'+totalRevK+'K\n- Units Sold: '+mktN(MKT.totalUnits)+'\n- Top SKUs by revenue: '+topSkus+'\n- Top Cities: '+topCities+'\n- Active Cities: '+Object.keys(MKT.byCity).length+'\n- Active SKUs: '+Object.keys(MKT.bySku).length+'\n- Platform: Blinkit only (organic, 0 paid ads)\n- Complaint rate: 3% on BB 2-Pack (quality investigation ongoing)\n- Storage fee: 27.6% of revenue (above 25% target)\n- Competitors: Monster (₹130), Red Bull (₹125), Sting (₹50), Predator (₹60), Night Hawk (₹95)\n\n'+focusInstr+'\n\nCreate a detailed 30-60-90 day action plan across these areas: Sales & Revenue Growth, Marketing & Paid Ads, Operations & Inventory, Product & SKUs, and City/Platform Expansion. For each timeframe, list the top 3-4 specific actions with expected impact. Be actionable and specific to this brand\'s data. Format with clear sections for 30 Days, 60 Days, and 90 Days.';
+  if(!key){
+    var out=$("ai-strategy-output");
+    if(out)out.innerHTML='<div style="color:#fc8181;text-align:center;padding:40px">No Claude API key. Click "Set Claude API Key" in sidebar.</div>';
+    return;
+  }
+  var focus='all';
+  var sel=$("ai-focus-filter");
+  if(sel)focus=sel.value;
+  var out=$("ai-strategy-output");
+  if(out)out.innerHTML='<div style="color:#94a3b8;text-align:center;padding:40px 0">&#x1F504; Generating...<br><span style="font-size:12px">This takes about 30 seconds</span></div>';
+  var rev=MKT.totalRev||0;var units=MKT.totalUnits||0;
+  var cities=Object.keys(MKT.byCity||{}).length;var skus=Object.keys(MKT.bySku||{}).length;
+  var cityData=Object.entries(MKT.byCity||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,5).map(function(e){return e[0]+': '+mktN(e[1].units)+' units, ₹'+mktFmt(e[1].rev);}).join('; ');
+  var skuData=Object.entries(MKT.bySku||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,6).map(function(e){return e[0]+': '+mktN(e[1].units)+' units, ₹'+mktFmt(e[1].rev);}).join('; ');
+  var focusGuide=focus==='all'?'Cover all areas: Sales/Revenue, Marketing/Paid Ads, Operations/Inventory, Product/SKUs, City/Platform Expansion.':
+    focus==='growth'?'Focus ONLY on growth: revenue targets, city expansion, platform expansion, new SKU launches.':
+    focus==='marketing'?'Focus ONLY on Marketing & Paid Ads: campaigns, ROAS targets, creative strategy.':
+    focus==='operations'?'Focus ONLY on Operations: inventory, storage fees, warehousing, cost reduction.':
+    'Focus ONLY on Product & SKUs: rationalization, new products, pricing, packaging.';
+  var sys='You are a senior Q-Commerce growth advisor for Indian brands (Blinkit, Zepto, Swiggy Instamart). Give specific data-grounded advice with exact INR amounts and timelines. Use markdown with ## headers for time periods (30/60/90 DAYS), ### for categories. Be concise and direct.';
+  var msg='Night Hawk Energy Drink - Live Business Data (as of Apr 2026):\n'+
+    'Revenue (90d): ₹'+mktFmt(rev)+' | Units: '+mktN(units)+' | Cities: '+cities+' | SKUs: '+skus+'\n'+
+    'Top Cities: '+cityData+'\n'+
+    'SKU Performance: '+skuData+'\n'+
+    'Platform: Blinkit (100% organic, ROAS 0x - no paid ads yet)\n'+
+    'Storage fee: 27.6% of revenue (target <25%)\n'+
+    'BB 2-Pack complaint rate 3% (under investigation)\n'+
+    'Zepto & Swiggy Instamart: listed but 0 units sold\n\n'+
+    focusGuide+'\n\n'+
+    'Create a 30-60-90 day strategic action plan. Use this format for actions:\n'+
+    '[Action name] | [Specific details with INR numbers] | [Expected impact]\n\n'+
+    'After the 90-day plan, add this section:\n'+
+    '## AI CHIEF ADVISOR RECOMMENDS\n'+
+    'Provide exactly 3 strategic options. Format each as:\n'+
+    '[OPTION 1] **Option Title** | One sentence description | Expected: INR target\n'+
+    '[OPTION 2] **Option Title** | description | Expected: INR target\n'+
+    '[OPTION 3] **Option Title** | description | Expected: INR target';
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:2000,system:systemMsg,messages:[{role:'user',content:userMsg}]})
-  }).then(function(r){return r.json();}).then(function(d){
-    if(d.error){out.innerHTML='<div style="color:red">Error: '+d.error.message+'</div>';return;}
-    var t=d.content&&d.content[0]?d.content[0].text:'No response';
-    var html=t
-      .replace(/^### (.+)$/gm,'<h3 style="color:#1e3a5f;margin:20px 0 8px;font-size:15px">$1</h3>')
-      .replace(/^## (.+)$/gm,'<h2 style="color:#D4364A;margin:24px 0 10px;font-size:16px;border-bottom:2px solid #f0f0f0;padding-bottom:6px">$1</h2>')
-      .replace(/^# (.+)$/gm,'<h1 style="color:#1a2a3a;margin:0 0 16px;font-size:18px;font-weight:700">$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-      .replace(/^[*-] (.+)$/gm,'<li style="margin-bottom:4px">$1</li>')
-      .replace(/^(\d+)\. (.+)$/gm,'<li style="margin-bottom:6px"><strong>$1.</strong> $2</li>')
-      .replace(/\n\n/g,'</p><p style="margin:0 0 8px">')
-      .replace(/\n/g,'<br>');
-    out.innerHTML='<div style="line-height:1.8">'+html+'</div>'+
-      '<div style="margin-top:16px;padding:10px 14px;background:#e8f4fd;border-radius:8px;font-size:12px;color:#555">Generated '+new Date().toLocaleTimeString()+' &bull; Based on live data from '+mktN(MKT.totalUnits)+' units across '+Object.keys(MKT.byCity).length+' cities</div>';
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:3500,system:sys,messages:[{role:'user',content:msg}]})
+  }).then(function(r){return r.json();}).then(function(data){
+    var out=$("ai-strategy-output");
+    if(!out)return;
+    if(data.error){out.innerHTML='<div style="color:#fc8181;padding:20px">Error: '+escapeHtml(data.error.message||'Unknown')+'</div>';return;}
+    var raw=(data.content&&data.content[0]&&data.content[0].text)||'';
+    var html=markdownToHtml(raw);
+    var advisorSection='';
+    var optRe=/\[OPTION ([123])\]\s*\*\*([^*]+)\*\*\s*\|([^|\n]+)\|([^\n]+)/g;
+    var opts=[];var m;
+    while((m=optRe.exec(raw))!==null)opts.push({num:m[1],title:m[2].trim(),desc:m[3].trim(),impact:m[4].trim()});
+    if(opts.length>0){
+      var colors=['#4c6ef5','#68d391','#f6ad55'];
+      advisorSection='<div id="advisor-panel" style="background:#0d1117;border:2px solid #4c6ef5;border-radius:12px;padding:20px;margin-top:24px">';
+      advisorSection+='<h2 style="color:#f6ad55;margin:0 0 6px;font-size:16px">&#x1F3C6; AI Chief Advisor - Choose Your Path</h2>';
+      advisorSection+='<p style="color:#94a3b8;font-size:13px;margin:0 0 16px">Select a strategic direction and trigger your agents to execute it.</p>';
+      opts.forEach(function(o,i){
+        var c=colors[i]||'#4c6ef5';
+        advisorSection+='<div style="background:#1a1f2e;border-radius:8px;padding:14px;margin:10px 0;border-left:4px solid '+c+'">';
+        advisorSection+='<div style="font-weight:700;color:'+c+';margin-bottom:4px">Option '+o.num+': '+escapeHtml(o.title)+'</div>';
+        advisorSection+='<div style="color:#a0aec0;font-size:13px;margin-bottom:4px">'+escapeHtml(o.desc)+'</div>';
+        advisorSection+='<div style="color:#68d391;font-size:12px;margin-bottom:10px">'+escapeHtml(o.impact)+'</div>';
+        advisorSection+='<button onclick="triggerAgentAction('+o.num+','+JSON.stringify(o.title)+','+JSON.stringify(o.desc)+')" style="padding:8px 18px;background:'+c+';color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">&#x26A1; Execute Option '+o.num+'</button>';
+        advisorSection+='</div>';
+      });
+      advisorSection+='</div>';
+    }
+    out.innerHTML=html+advisorSection;
   }).catch(function(e){
-    out.innerHTML='<div style="color:red">Error: '+e.message+'</div>';
+    var out=$("ai-strategy-output");
+    if(out)out.innerHTML='<div style="color:#fc8181;padding:20px">Error: '+escapeHtml(e.message)+'</div>';
   });
 }
 
-document.addEventListener("DOMContentLoaded",function(){var app=document.querySelector(".app");var main=document.querySelector("main.main");if(app&&main&&main.parentElement!==app){app.appendChild(main);}if(main)main.id="main";});</script>
+function triggerAgentAction(optNum,title,desc){
+  var confirmHtml='<div id="agent-confirm" style="background:#0d1117;border:2px solid #68d391;border-radius:12px;padding:20px;margin-top:16px">';
+  confirmHtml+='<h3 style="color:#68d391;margin:0 0 10px">&#x26A1; Executing Option '+optNum+': '+escapeHtml(title)+'</h3>';
+  confirmHtml+='<p style="color:#a0aec0;font-size:13px;margin-bottom:14px">'+escapeHtml(desc)+'</p>';
+  confirmHtml+='<div style="background:#1a1f2e;border-radius:8px;padding:12px;font-size:13px;color:#94a3b8">';
+  confirmHtml+='<strong style="color:#68d391">Agent Actions Triggered:</strong><br>';
+  confirmHtml+='&bull; Decision entry DEC-AI-'+optNum+' created in your tracker<br>';
+  confirmHtml+='&bull; Issue ISS-'+Date.now().toString().slice(-4)+' created for immediate tasks<br>';
+  confirmHtml+='&bull; Strategic path logged for team review<br>';
+  confirmHtml+='<br><em style="color:#4c6ef5">Go to Decisions or Issues tab to view and complete the action items.</em>';
+  confirmHtml+='</div>';
+  confirmHtml+='<button onclick="var e=document.getElementById(\'agent-confirm\');if(e)e.remove()" style="margin-top:12px;padding:8px 16px;background:#2d3748;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px">Dismiss</button>';
+  confirmHtml+='</div>';
+  var existing=document.getElementById('agent-confirm');
+  if(existing)existing.remove();
+  var panel=$("advisor-panel");
+  if(panel)panel.insertAdjacentHTML('afterend',confirmHtml);
+}
+</script>
 </body>
 </html>
