@@ -2789,6 +2789,7 @@ function renderMktAlerts(){
   mc.innerHTML+='</div>';
 }
 
+function nhHidePanel(){var p=document.getElementById("agent-panel");if(p)p.style.display="none";}
 function renderAIStrategy(){
   setLoading(true);
   var el=document.getElementById('mkt-inner');
@@ -2916,7 +2917,7 @@ function triggerAgentAction(option,num){
         '<div style="font-size:12px;color:#4A5568;margin-bottom:4px">&#x1F6A8; Issue Tracker</div>'+
         '<div style="font-size:13px;font-weight:600;color:#1a202c">Creating action items</div></div>'+
     '</div>'+
-    '<button onclick="document.getElementById('agent-panel').style.display='none'" style="padding:8px 16px;background:#E5E8EC;color:#1a202c;border:none;border-radius:6px;cursor:pointer;font-size:13px">Dismiss</button>'+
+    '<button onclick="nhHidePanel()" style="padding:8px 16px;background:#E5E8EC;color:#1a202c;border:none;border-radius:6px;cursor:pointer;font-size:13px">Dismiss</button>'+
   '</div>';
 }
 </script>
