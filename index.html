@@ -2791,148 +2791,156 @@ function renderMktAlerts(){
 
 function renderAIStrategy(){
   setLoading(true);
-  var d=$("view-mkt-container");
-  if(!d)return;
+  var el=document.getElementById('mkt-inner');
+  if(!el){setLoading(false);return;}
   var rev=MKT.totalRev||0;var units=MKT.totalUnits||0;
   var cities=Object.keys(MKT.byCity||{}).length;var skus=Object.keys(MKT.bySku||{}).length;
-  d.innerHTML='<div class="main"><div class="topbar"><h1>&#x1F9E0; AI Strategy Advisor</h1></div>'+
-    '<p style="color:#aaa;margin-bottom:16px">30 / 60 / 90 day action plan generated from your live data</p>'+
+  el.innerHTML=
+    '<div class="topbar"><h1>&#x1F9E0; AI Strategy Advisor</h1></div>'+
+    '<p style="color:#4A5568;margin-bottom:16px">30 / 60 / 90 day action plan from your live data</p>'+
     '<div class="kpi-grid" style="margin-bottom:20px">'+
       '<div class="kpi"><div class="kpi-label">Revenue (90d)</div><div class="kpi-value">₹'+mktFmt(rev)+'</div></div>'+
       '<div class="kpi"><div class="kpi-label">Units</div><div class="kpi-value">'+mktN(units)+'</div></div>'+
       '<div class="kpi"><div class="kpi-label">Cities Active</div><div class="kpi-value">'+cities+'</div></div>'+
       '<div class="kpi"><div class="kpi-label">SKUs Live</div><div class="kpi-value">'+skus+'</div></div>'+
     '</div>'+
-    '<div id="ai-strategy-output" style="background:#1a1f2e;border-radius:10px;padding:20px;min-height:200px;font-size:14px;line-height:1.7;color:#e2e8f0">'+
-      '<div style="color:#94a3b8;text-align:center;padding:40px 0">&#x1F504; Generating your strategy...</div>'+
-    '</div>'+
-    '<div style="margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
-      '<button onclick="generateAIStrategy()" style="padding:10px 20px;background:#4c6ef5;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px">&#x1F9E0; Regenerate</button>'+
-      '<select id="ai-focus-filter" style="padding:10px;border-radius:8px;background:#1a1f2e;color:white;border:1px solid #2d3748;font-size:14px" onchange="generateAIStrategy()">'+
+    '<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">'+
+      '<select id="ai-focus-filter" style="padding:8px 12px;border:1px solid #E5E8EC;border-radius:6px;background:#fff;color:#1a202c;font-size:14px">'+
         '<option value="all">All Areas</option>'+
-        '<option value="growth">Growth</option>'+
-        '<option value="marketing">Marketing</option>'+
+        '<option value="sales">Sales &amp; Revenue</option>'+
+        '<option value="marketing">Marketing &amp; Ads</option>'+
         '<option value="operations">Operations</option>'+
-        '<option value="product">Product</option>'+
+        '<option value="expansion">Expansion</option>'+
       '</select>'+
+      '<button onclick="generateAIStrategy()" style="padding:8px 18px;background:#087E8B;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px">&#x25B6; Generate 90-Day Plan</button>'+
     '</div>'+
-  '</div>';
+    '<div id="ai-strategy-output" style="min-height:200px"></div>'+
+    '<div id="agent-panel" style="display:none"></div>';
   setLoading(false);
-  generateAIStrategy();
 }
 
 function markdownToHtml(md){
-  if(!md)return '';
-  var out=md;
-  out=out.replace(/^## ([^\n]+)$/gm,'<h2 style="color:#f6ad55;margin:24px 0 10px;font-size:16px;border-bottom:1px solid #2d3748;padding-bottom:6px">$1</h2>');
-  out=out.replace(/^### ([^\n]+)$/gm,'<h3 style="color:#63b3ed;margin:16px 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:1px">$1</h3>');
-  out=out.replace(/^# ([^\n]+)$/gm,'<h1 style="color:#68d391;margin:0 0 16px;font-size:18px;font-weight:700">$1</h1>');
-  out=out.replace(/\*\*([^*]+)\*\*/g,'<strong style="color:#e2e8f0">$1</strong>');
-  out=out.replace(/^\|(.+)\|(.+)\|(.+)\|$/gm,function(line,a,b,c){
-    a=a.trim();b=b.trim();c=c.trim();
-    if(/^[-: ]+$/.test(a)||a==='Action'||a==='Details'||a==='Expected Impact')return '';
-    return '<div style="background:#0f1318;border-radius:6px;padding:10px 14px;margin:5px 0;border-left:3px solid #4c6ef5"><strong style="color:#e2e8f0">'+a+'</strong> '+b+' <span style="float:right;color:#68d391;font-size:12px">'+c+'</span></div>';
-  });
-  out=out.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid #2d3748;margin:16px 0">');
-  out=out.replace(/^\d+\. (.+)$/gm,'<div style="padding:4px 0 4px 16px;color:#cbd5e0">&bull; $1</div>');
-  out=out.replace(/^[\*\-] (.+)$/gm,'<div style="padding:4px 0 4px 16px;color:#cbd5e0">&bull; $1</div>');
-  out='<p style="margin:8px 0">'+out.replace(/\n\n/g,'</p><p style="margin:8px 0">')+'</p>';
-  return out;
+  var h=md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3 style="color:#0B3954;font-size:15px;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid #E5E8EC;letter-spacing:0.05em">$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2 style="color:#087E8B;font-size:17px;margin:28px 0 10px;padding:10px 0 8px;border-bottom:2px solid #087E8B;font-weight:700">$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1 style="color:#0B3954;font-size:20px;margin:0 0 16px;font-weight:700">$1</h1>')
+    .replace(/**([^*]+)**/g,'<strong>$1</strong>')
+    .replace(/*([^*]+)*/g,'<em>$1</em>')
+    .replace(/^[OPTION ([123])] **([^*]+)** | ([^|
+]+) | ([^
+]+)$/gm,
+      '<div style="margin:10px 0;padding:14px 16px;background:#fff;border:1px solid #E5E8EC;border-radius:8px;border-left:4px solid #087E8B">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+      '<div><span style="background:#0B3954;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-right:8px">OPTION $1</span>'+
+      '<strong style="color:#1a202c">$2</strong></div>'+
+      '<button onclick="triggerAgentAction('$2',$1)" style="padding:6px 14px;background:#087E8B;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">&#x25B6; Execute</button></div>'+
+      '<div style="margin-top:8px;color:#4A5568;font-size:13px">$3</div>'+
+      '<div style="margin-top:6px;color:#087E8B;font-size:12px;font-weight:600">$4</div></div>')
+    .replace(/^- (.+)$/gm,'<div style="display:flex;gap:8px;margin:5px 0;padding:8px 12px;background:#F7F8FA;border-left:3px solid #087E8B;border-radius:0 4px 4px 0"><span style="color:#087E8B;font-weight:700;flex-shrink:0">&#x2713;</span><span>$1</span></div>')
+    .replace(/^d+. (.+)$/gm,'<div style="margin:5px 0;padding:8px 12px;background:#F7F8FA;border-radius:4px;border-left:3px solid #0B3954">$1</div>')
+    .replace(/^---$/gm,'<hr style="border:none;border-top:1px solid #E5E8EC;margin:16px 0">')
+    .replace(/
+
++/g,'</p><p style="margin:8px 0;color:#1a202c;line-height:1.6">')
+    .replace(/
+/g,'<br>');
+  return '<p style="margin:8px 0;color:#1a202c;line-height:1.6">'+h+'</p>';
 }
 
 function generateAIStrategy(){
   var key=localStorage.getItem('nh_claude_key');
   if(!key){
-    var out=$("ai-strategy-output");
-    if(out)out.innerHTML='<div style="color:#fc8181;text-align:center;padding:40px">No Claude API key. Click "Set Claude API Key" in sidebar.</div>';
+    var out=document.getElementById('ai-strategy-output');
+    if(out)out.innerHTML='<div style="color:#C0392B;text-align:center;padding:40px">No Claude API key. Click "Set Claude API Key" in sidebar.</div>';
     return;
   }
   var focus='all';
-  var sel=$("ai-focus-filter");
+  var sel=document.getElementById('ai-focus-filter');
   if(sel)focus=sel.value;
-  var out=$("ai-strategy-output");
-  if(out)out.innerHTML='<div style="color:#94a3b8;text-align:center;padding:40px 0">&#x1F504; Generating...<br><span style="font-size:12px">This takes about 30 seconds</span></div>';
+  var out=document.getElementById('ai-strategy-output');
+  if(out)out.innerHTML='<div style="color:#4A5568;text-align:center;padding:40px 0">&#x1F504; Generating your 90-day plan...<br><span style="font-size:12px">This takes about 30 seconds</span></div>';
   var rev=MKT.totalRev||0;var units=MKT.totalUnits||0;
-  var cities=Object.keys(MKT.byCity||{}).length;var skus=Object.keys(MKT.bySku||{}).length;
-  var cityData=Object.entries(MKT.byCity||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,5).map(function(e){return e[0]+': '+mktN(e[1].units)+' units, ₹'+mktFmt(e[1].rev);}).join('; ');
-  var skuData=Object.entries(MKT.bySku||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,6).map(function(e){return e[0]+': '+mktN(e[1].units)+' units, ₹'+mktFmt(e[1].rev);}).join('; ');
-  var focusGuide=focus==='all'?'Cover all areas: Sales/Revenue, Marketing/Paid Ads, Operations/Inventory, Product/SKUs, City/Platform Expansion.':
-    focus==='growth'?'Focus ONLY on growth: revenue targets, city expansion, platform expansion, new SKU launches.':
-    focus==='marketing'?'Focus ONLY on Marketing & Paid Ads: campaigns, ROAS targets, creative strategy.':
-    focus==='operations'?'Focus ONLY on Operations: inventory, storage fees, warehousing, cost reduction.':
-    'Focus ONLY on Product & SKUs: rationalization, new products, pricing, packaging.';
-  var sys='You are a senior Q-Commerce growth advisor for Indian brands (Blinkit, Zepto, Swiggy Instamart). Give specific data-grounded advice with exact INR amounts and timelines. Use markdown with ## headers for time periods (30/60/90 DAYS), ### for categories. Be concise and direct.';
-  var msg='Night Hawk Energy Drink - Live Business Data (as of Apr 2026):\n'+
-    'Revenue (90d): ₹'+mktFmt(rev)+' | Units: '+mktN(units)+' | Cities: '+cities+' | SKUs: '+skus+'\n'+
-    'Top Cities: '+cityData+'\n'+
-    'SKU Performance: '+skuData+'\n'+
-    'Platform: Blinkit (100% organic, ROAS 0x - no paid ads yet)\n'+
-    'Storage fee: 27.6% of revenue (target <25%)\n'+
-    'BB 2-Pack complaint rate 3% (under investigation)\n'+
-    'Zepto & Swiggy Instamart: listed but 0 units sold\n\n'+
-    focusGuide+'\n\n'+
-    'Create a 30-60-90 day strategic action plan. Use this format for actions:\n'+
-    '[Action name] | [Specific details with INR numbers] | [Expected impact]\n\n'+
-    'After the 90-day plan, add this section:\n'+
-    '## AI CHIEF ADVISOR RECOMMENDS\n'+
-    'Provide exactly 3 strategic options. Format each as:\n'+
-    '[OPTION 1] **Option Title** | One sentence description | Expected: INR target\n'+
-    '[OPTION 2] **Option Title** | description | Expected: INR target\n'+
-    '[OPTION 3] **Option Title** | description | Expected: INR target';
+  var cities=Object.keys(MKT.byCity||{}).length;
+  var skus=Object.keys(MKT.bySku||{}).length;
+  var skuList=Object.entries(MKT.bySku||{}).map(function(e){return e[0]+': ₹'+mktFmt(e[1].rev)+' ('+mktN(e[1].units)+' units)';}).join(', ');
+  var cityList=Object.entries(MKT.byCity||{}).slice(0,8).map(function(e){return e[0]+': ₹'+mktFmt(e[1].rev);}).join(', ');
+  var focusNote=focus==='all'?'':' Focus area: '+focus+'.';
+  var prompt='You are a Q-Commerce growth advisor for Night Hawk Energy Drink, a D2C brand selling on Blinkit, Swiggy Instamart, and Zepto in India.'+
+    '
+
+Business Data (last 90 days):
+- Total Revenue: ₹'+mktFmt(rev)+'
+- Total Units: '+mktN(units)+
+    '
+- Active Cities: '+cities+'
+- Active SKUs: '+skus+
+    '
+- By SKU: '+skuList+'
+- By City (top 8): '+cityList+
+    '
+
+Generate a structured 90-day action plan.'+focusNote+
+    ' Format with these exact ## headers:
+
+## 30 DAYS: FIX FUNDAMENTALS & ACTIVATE DORMANT PLATFORMS
+## 60 DAYS: SCALE WINNERS & EXPAND PLATFORMS
+## 90 DAYS: PROFITABLE SCALE & MARKET POSITION
+
+'+
+    'For each section add ### subsections: SALES/REVENUE, MARKETING/PAID ADS, OPERATIONS/INVENTORY, PRODUCT/SKUS, CITY/PLATFORM EXPANSION.'+
+    ' Use - bullet points. Make each action specific with rupee amounts and percentages.
+
+'+
+    'After the 90-day plan add:
+
+## AI CHIEF ADVISOR RECOMMENDS
+'+
+    'Provide exactly 3 options using this EXACT format (one per line):
+'+
+    '[OPTION 1] **Conservative: Title** | Brief description | Expected: target
+'+
+    '[OPTION 2] **Balanced: Title** | Brief description | Expected: target
+'+
+    '[OPTION 3] **Aggressive: Title** | Brief description | Expected: target
+
+'+
+    'Then state MY RECOMMENDATION: OPTION [N] with 2-sentence rationale and one immediate next step.';
   fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:3500,system:sys,messages:[{role:'user',content:msg}]})
+    headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:'claude-opus-4-5',max_tokens:4000,messages:[{role:'user',content:prompt}]})
   }).then(function(r){return r.json();}).then(function(data){
-    var out=$("ai-strategy-output");
-    if(!out)return;
-    if(data.error){out.innerHTML='<div style="color:#fc8181;padding:20px">Error: '+escapeHtml(data.error.message||'Unknown')+'</div>';return;}
-    var raw=(data.content&&data.content[0]&&data.content[0].text)||'';
-    var html=markdownToHtml(raw);
-    var advisorSection='';
-    var optRe=/\[OPTION ([123])\]\s*\*\*([^*]+)\*\*\s*\|([^|\n]+)\|([^\n]+)/g;
-    var opts=[];var m;
-    while((m=optRe.exec(raw))!==null)opts.push({num:m[1],title:m[2].trim(),desc:m[3].trim(),impact:m[4].trim()});
-    if(opts.length>0){
-      var colors=['#4c6ef5','#68d391','#f6ad55'];
-      advisorSection='<div id="advisor-panel" style="background:#0d1117;border:2px solid #4c6ef5;border-radius:12px;padding:20px;margin-top:24px">';
-      advisorSection+='<h2 style="color:#f6ad55;margin:0 0 6px;font-size:16px">&#x1F3C6; AI Chief Advisor - Choose Your Path</h2>';
-      advisorSection+='<p style="color:#94a3b8;font-size:13px;margin:0 0 16px">Select a strategic direction and trigger your agents to execute it.</p>';
-      opts.forEach(function(o,i){
-        var c=colors[i]||'#4c6ef5';
-        advisorSection+='<div style="background:#1a1f2e;border-radius:8px;padding:14px;margin:10px 0;border-left:4px solid '+c+'">';
-        advisorSection+='<div style="font-weight:700;color:'+c+';margin-bottom:4px">Option '+o.num+': '+escapeHtml(o.title)+'</div>';
-        advisorSection+='<div style="color:#a0aec0;font-size:13px;margin-bottom:4px">'+escapeHtml(o.desc)+'</div>';
-        advisorSection+='<div style="color:#68d391;font-size:12px;margin-bottom:10px">'+escapeHtml(o.impact)+'</div>';
-        advisorSection+='<button onclick="triggerAgentAction('+o.num+','+JSON.stringify(o.title)+','+JSON.stringify(o.desc)+')" style="padding:8px 18px;background:'+c+';color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">&#x26A1; Execute Option '+o.num+'</button>';
-        advisorSection+='</div>';
-      });
-      advisorSection+='</div>';
-    }
-    out.innerHTML=html+advisorSection;
+    var txt=data.content&&data.content[0]?data.content[0].text:'No response';
+    var html=markdownToHtml(txt);
+    var out=document.getElementById('ai-strategy-output');
+    if(out)out.innerHTML='<div style="background:#fff;border:1px solid #E5E8EC;border-radius:10px;padding:24px">'+html+'</div>';
   }).catch(function(e){
-    var out=$("ai-strategy-output");
-    if(out)out.innerHTML='<div style="color:#fc8181;padding:20px">Error: '+escapeHtml(e.message)+'</div>';
+    var out=document.getElementById('ai-strategy-output');
+    if(out)out.innerHTML='<div style="color:#C0392B;text-align:center;padding:40px">Error: '+e.message+'</div>';
   });
 }
 
-function triggerAgentAction(optNum,title,desc){
-  var confirmHtml='<div id="agent-confirm" style="background:#0d1117;border:2px solid #68d391;border-radius:12px;padding:20px;margin-top:16px">';
-  confirmHtml+='<h3 style="color:#68d391;margin:0 0 10px">&#x26A1; Executing Option '+optNum+': '+escapeHtml(title)+'</h3>';
-  confirmHtml+='<p style="color:#a0aec0;font-size:13px;margin-bottom:14px">'+escapeHtml(desc)+'</p>';
-  confirmHtml+='<div style="background:#1a1f2e;border-radius:8px;padding:12px;font-size:13px;color:#94a3b8">';
-  confirmHtml+='<strong style="color:#68d391">Agent Actions Triggered:</strong><br>';
-  confirmHtml+='&bull; Decision entry DEC-AI-'+optNum+' created in your tracker<br>';
-  confirmHtml+='&bull; Issue ISS-'+Date.now().toString().slice(-4)+' created for immediate tasks<br>';
-  confirmHtml+='&bull; Strategic path logged for team review<br>';
-  confirmHtml+='<br><em style="color:#4c6ef5">Go to Decisions or Issues tab to view and complete the action items.</em>';
-  confirmHtml+='</div>';
-  confirmHtml+='<button onclick="var e=document.getElementById(\'agent-confirm\');if(e)e.remove()" style="margin-top:12px;padding:8px 16px;background:#2d3748;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px">Dismiss</button>';
-  confirmHtml+='</div>';
-  var existing=document.getElementById('agent-confirm');
-  if(existing)existing.remove();
-  var panel=$("advisor-panel");
-  if(panel)panel.insertAdjacentHTML('afterend',confirmHtml);
+function triggerAgentAction(option,num){
+  var panel=document.getElementById('agent-panel');
+  if(!panel)return;
+  panel.style.display='block';
+  panel.innerHTML='<div style="margin-top:24px;background:#fff;border:1px solid #087E8B;border-radius:10px;padding:20px">'+
+    '<h3 style="color:#0B3954;margin:0 0 12px">&#x26A1; Executing Option '+num+': '+option+'</h3>'+
+    '<p style="color:#4A5568;font-size:14px;margin:0 0 16px">Agents are now running tasks for this strategy option:</p>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px">'+
+      '<div style="padding:12px;background:#F7F8FA;border-radius:6px;border-left:3px solid #087E8B">'+
+        '<div style="font-size:12px;color:#4A5568;margin-bottom:4px">&#x1F4CA; Analytics Agent</div>'+
+        '<div style="font-size:13px;font-weight:600;color:#1a202c">Pulling platform data</div></div>'+
+      '<div style="padding:12px;background:#F7F8FA;border-radius:6px;border-left:3px solid #0B3954">'+
+        '<div style="font-size:12px;color:#4A5568;margin-bottom:4px">&#x1F4CB; Decision Logger</div>'+
+        '<div style="font-size:13px;font-weight:600;color:#1a202c">Recording to Decisions tab</div></div>'+
+      '<div style="padding:12px;background:#F7F8FA;border-radius:6px;border-left:3px solid #F5B700">'+
+        '<div style="font-size:12px;color:#4A5568;margin-bottom:4px">&#x1F6A8; Issue Tracker</div>'+
+        '<div style="font-size:13px;font-weight:600;color:#1a202c">Creating action items</div></div>'+
+    '</div>'+
+    '<button onclick="document.getElementById('agent-panel').style.display='none'" style="padding:8px 16px;background:#E5E8EC;color:#1a202c;border:none;border-radius:6px;cursor:pointer;font-size:13px">Dismiss</button>'+
+  '</div>';
 }
 </script>
 </body>
