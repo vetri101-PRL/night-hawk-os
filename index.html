@@ -2838,7 +2838,7 @@ function markdownToHtml(md){
     '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
     '<div><span style="background:#0B3954;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;margin-right:8px">OPTION $1</span>'+
     '<strong style="color:#1a202c">$2</strong></div>'+
-    '<button onclick="triggerAgentAction('$2',$1)" style="padding:6px 14px;background:#087E8B;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">&#x25B6; Execute</button></div>'+
+    '<button onclick="triggerAgentAction(this.dataset.opt,this.dataset.num)" data-opt="$2" data-num="$1" style="padding:6px 14px;background:#087E8B;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer">&#x25B6; Execute</button></div>'+
     '<div style="margin-top:8px;color:#4A5568;font-size:13px">$3</div>'+
     '<div style="margin-top:6px;color:#087E8B;font-size:12px;font-weight:600">$4</div></div>');
   h=h.replace(boldRx,'<strong>$1</strong>');
