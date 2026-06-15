@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Night Hawk OS</title>
-<meta name="description" content="Night Hawk Energy Drink — Q-Commerce operations dashboard">
+<meta name="description" content="Night Hawk Energy Drink â Q-Commerce operations dashboard">
 <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='12' fill='%23F5B700'/><circle cx='16' cy='16' r='16' fill='none' stroke='%230B3954' stroke-width='2'/></svg>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -185,7 +185,12 @@
       <li data-view="mkt-listing"><span class="ico">&#127978;</span> Listing Health</li>
       <li data-view="mkt-audience"><span class="ico">&#128101;</span> Audience &amp; Cohorts</li>
       <li data-view="mkt-budget"><span class="ico">&#128184;</span> Budget Planner</li>
-    </ul>
+    
+      <li data-view="mkt-inventory"><span class="ico">&#128230;</span> Inventory Planner</li>
+      <li data-view="mkt-pnl"><span class="ico">&#128200;</span> P&amp;L Dashboard</li>
+      <li data-view="mkt-competitor"><span class="ico">&#128269;</span> Competitor Intel</li>
+      <li data-view="mkt-expansion"><span class="ico">&#128640;</span> Expansion Tracker</li>
+      <li data-view="mkt-alerts"><span class="ico">&#128308;</span> Live Alerts</li></ul>
     <div class="sidebar-foot"><div id="whoami">Org: <b>Night Hawk Energy Drink</b></div><div style="margin-top:6px"><a id="settings-link" style="display:block;margin-bottom:6px">Change API URL</a><a onclick="openKeyModal()" style="cursor:pointer;color:var(--nh-yellow);font-weight:600;font-size:11px;display:flex;align-items:center;gap:6px"><span id="key-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Set Claude API Key</a></div></div>
       <div style="margin-top:6px"><a id="settings-link">Change API URL</a></div>
     </div>
@@ -231,7 +236,7 @@
 <script>
 // ===================================================================
 // Night Hawk Q-Commerce OS
-// Unified client — works in three contexts:
+// Unified client â works in three contexts:
 //   1. Served by Apps Script (template injects deployUrl)
 //   2. Hosted on GitHub Pages (user pastes URL in setup screen)
 //   3. Opened as a local file (same as #2)
@@ -240,7 +245,7 @@
 
 // The Apps Script HTML template will replace the next line with the real
 // deploy URL.  If this file is served as a plain static file, the raw
-// scriptlet text remains — we detect that and fall through to setup.
+// scriptlet text remains â we detect that and fall through to setup.
 var TEMPLATED_URL = "<?!= deployUrl ?>";
 
 var LS_KEY = 'nh.apiUrl';
@@ -399,7 +404,12 @@ function switchView(v) {
     'mkt-overview': 'Marketing Overview', 'mkt-ai': 'Ask Marketing AI',
     'mkt-campaigns': 'Campaign Manager', 'mkt-creative': 'Creative Lab',
     'mkt-listing': 'Listing Health', 'mkt-audience': 'Audience & Cohorts',
-    'mkt-budget': 'Budget Planner'
+    'mkt-budget': 'Budget Planner',
+    'mkt-inventory': 'Inventory Planner',
+    'mkt-pnl': 'P&L Dashboard',
+    'mkt-competitor': 'Competitor Intel',
+    'mkt-expansion': 'Expansion Tracker',
+    'mkt-alerts': 'Live Alerts'
   };
   $('view-title').innerText = titles[v] || v;
   var qcViews = ['brief','ai','dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','cash','forecast','scenarios','decisions','issues','import','master'];
@@ -441,6 +451,11 @@ function loadView(v) {
     case 'mkt-listing':    render = function(){ if(typeof renderMktListing==='function') renderMktListing(); }; break;
     case 'mkt-audience':   render = function(){ if(typeof renderMktAudience==='function') renderMktAudience(); }; break;
     case 'mkt-budget':     render = function(){ if(typeof renderMktBudget==='function') renderMktBudget(); }; break;
+    case 'mkt-inventory':   render = function(){ if(typeof renderMktInventory==='function') renderMktInventory(); }; break;
+    case 'mkt-pnl':         render = function(){ if(typeof renderMktPnL==='function') renderMktPnL(); }; break;
+    case 'mkt-competitor':  render = function(){ if(typeof renderMktCompetitor==='function') renderMktCompetitor(); }; break;
+    case 'mkt-expansion':   render = function(){ if(typeof renderMktExpansionTracker==='function') renderMktExpansionTracker(); }; break;
+    case 'mkt-alerts':      render = function(){ if(typeof renderMktAlerts==='function') renderMktAlerts(); }; break;
   }
   if (!render) return;
   try {
@@ -1083,7 +1098,7 @@ function renderScenarios(el) {
         var fmt = function(v) { return (suffix === '%') ? (v.toFixed(dp) + '%') : (dp > 0 ? '\u20B9' + v.toFixed(dp) : Math.round(v).toLocaleString('en-IN')); };
         var delta = sc - cu;
         var deltaCls = delta >= 0 ? 'pill-ok' : 'pill-err';
-        // For "costs" rising is bad — flip the semantic
+        // For "costs" rising is bad â flip the semantic
         var costLines = ['COGS / can', 'Platform fees (% of rev)', 'Ad spend (% of rev)', 'Cost / can'];
         if (costLines.indexOf(row[0]) >= 0) deltaCls = delta <= 0 ? 'pill-ok' : 'pill-err';
         var deltaTxt = (delta >= 0 ? '+' : '') + fmt(delta);
@@ -1168,7 +1183,7 @@ function renderAI(el) {
     t = t.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
     // inline code
     t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // bullet list lines starting with - or •
+    // bullet list lines starting with - or â¢
     var lines = t.split('\n');
     var out = []; var inList = false;
     for (var i = 0; i < lines.length; i++) {
@@ -1465,7 +1480,7 @@ function renderBrief(el) {
       });
     }
 
-    // Kick off AI brief fetch in parallel — inject once it resolves.
+    // Kick off AI brief fetch in parallel â inject once it resolves.
     api('getTodaysBrief').then(function(res) {
       var host = document.getElementById('nh-brief-slot');
       if (!host) return;
@@ -2192,7 +2207,7 @@ init();
 
 <script>
 // ============================================================
-// NIGHT HAWK OS — Marketing Modules + API Key Modal
+// NIGHT HAWK OS â Marketing Modules + API Key Modal
 // ============================================================
 const MKT_CLAUDE_KEY = 'nh_claude_key';
 let mktChatHistory = [];
@@ -2203,12 +2218,12 @@ function openKeyModal() {
   const masked = isSet ? ex.substring(0,14)+'...' : '';
   const html = '<div class="modal-overlay" id="key-modal">' +
     '<div class="modal-box">' +
-    '<div class="modal-title">🔑 Claude API Key</div>' +
+    '<div class="modal-title">ð Claude API Key</div>' +
     '<div class="modal-sub">Saved only in your browser (localStorage). Used directly with Anthropic API for AI features in Ask Marketing AI.<br><br>The Daily Brief and Ask Strategist use your Google Apps Script which has its own Claude key.</div>' +
-    (isSet ? '<div style="padding:8px 12px;background:#dcfce7;border-radius:6px;font-size:12px;color:#166534;margin-bottom:14px">✓ Key is set ('+masked+')</div>' : '') +
+    (isSet ? '<div style="padding:8px 12px;background:#dcfce7;border-radius:6px;font-size:12px;color:#166534;margin-bottom:14px">â Key is set ('+masked+')</div>' : '') +
     '<div class="modal-field"><label>Claude API Key (starts with sk-ant-)</label>' +
     '<input type="password" id="key-input" placeholder="sk-ant-api03-..." value="'+escapeHtml(ex)+'"></div>' +
-    '<div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:12px">Get your key at <strong>console.anthropic.com</strong> → API Keys</div>' +
+    '<div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:12px">Get your key at <strong>console.anthropic.com</strong> â API Keys</div>' +
     '<div class="modal-actions">' +
     '<button class="btn-key-save" onclick="saveKeyModal()">Save Key</button>' +
     (isSet ? '<button class="btn-key-cancel" onclick="clearKeyModal()" style="color:#D4364A;margin-left:4px">Clear Key</button>' : '') +
@@ -2245,7 +2260,27 @@ function mktLoad(cb){
   api('sales', {from:'2024-01-01', to: new Date().toISOString().substring(0,10)})
   .then(function(sales){
     MKT.rows=(sales.rows||sales.data||[]).filter(function(r){return r.date&&(r.sku||r.sku_id)&&r.units;});
-    MKT.byCity={};MKT.bySku={};MKT.byMonth={};
+    MKT.byCity={};MKT.bySku={};MKT
+    var byPlat={};
+    MKT.rows.forEach(function(r){
+      var platId=r.platform_id||r.platform||'Unknown';
+      var u=parseFloat(r.units)||0;
+      var rev=parseFloat(r.value||r.revenue)||(u*87.85);
+      byPlat[platId]=byPlat[platId]||{units:0,rev:0,name:platId};
+      byPlat[platId].units+=u;byPlat[platId].rev+=rev;
+    });
+    MKT.platformData=Object.values(byPlat).sort(function(a,b){return b.rev-a.rev;});
+    MKT.skuData=Object.keys(MKT.bySku).map(function(k){return {name:k,rev:MKT.bySku[k].rev,units:MKT.bySku[k].units};}).sort(function(a,b){return b.rev-a.rev;});
+    MKT.cityData=Object.keys(MKT.byCity).map(function(k){return {name:k,rev:MKT.byCity[k].rev,units:MKT.byCity[k].units};}).sort(function(a,b){return b.rev-a.rev;});
+    var sm={};var cm={};
+    (window.state&&window.state.boot&&window.state.boot.skus)?Object.assign(sm,window.state.boot.skus):null;
+    (window.state&&window.state.boot&&window.state.boot.cities)?Object.assign(cm,window.state.boot.cities):null;
+    MKT.rawRows=MKT.rows.map(function(r){
+      var u=parseFloat(r.units)||0;
+      var rev=parseFloat(r.value||r.revenue)||(u*87.85);
+      return {date:r.date,sku:sm[r.sku_id]||r.sku||r.sku_id||'Unknown',city:cm[r.city_id]||r.city||r.city_id||'Unknown',platform:r.platform_id||r.platform||'Unknown',units:u,rev:rev};
+    });
+    .byMonth={};
     MKT.rows.forEach(function(r){
       var u=parseFloat(r.units)||0;
       var rev=parseFloat(r.value||r.revenue)||(u*87.85);
@@ -2287,14 +2322,14 @@ function renderMktOverview(){
       sr+='<tr><td>'+sv[0]+'</td><td>'+mktN(sv[1].units)+'</td><td>'+mktFmt(sv[1].rev)+'</td><td><span class="badge '+cls+'">'+pct+'%</span></td></tr>';
     });
     mc.innerHTML='<div class="topbar" style="margin-bottom:4px"><h1 style="margin:0;font-size:22px;font-weight:700;color:#1a2a3a">Marketing Overview</h1></div>'+
-      '<div class="alert-high" style="margin-top:12px">⚠️ No paid ads running. ROAS is 0x — all '+mktFmt(MKT.totalRev)+' revenue is organic. Blinkit Sponsored Listings could unlock 2–3x growth.</div>'+
-      '<div class="alert-warn">→ Storage fee at 27.6% of revenue (target &lt;25%). Promote slow-moving SKUs to reduce costs.</div>'+
+      '<div class="alert-high" style="margin-top:12px">â ï¸ No paid ads running. ROAS is 0x â all '+mktFmt(MKT.totalRev)+' revenue is organic. Blinkit Sponsored Listings could unlock 2â3x growth.</div>'+
+      '<div class="alert-warn">â Storage fee at 27.6% of revenue (target &lt;25%). Promote slow-moving SKUs to reduce costs.</div>'+
       '<div class="kpi-grid">'+
       '<div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-value">'+mktFmt(MKT.totalRev)+'</div><div class="kpi-sub">90d, Blinkit organic</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Units Sold</div><div class="kpi-value">'+mktN(MKT.totalUnits)+'</div><div class="kpi-sub">Avg ₹'+avgP+'/unit</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Ad Spend</div><div class="kpi-value">₹0</div><div class="kpi-sub">No campaigns yet</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Units Sold</div><div class="kpi-value">'+mktN(MKT.totalUnits)+'</div><div class="kpi-sub">Avg â¹'+avgP+'/unit</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Ad Spend</div><div class="kpi-value">â¹0</div><div class="kpi-sub">No campaigns yet</div></div>'+
       '<div class="kpi"><div class="kpi-label">ROAS</div><div class="kpi-value">0x</div><div class="kpi-sub">No ad spend</div></div>'+
-      '<div class="kpi"><div class="kpi-label">CM/Can</div><div class="kpi-value">₹8.44</div><div class="kpi-sub">After platform costs</div></div>'+
+      '<div class="kpi"><div class="kpi-label">CM/Can</div><div class="kpi-value">â¹8.44</div><div class="kpi-sub">After platform costs</div></div>'+
       '<div class="kpi"><div class="kpi-label">Storage/Rev</div><div class="kpi-value">27.6%</div><div class="kpi-sub">Target &lt;25%</div></div>'+
       '</div>'+
       '<div class="two-col">'+
@@ -2305,13 +2340,13 @@ function renderMktOverview(){
         '<div class="card"><div class="card-title">Top Cities</div><table><thead><tr><th>City</th><th>Units</th><th>Revenue</th><th>Rev/Unit</th></tr></thead><tbody>'+cr+'</tbody></table></div>'+
         '<div class="card"><div class="card-title">SKU Performance</div><table><thead><tr><th>SKU</th><th>Units</th><th>Revenue</th><th>Share</th></tr></thead><tbody>'+sr+'</tbody></table></div>'+
       '</div>'+
-      '<div class="card"><div class="card-title">🎯 Where to Spend Your First Marketing Budget</div>'+
-        '<div class="ai-box"><div class="ai-rec"><strong>REC 1: Blinkit Sponsored — Berry Burst Single Can (Bangalore + Hyderabad)</strong>These cities drive '+mktFmt(top2rev)+' organically. ₹8,000–12,000/month should yield 3–4x ROAS.</div>'+
-        '<div class="ai-rec"><strong>REC 2: "₹10 off" promo on BB 2-Pack to clear stock</strong>3% complaint rate + quality pause = storage drag. A promo clears inventory and generates review velocity.</div>'+
-        '<div class="ai-rec" style="border-left-color:#f59e0b"><strong>REC 3: Pre-position Mumbai stock before paid ads</strong>74 units organic signals demand is there — stock up first.</div></div></div>';
+      '<div class="card"><div class="card-title">ð¯ Where to Spend Your First Marketing Budget</div>'+
+        '<div class="ai-box"><div class="ai-rec"><strong>REC 1: Blinkit Sponsored â Berry Burst Single Can (Bangalore + Hyderabad)</strong>These cities drive '+mktFmt(top2rev)+' organically. â¹8,000â12,000/month should yield 3â4x ROAS.</div>'+
+        '<div class="ai-rec"><strong>REC 2: "â¹10 off" promo on BB 2-Pack to clear stock</strong>3% complaint rate + quality pause = storage drag. A promo clears inventory and generates review velocity.</div>'+
+        '<div class="ai-rec" style="border-left-color:#f59e0b"><strong>REC 3: Pre-position Mumbai stock before paid ads</strong>74 units organic signals demand is there â stock up first.</div></div></div>';
     setTimeout(function(){
       var colors=['#0B3954','#D4364A','#F0A500','#2952B3','#22c55e','#a855f7'];
-      mktChart('mkt-mo',{type:'bar',data:{labels:months,datasets:[{label:'Revenue',data:months.map(function(m){return Math.round(MKT.byMonth[m].rev);}),backgroundColor:'#0B3954',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return '₹'+(v/1000).toFixed(0)+'K';}}}}}});
+      mktChart('mkt-mo',{type:'bar',data:{labels:months,datasets:[{label:'Revenue',data:months.map(function(m){return Math.round(MKT.byMonth[m].rev);}),backgroundColor:'#0B3954',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:function(v){return 'â¹'+(v/1000).toFixed(0)+'K';}}}}}});
       mktChart('mkt-sku',{type:'doughnut',data:{labels:skuList.map(function(s){return s[0];}),datasets:[{data:skuList.map(function(s){return Math.round(s[1].rev);}),backgroundColor:colors}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}}}}});
     },60);
   });
@@ -2324,15 +2359,15 @@ function renderMktCampaigns(){
     '<div class="card"><div class="card-title">Suggested First Campaign</div><div class="card-sub">Highest-ROI campaign based on your sales data.</div>'+
     '<div style="border:2px solid #D4364A;border-radius:10px;padding:16px;margin-bottom:12px">'+
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
-    '<div><div style="font-size:14px;font-weight:700">Berry Burst Single Can — Blinkit Sponsored</div><div style="font-size:12px;color:#888">Platform: Blinkit   ·   Cities: Bangalore, Hyderabad</div></div>'+
+    '<div><div style="font-size:14px;font-weight:700">Berry Burst Single Can â Blinkit Sponsored</div><div style="font-size:12px;color:#888">Platform: Blinkit   Â·   Cities: Bangalore, Hyderabad</div></div>'+
     '<span class="badge badge-warn">Draft</span></div>'+
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0;font-size:12px">'+
-    '<div><div style="color:#888;font-size:11px">Daily Budget</div><div style="font-weight:700">₹400/day</div></div>'+
-    '<div><div style="color:#888;font-size:11px">Bid/Click</div><div style="font-weight:700">₹10</div></div>'+
-    '<div><div style="color:#888;font-size:11px">Target ROAS</div><div style="font-weight:700">3–4x</div></div>'+
-    '<div><div style="color:#888;font-size:11px">Est. Revenue</div><div style="font-weight:700">₹36K/mo</div></div></div>'+
+    '<div><div style="color:#888;font-size:11px">Daily Budget</div><div style="font-weight:700">â¹400/day</div></div>'+
+    '<div><div style="color:#888;font-size:11px">Bid/Click</div><div style="font-weight:700">â¹10</div></div>'+
+    '<div><div style="color:#888;font-size:11px">Target ROAS</div><div style="font-weight:700">3â4x</div></div>'+
+    '<div><div style="color:#888;font-size:11px">Est. Revenue</div><div style="font-weight:700">â¹36K/mo</div></div></div>'+
     '<div style="font-size:12px;color:#555;margin-bottom:12px">Keywords: energy drink, sugar free energy drink, 250ml can, night hawk energy</div>'+
-    '<button class="btn" onclick="alert(&apos;Log into Blinkit Seller Portal to activate this campaign.&apos;)">Activate on Blinkit →</button></div></div>'+
+    '<button class="btn" onclick="alert(&apos;Log into Blinkit Seller Portal to activate this campaign.&apos;)">Activate on Blinkit â</button></div></div>'+
     '<div class="card"><div class="card-title">Campaign Log</div>'+
     '<table><thead><tr><th>Date</th><th>Platform</th><th>Campaign</th><th>Spend</th><th>Revenue</th><th>ROAS</th><th>Status</th></tr></thead>'+
     '<tbody><tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px">No campaigns logged yet.</td></tr></tbody></table></div>';
@@ -2341,9 +2376,9 @@ function renderMktCampaigns(){
 function renderMktCreative(){
   setLoading(false);
   var briefs=[
-    {title:'Berry Burst — Bangalore Awareness',type:'Sponsored Listing',sc:'badge-ok',status:'Recommended',hl:'Night Hawk Berry Burst — Feel the Rush',hook:'Your go-to energy drink for late nights and early mornings. Zero sugar crash.',cta:'Order Now',tags:['energy','no-crash','berry']},
-    {title:'Pineapple Passion — Summer Push',type:'Banner Ad',sc:'badge-warn',status:'Draft',hl:'Tropical Energy. Zero Guilt.',hook:'Night Hawk Pineapple Passion — refreshing energy that tastes like a vacation.',cta:'Try Now',tags:['summer','tropical']},
-    {title:'BB 2-Pack — Clearance Promo',type:'Promotional',sc:'badge-crit',status:'Urgent',hl:'Stock Up & Save — ₹10 Off BB 2-Pack',hook:'Limited time offer. Free delivery on orders above ₹199.',cta:'Grab the Deal',tags:['discount','clearance']}
+    {title:'Berry Burst â Bangalore Awareness',type:'Sponsored Listing',sc:'badge-ok',status:'Recommended',hl:'Night Hawk Berry Burst â Feel the Rush',hook:'Your go-to energy drink for late nights and early mornings. Zero sugar crash.',cta:'Order Now',tags:['energy','no-crash','berry']},
+    {title:'Pineapple Passion â Summer Push',type:'Banner Ad',sc:'badge-warn',status:'Draft',hl:'Tropical Energy. Zero Guilt.',hook:'Night Hawk Pineapple Passion â refreshing energy that tastes like a vacation.',cta:'Try Now',tags:['summer','tropical']},
+    {title:'BB 2-Pack â Clearance Promo',type:'Promotional',sc:'badge-crit',status:'Urgent',hl:'Stock Up & Save â â¹10 Off BB 2-Pack',hook:'Limited time offer. Free delivery on orders above â¹199.',cta:'Grab the Deal',tags:['discount','clearance']}
   ];
   var cards=briefs.map(function(b){
     return '<div class="card" style="margin-bottom:12px">'+
@@ -2384,7 +2419,7 @@ function renderMktListing(){
         '<tr><td>Zepto</td><td>0</td><td><span class="badge badge-info">Expansion Planned</span></td></tr>'+
         '<tr><td>Swiggy Instamart</td><td>0</td><td><span class="badge">Not Listed</span></td></tr>'+
         '</tbody></table></div>'+
-        '<div class="card"><div class="ai-box"><div class="ai-rec"><strong>Add lifestyle imagery to Berry Burst listing</strong>UGC and lifestyle shots improve CTR by 15–25% on Blinkit.</div>'+
+        '<div class="card"><div class="ai-box"><div class="ai-rec"><strong>Add lifestyle imagery to Berry Burst listing</strong>UGC and lifestyle shots improve CTR by 15â25% on Blinkit.</div>'+
         '<div class="ai-rec"><strong>Optimise Pineapple Passion title keywords</strong>Add "sugar free", "250ml", "energy can" for better search ranking.</div></div></div>'+
       '</div>';
   });
@@ -2405,17 +2440,17 @@ function renderMktAudience(){
     (document.getElementById('mkt-inner')||document.getElementById('main')).innerHTML='<div class="topbar" style="margin-bottom:4px"><h1 style="margin:0;font-size:22px;font-weight:700">Audience &amp; Cohorts</h1></div>'+
       '<div class="kpi-grid" style="margin-top:12px">'+
       '<div class="kpi"><div class="kpi-label">Cities Active</div><div class="kpi-value">14</div><div class="kpi-sub">Organic</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Top City</div><div class="kpi-value">'+(cityList[0]?cityList[0][0]:'—')+'</div><div class="kpi-sub">'+(cityList[0]?mktFmt(cityList[0][1].rev):'')+' revenue</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Top City</div><div class="kpi-value">'+(cityList[0]?cityList[0][0]:'â')+'</div><div class="kpi-sub">'+(cityList[0]?mktFmt(cityList[0][1].rev):'')+' revenue</div></div>'+
       '<div class="kpi"><div class="kpi-label">Fast Growing</div><div class="kpi-value">Mumbai</div><div class="kpi-sub">74 units organic</div></div>'+
-      '<div class="kpi"><div class="kpi-label">Avg Rev/Unit</div><div class="kpi-value">₹87.85</div><div class="kpi-sub">Blended</div></div>'+
+      '<div class="kpi"><div class="kpi-label">Avg Rev/Unit</div><div class="kpi-value">â¹87.85</div><div class="kpi-sub">Blended</div></div>'+
       '</div>'+
       '<div class="two-col">'+
         '<div class="card"><div class="card-title">City Revenue Breakdown</div>'+
         '<table><thead><tr><th>City</th><th>Units</th><th>Revenue</th><th>Rev/Unit</th><th>Tier</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
         '<div class="card"><div class="ai-box">'+
         '<div class="ai-rec"><strong>Bangalore + Hyderabad = Core Market (57% of revenue)</strong>Target first with paid ads to amplify proven organic demand.</div>'+
-        '<div class="ai-rec"><strong>Mumbai = Growth Opportunity</strong>74 units organic — pre-stock before running paid ads.</div>'+
-        '<div class="ai-rec" style="border-left-color:#f59e0b"><strong>Kolkata + Chennai = Emerging</strong>Monitor 2–3 more months before investing in paid acquisition.</div>'+
+        '<div class="ai-rec"><strong>Mumbai = Growth Opportunity</strong>74 units organic â pre-stock before running paid ads.</div>'+
+        '<div class="ai-rec" style="border-left-color:#f59e0b"><strong>Kolkata + Chennai = Emerging</strong>Monitor 2â3 more months before investing in paid acquisition.</div>'+
         '</div></div>'+
       '</div>';
   });
@@ -2424,23 +2459,23 @@ function renderMktAudience(){
 function renderMktBudget(){
   setLoading(false);
   (document.getElementById('mkt-inner')||document.getElementById('main')).innerHTML='<div class="topbar" style="margin-bottom:4px"><h1 style="margin:0;font-size:22px;font-weight:700">Budget Planner</h1></div>'+
-    '<div class="alert-ok" style="margin-top:12px">Zero ad spend today. Even ₹10,000/month could generate ₹30,000–40,000 incremental revenue based on category ROAS benchmarks.</div>'+
+    '<div class="alert-ok" style="margin-top:12px">Zero ad spend today. Even â¹10,000/month could generate â¹30,000â40,000 incremental revenue based on category ROAS benchmarks.</div>'+
     '<div class="two-col">'+
-      '<div class="card"><div class="card-title">Recommended First Budget — ₹15K/month</div>'+
+      '<div class="card"><div class="card-title">Recommended First Budget â â¹15K/month</div>'+
       '<table><thead><tr><th>Channel</th><th>Budget</th><th>ROAS</th><th>Est. Revenue</th></tr></thead><tbody>'+
-      '<tr><td>Blinkit — BB Single Can (BLR+HYD)</td><td>₹8,000</td><td>3–4x</td><td>₹24K–32K</td></tr>'+
-      '<tr><td>Blinkit — PP Single Can</td><td>₹4,000</td><td>2–3x</td><td>₹8K–12K</td></tr>'+
-      '<tr><td>Zepto Launch Boost</td><td>₹3,000</td><td>2x</td><td>₹6K</td></tr>'+
+      '<tr><td>Blinkit â BB Single Can (BLR+HYD)</td><td>â¹8,000</td><td>3â4x</td><td>â¹24Kâ32K</td></tr>'+
+      '<tr><td>Blinkit â PP Single Can</td><td>â¹4,000</td><td>2â3x</td><td>â¹8Kâ12K</td></tr>'+
+      '<tr><td>Zepto Launch Boost</td><td>â¹3,000</td><td>2x</td><td>â¹6K</td></tr>'+
       '</tbody></table>'+
-      '<div style="margin-top:12px;font-size:13px;color:#555;font-weight:600">Total: ₹15K → Est. ₹38K–50K incremental revenue</div></div>'+
+      '<div style="margin-top:12px;font-size:13px;color:#555;font-weight:600">Total: â¹15K â Est. â¹38Kâ50K incremental revenue</div></div>'+
       '<div class="card"><div class="card-title">Budget Calculator</div>'+
-      '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Monthly Budget (₹)</label>'+
+      '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Monthly Budget (â¹)</label>'+
       '<input type="number" id="bc-budget" value="15000" oninput="calcMktBudget()" style="width:100%;border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px"></div>'+
       '<div style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Target ROAS</label>'+
       '<input type="number" id="bc-roas" value="3" step="0.5" oninput="calcMktBudget()" style="width:100%;border:1.5px solid #ddd;border-radius:8px;padding:8px 10px;font-size:13px"></div>'+
       '<div id="bc-out" style="padding:14px;background:#f0f7ff;border-radius:8px;font-size:13px">'+
       '<div style="font-weight:700;margin-bottom:6px">Projected Outcomes</div>'+
-      '<div>Expected Revenue: <strong>₹45,000/month</strong></div><div>Net Gain: <strong>₹30,000/month</strong></div></div></div>'+
+      '<div>Expected Revenue: <strong>â¹45,000/month</strong></div><div>Net Gain: <strong>â¹30,000/month</strong></div></div></div>'+
     '</div>'+
     '<div class="card"><div class="card-title">Budget vs Actual Tracker</div>'+
     '<table><thead><tr><th>Month</th><th>Budget</th><th>Actual Spend</th><th>Revenue</th><th>ROAS</th></tr></thead>'+
@@ -2454,51 +2489,306 @@ function calcMktBudget(){
 }
 
 function renderMktAI(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
   setLoading(false);
-  var hasKey=!!localStorage.getItem(MKT_CLAUDE_KEY);
-  (document.getElementById('mkt-inner')||document.getElementById('main')).innerHTML='<div class="topbar" style="margin-bottom:4px"><h1 style="margin:0;font-size:22px;font-weight:700">Ask Marketing AI</h1></div>'+
-    (!hasKey?'<div class="alert-warn" style="margin-top:12px">Claude API key not set. <a href="#" onclick="openKeyModal();return false;" style="color:#D4364A;font-weight:600">Click here to add your key</a> to enable AI responses.</div>':'')+
-    '<div style="display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:380px;margin-top:12px">'+
-    '<div id="mkt-msgs" style="flex:1;overflow-y:auto;padding:16px;background:#f8fafc;border-radius:10px 10px 0 0;border:1px solid #e2e8f0;border-bottom:none">'+
-    '<div class="msg msg-ai"><div class="msg-label">Marketing AI</div><div class="msg-bubble">Hi! I am your Night Hawk Marketing advisor. I have analysed your sales data — ₹54,028 revenue, 615 units, 14 cities, all organic from Blinkit.<br><br>Ask me anything: which city to target first, how to reduce storage fees, what creative to run, or how to set up your first sponsored campaign.</div></div></div>'+
-    '<div style="display:flex;gap:8px;padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:0 0 10px 10px">'+
-    '<textarea id="mkt-inp" placeholder="Ask your marketing advisor... (Enter to send)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendMktChat();}" style="flex:1;border:1px solid #ddd;border-radius:8px;padding:9px 12px;font-size:13px;resize:none;height:44px;font-family:inherit"></textarea>'+
-    '<button class="btn btn-primary" onclick="sendMktChat()">Ask</button></div></div>';
-  mktChatHistory=[];
+  var hasKey=!!localStorage.getItem('nh_claude_key');
+  var suggs=['Why is revenue dropping in Chennai?','Which SKU has the best margin?','Recommend ad spend for next week','Which cities should I expand to next quarter?','Compare Blinkit vs Zepto vs Swiggy'];
+  var sugHtml=suggs.map(function(s){return '<button class="sugg-chip" onclick="document.getElementById(\x27mkt-inp\x27).value=this.innerText;sendMktChat();">'+s+'</button>';}).join('');
+  mc.innerHTML='<style>.msg-user{background:#6366f1;color:#fff;border-radius:12px 12px 2px 12px;padding:10px 14px;max-width:80%;align-self:flex-end;margin-left:auto;margin-bottom:4px}.msg-ai{background:#fff;border:1px solid #e2e8f0;border-radius:2px 12px 12px 12px;padding:12px 16px;max-width:85%;margin-bottom:4px;line-height:1.6}.sugg-chip{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;color:#475569}.sugg-chip:hover{background:#e0e7ff;color:#3730a3}</style>';
+  mc.innerHTML+='<div style="max-width:900px;margin:0 auto;padding:8px 4px">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e8f0"><div style="width:48px;height:48px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">&#129302;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">Ask Marketing AI</div><div style="color:#64748b;font-size:13px">Claude-powered &middot; Live data context</div></div>';
+  mc.innerHTML+=(hasKey?'<div style="margin-left:auto;background:#dcfce7;border:1px solid #86efac;color:#166534;padding:6px 12px;border-radius:8px;font-size:12px">&#10003; Claude Connected</div>':'<div style="margin-left:auto;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:6px 12px;border-radius:8px;font-size:12px">&#9888; Set API key</div>');
+  mc.innerHTML+='</div>';
+  mc.innerHTML+='<div id="mkt-msgs" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;min-height:340px;max-height:500px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:4px;margin-bottom:12px"><div class="msg-ai"><div style="font-size:11px;color:#94a3b8;margin-bottom:6px;font-weight:600">MARKETING AI</div>Hello! I have access to your live sales data. Ask me about SKU performance, city analytics, ad spend, or growth strategy.</div></div>';
+  mc.innerHTML+='<div style="margin-bottom:12px"><div style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:8px">SUGGESTED</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+sugHtml+'</div></div>';
+  mc.innerHTML+='<div style="display:flex;gap:8px"><textarea id="mkt-inp" rows="2" style="flex:1;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;resize:none;outline:none" placeholder="Ask about sales, ad strategy, expansion..." onkeydown="if(event.key===String.fromCharCode(13)&&!event.shiftKey){event.preventDefault();sendMktChat();}"></textarea><button onclick="sendMktChat()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:14px;font-weight:600;align-self:flex-end">Send</button></div>';
+  mc.innerHTML+='</div>';
+  window.mktChatHistory=[];
 }
 
 async function sendMktChat(){
   var inp=document.getElementById('mkt-inp'),msgs=document.getElementById('mkt-msgs');
   if(!inp||!msgs)return;
   var text=inp.value.trim();if(!text)return;inp.value='';
+  var key=localStorage.getItem('nh_claude_key')||'';
   var ud=document.createElement('div');ud.className='msg msg-user';
-  ud.innerHTML='<div class="msg-label">You</div><div class="msg-bubble">'+escapeHtml(text)+'</div>';
+  ud.innerHTML='<div style="font-size:11px;opacity:.7;margin-bottom:4px;font-weight:600">YOU</div><div>'+text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</div>';
   msgs.appendChild(ud);msgs.scrollTop=msgs.scrollHeight;
-  var key=localStorage.getItem(MKT_CLAUDE_KEY);
-  if(!key){var nd=document.createElement('div');nd.className='msg msg-ai';nd.innerHTML='<div class="msg-label">Marketing AI</div><div class="msg-bubble">Please set your Claude API key first — click "Set Claude API Key" in the sidebar.</div>';msgs.appendChild(nd);msgs.scrollTop=msgs.scrollHeight;return;}
-  var sp=document.createElement('div');sp.className='msg msg-ai';sp.id='mkt-sp';
-  sp.innerHTML='<div class="msg-label">Marketing AI</div><div class="msg-bubble"><span style="display:inline-block;width:14px;height:14px;border:2px solid #ddd;border-top-color:#D4364A;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px"></span>Thinking...</div>';
-  msgs.appendChild(sp);msgs.scrollTop=msgs.scrollHeight;
-  var sys='You are the Night Hawk Energy Drink Marketing Advisor. Night Hawk is a 3-year-old Indian beverage brand now pivoting to AI-first operations. Current data: revenue ₹54,028 over 90 days (Blinkit, 100% organic), 615 units, CM ₹8.44/can, storage 27.6% (target <25%). Hero SKU: Berry Burst Single Can (434 units, 70% of revenue). Top cities: Hyderabad (138u), Bangalore (133u), Mumbai (74u). No paid ads. BB 2-Pack paused (quality complaints). Zepto expansion planned. Give strategic, data-driven advice in 3-5 sentences.';
-  mktChatHistory.push({role:'user',content:text});
+  var ld=document.createElement('div');ld.className='msg msg-ai';
+  ld.innerHTML='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;font-weight:600">MARKETING AI</div><div style="color:#94a3b8">Analysing your data...</div>';
+  msgs.appendChild(ld);msgs.scrollTop=msgs.scrollHeight;
+  if(!key){
+    ld.querySelector('div+div').textContent='No Claude API key. Click the key icon in the top bar.';
+    ld.querySelector('div+div').style.color='#ef4444';
+    return;
+  }
+  var ctx='You are the Night Hawk Energy Drink Marketing AI. Q-Commerce beverage brand on Blinkit, Zepto, Swiggy Instamart in India. Be concise (under 250 words), cite specific numbers, give actionable recommendations.\n';
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':key,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:600,system:sys,messages:mktChatHistory})});
-    var data=await resp.json();
-    var reply=data.content&&data.content[0]?data.content[0].text:'Sorry, no response.';
-    mktChatHistory.push({role:'assistant',content:reply});
-    var s=document.getElementById('mkt-sp');if(s)s.remove();
-    var ad=document.createElement('div');ad.className='msg msg-ai';ad.innerHTML='<div class="msg-label">Marketing AI</div><div class="msg-bubble">'+reply.replace(/\n/g,'<br>')+'</div>';
-    msgs.appendChild(ad);msgs.scrollTop=msgs.scrollHeight;
-  }catch(e){var s2=document.getElementById('mkt-sp');if(s2)s2.remove();var ed=document.createElement('div');ed.className='msg msg-ai';ed.innerHTML='<div class="msg-label">Marketing AI</div><div class="msg-bubble" style="color:#D4364A">Error: '+e.message+'</div>';msgs.appendChild(ed);msgs.scrollTop=msgs.scrollHeight;}
+    var M=window.MKT||{};
+    if(M.totalRev) ctx+='Revenue: \u20B9'+M.totalRev.toLocaleString('en-IN')+' | Units: '+M.totalUnits+'\n';
+    if(M.skuData&&M.skuData.length) ctx+='SKUs: '+(M.skuData.slice(0,8).map(function(s){return s.name+': \u20B9'+s.rev.toLocaleString('en-IN')+'('+s.units+'u)';}).join(', '))+'\n';
+    if(M.cityData&&M.cityData.length) ctx+='Cities: '+(M.cityData.slice(0,8).map(function(c){return c.name+': \u20B9'+c.rev.toLocaleString('en-IN');}).join(', '))+'\n';
+    if(M.platformData&&M.platformData.length) ctx+='Platforms: '+(M.platformData.slice(0,3).map(function(p){return p.name+': \u20B9'+p.rev.toLocaleString('en-IN');}).join(', '))+'\n';
+    if(window.state&&window.state.boot&&window.state.boot.skus) ctx+='Products: '+Object.values(window.state.boot.skus).join(', ');
+  }catch(e){}
+  if(!window.mktChatHistory) window.mktChatHistory=[];
+  window.mktChatHistory.push({role:'user',content:text});
+  try{
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-opus-4-5',max_tokens:1024,system:ctx,messages:window.mktChatHistory.slice(-10)})
+    });
+    var data=await res.json();
+    var reply=(data.content&&data.content[0]&&data.content[0].text)||'No response.';
+    window.mktChatHistory.push({role:'assistant',content:reply});
+    var fmt=reply.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    ld.innerHTML='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;font-weight:600">MARKETING AI</div><div>'+fmt+'</div>';
+  }catch(e){
+    ld.innerHTML='<div style="font-size:11px;color:#94a3b8;margin-bottom:6px;font-weight:600">MARKETING AI</div><div style="color:#ef4444">Error: '+e.message+'</div>';
+  }
+  msgs.scrollTop=msgs.scrollHeight;
 }
 
-// Extend loadView to handle marketing views
-var _origLV=window.loadView;
-window.loadView=function(view){
-  var mktFns={'mkt-overview':renderMktOverview,'mkt-campaigns':renderMktCampaigns,'mkt-creative':renderMktCreative,'mkt-listing':renderMktListing,'mkt-audience':renderMktAudience,'mkt-budget':renderMktBudget,'mkt-ai':renderMktAI};
-  if(mktFns[view]){mktFns[view]();}else if(_origLV){_origLV(view);}
-};
-</script>
-<script>document.addEventListener("DOMContentLoaded",function(){var app=document.querySelector(".app");var main=document.querySelector("main.main");if(app&&main&&main.parentElement!==app){app.appendChild(main);}if(main)main.id="main";});</script>
+// Alerts Engine
+function computeAlerts(){
+  var alerts=[];
+  try{
+    var M=window.MKT||{};
+    var rows=(M.rawRows||[]);
+    if(!rows.length) return alerts;
+    var today=new Date(),d7=new Date(today),d14=new Date(today);
+    d7.setDate(d7.getDate()-7);d14.setDate(d14.getDate()-14);
+    var toStr=function(d){return d.toISOString().split('T')[0];};
+    var last7=rows.filter(function(r){return r.date>=toStr(d7);});
+    var prev7=rows.filter(function(r){return r.date>=toStr(d14)&&r.date<toStr(d7);});
+    var sum=function(arr,field){return arr.reduce(function(a,r){return a+(r[field]||0);},0);};
+    var l7rev=sum(last7,'rev'),p7rev=sum(prev7,'rev');
+    if(p7rev>0&&l7rev<p7rev*0.8){
+      var drop=Math.round((1-l7rev/p7rev)*100);
+      alerts.push({type:'danger',icon:'&#128308;',title:'Revenue Drop Alert',msg:drop+'% revenue drop last 7 days. Last 7d: \u20B9'+Math.round(l7rev).toLocaleString('en-IN')+' vs prior \u20B9'+Math.round(p7rev).toLocaleString('en-IN')});
+    } else if(p7rev>0&&l7rev>p7rev*1.2){
+      var gain=Math.round((l7rev/p7rev-1)*100);
+      alerts.push({type:'success',icon:'&#128994;',title:'Revenue Surge +'+gain+'%',msg:'Last 7 days: \u20B9'+Math.round(l7rev).toLocaleString('en-IN')});
+    }
+    var skuL={},skuP={};
+    last7.forEach(function(r){skuL[r.sku]=(skuL[r.sku]||0)+r.rev;});
+    prev7.forEach(function(r){skuP[r.sku]=(skuP[r.sku]||0)+r.rev;});
+    Object.keys(skuP).forEach(function(sku){
+      var prev=skuP[sku],last=skuL[sku]||0;
+      if(prev>500&&last===0) alerts.push({type:'warning',icon:'&#9888;',title:'Possible Stockout: '+sku,msg:sku+' had \u20B9'+Math.round(prev).toLocaleString('en-IN')+' last week but zero this week. Check inventory.'});
+      else if(prev>1000&&last<prev*0.5) alerts.push({type:'warning',icon:'&#9888;',title:'Low Sales: '+sku,msg:sku+' down '+Math.round((1-last/prev)*100)+'% this week.'});
+    });
+    var cityL={},cityP={};
+    last7.forEach(function(r){cityL[r.city]=(cityL[r.city]||0)+r.rev;});
+    prev7.forEach(function(r){cityP[r.city]=(cityP[r.city]||0)+r.rev;});
+    Object.keys(cityP).forEach(function(city){
+      var prev=cityP[city],last=cityL[city]||0;
+      if(prev>2000&&last<prev*0.6) alerts.push({type:'warning',icon:'&#128205;',title:'City Alert: '+city,msg:city+' revenue down '+Math.round((1-last/prev)*100)+'% (\u20B9'+Math.round(last).toLocaleString('en-IN')+' vs \u20B9'+Math.round(prev).toLocaleString('en-IN')+')' });
+    });
+    if(!alerts.length) alerts.push({type:'success',icon:'&#9989;',title:'All Clear',msg:'No critical alerts. Sales healthy across SKUs and cities.'});
+  }catch(e){ alerts.push({type:'info',icon:'&#8505;',title:'Load data first',msg:'Visit Marketing Overview to load sales data.'}); }
+  return alerts;
+}
+
+function renderMktInventory(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
+  setLoading(false);
+  var M=window.MKT||{};
+  var rows=M.rawRows||[];
+  var today=new Date(),d30=new Date(today);
+  d30.setDate(d30.getDate()-30);
+  var toStr=function(d){return d.toISOString().split('T')[0];};
+  var last30=rows.filter(function(r){return r.date>=toStr(d30);});
+  var skuUnits={},skuRev={};
+  last30.forEach(function(r){
+    skuUnits[r.sku]=(skuUnits[r.sku]||0)+r.units;
+    skuRev[r.sku]=(skuRev[r.sku]||0)+r.rev;
+  });
+  var skus=Object.keys(skuUnits).sort(function(a,b){return skuRev[b]-skuRev[a];});
+  var tableRows=skus.map(function(sku){
+    var u=skuUnits[sku]||0;
+    var dailyAvg=u/30;
+    var reorder7=Math.ceil(dailyAvg*7);
+    var reorder30=Math.ceil(dailyAvg*30);
+    var safetyStock=Math.ceil(dailyAvg*14);
+    var urgency=dailyAvg>10?'<span style="background:#fee2e2;color:#dc2626;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">HIGH</span>':dailyAvg>5?'<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:11px">MED</span>':'<span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px">LOW</span>';
+    return '<tr><td style="padding:10px 12px;font-weight:500">'+sku+'</td><td style="padding:10px 12px;text-align:right">'+u+'</td><td style="padding:10px 12px;text-align:right">'+dailyAvg.toFixed(1)+'</td><td style="padding:10px 12px;text-align:right">'+reorder7+'</td><td style="padding:10px 12px;text-align:right">'+safetyStock+'</td><td style="padding:10px 12px;text-align:right">'+reorder30+'</td><td style="padding:10px 12px">'+urgency+'</td></tr>';
+  }).join('');
+  if(!tableRows) tableRows='<tr><td colspan="7" style="padding:20px;text-align:center;color:#94a3b8">Load sales data via Marketing Overview first</td></tr>';
+  mc.innerHTML='<div style="max-width:1000px;margin:0 auto">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="font-size:24px">&#128230;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">Inventory Planner</div><div style="color:#64748b;font-size:13px">AI-computed reorder recommendations from last 30 days sales velocity</div></div></div>';
+  mc.innerHTML+='<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:#1e40af">&#128161; Order <strong>7-Day Reorder</strong> qty weekly for fast movers. Keep <strong>Safety Stock</strong> as buffer. <strong>30-Day Qty</strong> for bulk orders.</div>';
+  mc.innerHTML+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)"><thead><tr style="background:#f8fafc"><th style="padding:12px;text-align:left;font-size:12px;color:#64748b;font-weight:600">SKU</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">Units (30d)</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">Avg/Day</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">7-Day Reorder</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">Safety Stock</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">30-Day Qty</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Volume</th></tr></thead><tbody>'+tableRows+'</tbody></table></div></div>';
+}
+
+function renderMktPnL(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
+  setLoading(false);
+  var M=window.MKT||{};
+  var totalRev=M.totalRev||0;
+  var saved=JSON.parse(localStorage.getItem('nh_pnl')||'{"cogs_pct":52,"adspend":0,"fixedCost":0,"returns_pct":2}');
+  var cogs_pct=saved.cogs_pct||52,adspend=saved.adspend||0,fixedCost=saved.fixedCost||0,returns_pct=saved.returns_pct||2;
+  var effectiveRev=totalRev*(1-returns_pct/100);
+  var cogs=effectiveRev*(cogs_pct/100);
+  var grossProfit=effectiveRev-cogs;
+  var ebitda=grossProfit-adspend-fixedCost;
+  var grossMarginPct=effectiveRev>0?Math.round(grossProfit/effectiveRev*100):0;
+  var ebitdaPct=effectiveRev>0?Math.round(ebitda/effectiveRev*100):0;
+  var fmtR=function(n){return '\u20B9'+Math.round(n).toLocaleString('en-IN');};
+  var rows=[
+    {l:'Gross Revenue',v:fmtR(totalRev),s:'font-weight:600'},
+    {l:'Less: Returns ('+returns_pct+'%)',v:'-'+fmtR(totalRev*returns_pct/100),s:'color:#ef4444'},
+    {l:'Net Revenue',v:fmtR(effectiveRev),s:'font-weight:700;border-top:2px solid #e2e8f0'},
+    {l:'COGS ('+cogs_pct+'%)',v:'-'+fmtR(cogs),s:'color:#ef4444'},
+    {l:'Gross Profit ('+grossMarginPct+'%)',v:fmtR(grossProfit),s:'font-weight:700;border-top:2px solid #e2e8f0;color:'+( grossProfit>=0?'#166534':'#dc2626')},
+    {l:'Ad Spend',v:'-'+fmtR(adspend),s:'color:#ef4444'},
+    {l:'Fixed Overheads',v:'-'+fmtR(fixedCost),s:'color:#ef4444'},
+    {l:'EBITDA ('+ebitdaPct+'%)',v:fmtR(ebitda),s:'font-weight:700;font-size:16px;border-top:2px solid #1e293b;color:'+( ebitda>=0?'#166534':'#dc2626')}
+  ];
+  var pnlHtml=rows.map(function(r){return '<tr style="'+r.s+'"><td style="padding:10px 14px">'+r.l+'</td><td style="padding:10px 14px;text-align:right">'+r.v+'</td></tr>';}).join('');
+  mc.innerHTML='<div style="max-width:900px;margin:0 auto">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="font-size:24px">&#128200;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">P&amp;L Dashboard</div><div style="color:#64748b;font-size:13px">Live revenue + editable cost inputs</div></div></div>';
+  mc.innerHTML+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px"><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center"><div style="font-size:13px;color:#64748b;margin-bottom:4px">Gross Revenue</div><div style="font-size:28px;font-weight:700;color:#1e293b">\u20B9'+totalRev.toLocaleString('en-IN')+'</div></div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;text-align:center"><div style="font-size:13px;color:#64748b;margin-bottom:4px">EBITDA</div><div style="font-size:28px;font-weight:700;color:'+( ebitda>=0?'#166534':'#dc2626')+'">\u20B9'+Math.round(ebitda).toLocaleString('en-IN')+'</div><div style="font-size:12px;color:#94a3b8">'+ebitdaPct+'% margin</div></div></div>';
+  mc.innerHTML+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">';
+  mc.innerHTML+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden"><div style="padding:14px 16px;background:#f8fafc;font-weight:600;font-size:14px;border-bottom:1px solid #e2e8f0">P&amp;L Statement</div><table style="width:100%;border-collapse:collapse">'+pnlHtml+'</table></div>';
+  mc.innerHTML+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px"><div style="font-weight:600;font-size:14px;margin-bottom:16px">&#9998; Edit Cost Assumptions</div><div style="margin-bottom:12px"><label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">COGS % of Net Revenue</label><input type="number" id="pnl-cogs" value="'+cogs_pct+'" min="0" max="100" style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:14px" onchange="savePnL()"></div><div style="margin-bottom:12px"><label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Ad Spend (\u20B9)</label><input type="number" id="pnl-adspend" value="'+adspend+'" min="0" style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:14px" onchange="savePnL()"></div><div style="margin-bottom:12px"><label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Fixed Overheads (\u20B9/month)</label><input type="number" id="pnl-fixed" value="'+fixedCost+'" min="0" style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:14px" onchange="savePnL()"></div><div style="margin-bottom:16px"><label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px">Returns/Cancellations %</label><input type="number" id="pnl-returns" value="'+returns_pct+'" min="0" max="50" style="width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;font-size:14px" onchange="savePnL()"></div><button onclick="renderMktPnL()" style="width:100%;background:#6366f1;color:#fff;border:none;border-radius:8px;padding:10px;cursor:pointer;font-size:14px;font-weight:600">Recalculate P&amp;L</button></div>';
+  mc.innerHTML+='</div></div>';
+}
+
+function savePnL(){
+  var d={cogs_pct:parseFloat(document.getElementById('pnl-cogs').value)||52,adspend:parseFloat(document.getElementById('pnl-adspend').value)||0,fixedCost:parseFloat(document.getElementById('pnl-fixed').value)||0,returns_pct:parseFloat(document.getElementById('pnl-returns').value)||2};
+  localStorage.setItem('nh_pnl',JSON.stringify(d));
+}
+
+function renderMktCompetitor(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
+  setLoading(false);
+  var saved=JSON.parse(localStorage.getItem('nh_competitor')||'[]');
+  var defaults=[{brand:'Monster Energy',sku:'Monster 500ml',platform:'Blinkit',price:130,stock:'In Stock',notes:'Top seller'},
+    {brand:'Red Bull',sku:'Red Bull 250ml',platform:'Blinkit',price:125,stock:'In Stock',notes:'Premium segment'},
+    {brand:'Sting',sku:'Sting 250ml',platform:'Zepto',price:50,stock:'In Stock',notes:'Mass market'},
+    {brand:'Predator',sku:'Predator 250ml',platform:'Swiggy Instamart',price:60,stock:'Low Stock',notes:'Budget segment'},
+    {brand:'Night Hawk',sku:'Berry Burst Single Can',platform:'All Platforms',price:95,stock:'In Stock',notes:'Our hero SKU - Night Hawk'}
+  ];
+  var compData=saved.length?saved:defaults;
+  var compRows=compData.map(function(c,i){
+    var isUs=c.brand==='Night Hawk';
+    var sColor=c.stock==='In Stock'?'#166534':c.stock==='Low Stock'?'#d97706':'#dc2626';
+    return '<tr style="'+(isUs?'background:#f0f9ff;font-weight:600':'')+'"><td style="padding:10px 12px">'+c.brand+(isUs?' &#9733;':'')+'</td><td style="padding:10px 12px">'+c.sku+'</td><td style="padding:10px 12px">'+c.platform+'</td><td style="padding:10px 12px;text-align:right">\u20B9'+c.price+'</td><td style="padding:10px 12px"><span style="color:'+sColor+'">'+c.stock+'</span></td><td style="padding:10px 12px;color:#64748b;font-size:12px">'+c.notes+'</td><td style="padding:10px 12px"><button onclick="editCompetitor('+i+')" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">Edit</button></td></tr>';
+  }).join('');
+  mc.innerHTML='<div style="max-width:1000px;margin:0 auto">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="font-size:24px">&#128269;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">Competitor & Pricing Intel</div><div style="color:#64748b;font-size:13px">Track competitor pricing and stock across Blinkit, Zepto, Swiggy</div></div><button onclick="addCompetitor()" style="margin-left:auto;background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600">+ Add Entry</button></div>';
+  mc.innerHTML+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)"><thead><tr style="background:#f8fafc"><th style="padding:12px;text-align:left;font-size:12px;color:#64748b;font-weight:600">Brand</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">SKU</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Platform</th><th style="padding:12px;text-align:right;font-size:12px;color:#64748b;font-weight:600">Price</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Stock</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Notes</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Action</th></tr></thead><tbody>'+compRows+'</tbody></table></div>';
+  mc.innerHTML+='<div id="comp-form" style="display:none;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-top:16px"><div style="font-weight:600;margin-bottom:12px">Add / Edit Competitor</div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px"><input id="cf-brand" placeholder="Brand" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"><input id="cf-sku" placeholder="SKU / Product" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"><input id="cf-platform" placeholder="Platform" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"><input id="cf-price" type="number" placeholder="Price (\u20B9)" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"><select id="cf-stock" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"><option>In Stock</option><option>Low Stock</option><option>Out of Stock</option></select><input id="cf-notes" placeholder="Notes" style="border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px"></div><div style="margin-top:12px;display:flex;gap:8px"><button onclick="saveCompetitor()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer">Save</button><button onclick="document.getElementById(\x27comp-form\x27).style.display=\x27none\x27" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:8px 16px;cursor:pointer">Cancel</button></div></div>';
+  mc.innerHTML+='</div>';
+  window._editCompIdx=-1;
+}
+function addCompetitor(){window._editCompIdx=-1;var f=document.getElementById('comp-form');if(f){f.style.display='block';}}
+function editCompetitor(i){
+  var saved=JSON.parse(localStorage.getItem('nh_competitor')||'[]');
+  var defaults=[{brand:'Monster Energy',sku:'Monster 500ml',platform:'Blinkit',price:130,stock:'In Stock',notes:'Top seller'},{brand:'Red Bull',sku:'Red Bull 250ml',platform:'Blinkit',price:125,stock:'In Stock',notes:'Premium segment'},{brand:'Sting',sku:'Sting 250ml',platform:'Zepto',price:50,stock:'In Stock',notes:'Mass market'},{brand:'Predator',sku:'Predator 250ml',platform:'Swiggy Instamart',price:60,stock:'Low Stock',notes:'Budget segment'},{brand:'Night Hawk',sku:'Berry Burst Single Can',platform:'All Platforms',price:95,stock:'In Stock',notes:'Our hero SKU'}];
+  var data=saved.length?saved:defaults;var c=data[i];if(!c)return;
+  window._editCompIdx=i;var f=document.getElementById('comp-form');if(!f)return;f.style.display='block';
+  document.getElementById('cf-brand').value=c.brand||'';
+  document.getElementById('cf-sku').value=c.sku||'';
+  document.getElementById('cf-platform').value=c.platform||'';
+  document.getElementById('cf-price').value=c.price||'';
+  document.getElementById('cf-stock').value=c.stock||'In Stock';
+  document.getElementById('cf-notes').value=c.notes||'';
+}
+function saveCompetitor(){
+  var saved=JSON.parse(localStorage.getItem('nh_competitor')||'[]');
+  var defaults=[{brand:'Monster Energy',sku:'Monster 500ml',platform:'Blinkit',price:130,stock:'In Stock',notes:'Top seller'},{brand:'Red Bull',sku:'Red Bull 250ml',platform:'Blinkit',price:125,stock:'In Stock',notes:'Premium segment'},{brand:'Sting',sku:'Sting 250ml',platform:'Zepto',price:50,stock:'In Stock',notes:'Mass market'},{brand:'Predator',sku:'Predator 250ml',platform:'Swiggy Instamart',price:60,stock:'Low Stock',notes:'Budget segment'},{brand:'Night Hawk',sku:'Berry Burst Single Can',platform:'All Platforms',price:95,stock:'In Stock',notes:'Our hero SKU'}];
+  var data=saved.length?saved:defaults.slice();
+  var newItem={brand:(document.getElementById('cf-brand')||{}).value||'',sku:(document.getElementById('cf-sku')||{}).value||'',platform:(document.getElementById('cf-platform')||{}).value||'',price:parseFloat((document.getElementById('cf-price')||{}).value)||0,stock:(document.getElementById('cf-stock')||{}).value||'In Stock',notes:(document.getElementById('cf-notes')||{}).value||''};
+  var idx=window._editCompIdx>=0?window._editCompIdx:data.length;
+  data[idx]=newItem;
+  localStorage.setItem('nh_competitor',JSON.stringify(data));
+  renderMktCompetitor();
+}
+
+function renderMktExpansionTracker(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
+  setLoading(false);
+  var M=window.MKT||{};
+  var cityRev={};
+  (M.cityData||[]).forEach(function(c){cityRev[c.name]=c.rev;});
+  var saved=JSON.parse(localStorage.getItem('nh_expansion')||'[]');
+  var potential=[{city:'Mumbai',platform:'Blinkit',tier:1,pop:'20M+',status:'Target',priority:'High',notes:'Largest Q-Commerce market'},
+    {city:'Delhi',platform:'Zepto',tier:1,pop:'19M+',status:'Target',priority:'High',notes:'Top Q-Commerce adoption'},
+    {city:'Pune',platform:'Blinkit',tier:1,pop:'5M+',status:'In Progress',priority:'High',notes:'High per-capita beverage spending'},
+    {city:'Kolkata',platform:'Swiggy Instamart',tier:1,pop:'14M+',status:'Target',priority:'Medium',notes:'Swiggy strong in east India'},
+    {city:'Ahmedabad',platform:'Zepto',tier:2,pop:'7M+',status:'Target',priority:'Medium',notes:'Fast-growing Q-Commerce'},
+    {city:'Jaipur',platform:'Blinkit',tier:2,pop:'3M+',status:'Evaluating',priority:'Low',notes:'High Blinkit penetration'},
+    {city:'Kochi',platform:'Swiggy Instamart',tier:2,pop:'2M+',status:'Evaluating',priority:'Low',notes:'South India premium market'}
+  ];
+  var allCities=saved.length?saved:potential;
+  var activeCities=(M.cityData||[]).map(function(c){return c.name;});
+  var sColors={Active:'#166534','In Progress':'#d97706',Target:'#6366f1',Evaluating:'#64748b'};
+  var pColors={High:'#dc2626',Medium:'#d97706',Low:'#166534'};
+  var tColors={1:'#6366f1',2:'#f59e0b',3:'#94a3b8'};
+  var cityRows=allCities.map(function(c,i){
+    var isActive=activeCities.some(function(a){return a.toLowerCase()===c.city.toLowerCase();});
+    var actualRev=cityRev[c.city]||0;
+    var statusBadge=isActive?'<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">LIVE \u20B9'+actualRev.toLocaleString('en-IN')+'</span>':'<span style="background:#f1f5f9;color:'+( sColors[c.status]||'#64748b')+';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">'+c.status+'</span>';
+    return '<tr><td style="padding:10px 12px;font-weight:500">'+c.city+'</td><td style="padding:10px 12px">'+c.platform+'</td><td style="padding:10px 12px"><span style="background:#eff6ff;color:'+( tColors[c.tier]||'#94a3b8')+';padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">T'+c.tier+'</span></td><td style="padding:10px 12px;color:#64748b">'+c.pop+'</td><td style="padding:10px 12px">'+statusBadge+'</td><td style="padding:10px 12px"><span style="color:'+( pColors[c.priority]||'#64748b')+';font-weight:600;font-size:12px">'+c.priority+'</span></td><td style="padding:10px 12px;color:#64748b;font-size:12px">'+c.notes+'</td><td style="padding:10px 12px"><button onclick="updateExpansionStatus('+i+')" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">Update</button></td></tr>';
+  }).join('');
+  var summaryActive=activeCities.length;
+  var summaryTarget=allCities.filter(function(c){return c.status==='Target'||c.priority==='High';}).length;
+  mc.innerHTML='<div style="max-width:1100px;margin:0 auto">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="font-size:24px">&#128640;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">Expansion Tracker</div><div style="color:#64748b;font-size:13px">Active cities + Zepto/Blinkit/Swiggy expansion pipeline</div></div></div>';
+  mc.innerHTML+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px"><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#166534">'+summaryActive+'</div><div style="font-size:13px;color:#64748b">Active Cities</div></div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#6366f1">'+summaryTarget+'</div><div style="font-size:13px;color:#64748b">High Priority Targets</div></div><div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#f59e0b">'+allCities.length+'</div><div style="font-size:13px;color:#64748b">Cities Tracked</div></div></div>';
+  mc.innerHTML+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.1)"><thead><tr style="background:#f8fafc"><th style="padding:12px;text-align:left;font-size:12px;color:#64748b;font-weight:600">City</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Platform</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Tier</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Pop.</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Status</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Priority</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Notes</th><th style="padding:12px;font-size:12px;color:#64748b;font-weight:600">Action</th></tr></thead><tbody>'+cityRows+'</tbody></table></div></div>';
+}
+function updateExpansionStatus(i){
+  var saved=JSON.parse(localStorage.getItem('nh_expansion')||'[]');
+  var potential=[{city:'Mumbai',platform:'Blinkit',tier:1,pop:'20M+',status:'Target',priority:'High',notes:'Largest Q-Commerce market'},{city:'Delhi',platform:'Zepto',tier:1,pop:'19M+',status:'Target',priority:'High',notes:'Top Q-Commerce adoption'},{city:'Pune',platform:'Blinkit',tier:1,pop:'5M+',status:'In Progress',priority:'High',notes:'High per-capita spending'},{city:'Kolkata',platform:'Swiggy Instamart',tier:1,pop:'14M+',status:'Target',priority:'Medium',notes:'Swiggy east India'},{city:'Ahmedabad',platform:'Zepto',tier:2,pop:'7M+',status:'Target',priority:'Medium',notes:'Fast-growing Q-Commerce'},{city:'Jaipur',platform:'Blinkit',tier:2,pop:'3M+',status:'Evaluating',priority:'Low',notes:'High Blinkit penetration'},{city:'Kochi',platform:'Swiggy Instamart',tier:2,pop:'2M+',status:'Evaluating',priority:'Low',notes:'South India premium'}];
+  var data=saved.length?saved:potential;
+  var c=data[i];if(!c)return;
+  var ns=prompt('Update status for '+c.city+' ['+c.status+']:\nTarget / In Progress / Evaluating / Active / On Hold',c.status);
+  if(ns&&['Target','In Progress','Evaluating','Active','On Hold'].indexOf(ns)>=0){data[i].status=ns;localStorage.setItem('nh_expansion',JSON.stringify(data));renderMktExpansionTracker();}
+  else if(ns) alert('Invalid status. Use: Target/In Progress/Evaluating/Active/On Hold');
+}
+
+function renderMktAlerts(){
+  var mc=document.getElementById('mkt-inner')||document.getElementById('main');
+  if(!mc)return;
+  setLoading(false);
+  var alerts=computeAlerts();
+  var aColors={danger:'#fef2f2',warning:'#fffbeb',success:'#f0fdf4',info:'#eff6ff'};
+  var bColors={danger:'#fca5a5',warning:'#fcd34d',success:'#86efac',info:'#93c5fd'};
+  var alertHtml=alerts.map(function(a){
+    return '<div style="background:'+( aColors[a.type]||'#f8fafc')+';border:1px solid '+( bColors[a.type]||'#e2e8f0')+';border-radius:10px;padding:16px;display:flex;gap:12px;align-items:flex-start"><div style="font-size:20px">'+a.icon+'</div><div><div style="font-weight:600;font-size:14px;color:#1e293b;margin-bottom:4px">'+a.title+'</div><div style="color:#475569;font-size:13px">'+a.msg+'</div></div></div>';
+  }).join('');
+  var M=window.MKT||{};
+  var statsHtml='';
+  if(M.totalRev){
+    var today=new Date(),d7=new Date();d7.setDate(d7.getDate()-7);
+    var toStr=function(d){return d.toISOString().split('T')[0];};
+    var rows=M.rawRows||[];
+    var last7=rows.filter(function(r){return r.date>=toStr(d7);});
+    var l7rev=last7.reduce(function(a,r){return a+(r.rev||0);},0);
+    var l7units=last7.reduce(function(a,r){return a+(r.units||0);},0);
+    statsHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px">';
+    statsHtml+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:13px;color:#64748b;margin-bottom:4px">Last 7 Days Revenue</div><div style="font-size:24px;font-weight:700;color:#1e293b">\u20B9'+Math.round(l7rev).toLocaleString('en-IN')+'</div></div>';
+    statsHtml+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:13px;color:#64748b;margin-bottom:4px">Last 7 Days Units</div><div style="font-size:24px;font-weight:700;color:#1e293b">'+l7units+'</div></div>';
+    statsHtml+='<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center"><div style="font-size:13px;color:#64748b;margin-bottom:4px">Active Alerts</div><div style="font-size:24px;font-weight:700;color:'+( alerts.some(function(a){return a.type==='danger';})?'#dc2626':alerts.some(function(a){return a.type==='warning';})?'#d97706':'#166534')+'">'+alerts.length+'</div></div>';
+    statsHtml+='</div>';
+  }
+  mc.innerHTML='<div style="max-width:900px;margin:0 auto">';
+  mc.innerHTML+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px"><div style="font-size:24px">&#128308;</div><div><div style="font-size:20px;font-weight:700;color:#1e293b">Live Alerts</div><div style="color:#64748b;font-size:13px">Automated: revenue drops, stockouts, city anomalies</div></div><button onclick="renderMktAlerts()" style="margin-left:auto;background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">&#8635; Refresh</button></div>';
+  mc.innerHTML+=statsHtml;
+  mc.innerHTML+='<div style="display:flex;flex-direction:column;gap:12px">'+alertHtml+'</div>';
+  mc.innerHTML+='<div style="margin-top:16px;padding:14px 18px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:12px;color:#94a3b8">&#8505; Load sales data via Marketing Overview first, then refresh alerts.</div>';
+  mc.innerHTML+='</div>';
+}
+
+document.addEventListener("DOMContentLoaded",function(){var app=document.querySelector(".app");var main=document.querySelector("main.main");if(app&&main&&main.parentElement!==app){app.appendChild(main);}if(main)main.id="main";});</script>
 </body>
 </html>
