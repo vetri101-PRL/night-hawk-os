@@ -191,7 +191,7 @@
       <li data-view="mkt-competitor"><span class="ico">&#128269;</span> Competitor Intel</li>
       <li data-view="mkt-expansion"><span class="ico">&#128640;</span> Expansion Tracker</li>
       <li data-view="mkt-alerts"><span class="ico">&#128308;</span> Live Alerts</li>
-      <li data-view="ai-strategy"><span class="ico">&#129504;</span> AI Strategy</li></ul>
+      <li data-view="mkt-ai-strategy"><span class="ico">&#129504;</span> AI Strategy</li></ul>
     <div class="sidebar-foot"><div id="whoami">Org: <b>Night Hawk Energy Drink</b></div><div style="margin-top:6px"><a id="settings-link" style="display:block;margin-bottom:6px">Change API URL</a><a onclick="openKeyModal()" style="cursor:pointer;color:var(--nh-yellow);font-weight:600;font-size:11px;display:flex;align-items:center;gap:6px"><span id="key-status-dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>Set Claude API Key</a></div></div>
       <div style="margin-top:6px"><a id="settings-link">Change API URL</a></div>
     </div>
@@ -411,7 +411,7 @@ function switchView(v) {
     'mkt-competitor': 'Competitor Intel',
     'mkt-expansion': 'Expansion Tracker',
     'mkt-alerts': 'Live Alerts',
-    'ai-strategy': 'AI Strategy Advisor'
+    'mkt-ai-strategy': 'AI Strategy Advisor'
   };
   $('view-title').innerText = titles[v] || v;
   var qcViews = ['brief','ai','dashboard','sales','unit-econ','ads','inventory','complaints','expansion','budget','cash','forecast','scenarios','decisions','issues','import','master'];
@@ -458,7 +458,7 @@ function loadView(v) {
     case 'mkt-competitor':  render = function(){ if(typeof renderMktCompetitor==='function') renderMktCompetitor(); }; break;
     case 'mkt-expansion':   render = function(){ if(typeof renderMktExpansionTracker==='function') renderMktExpansionTracker(); }; break;
     case 'mkt-alerts':      render = function(){ if(typeof renderMktAlerts==='function') renderMktAlerts(); }; break;
-    case 'ai-strategy':   render = function(){ if(typeof renderAIStrategy==='function') renderAIStrategy(); }; break;
+    case 'mkt-ai-strategy':   render = function(){ if(typeof renderAIStrategy==='function') renderAIStrategy(); }; break;
   }
   if (!render) return;
   try {
@@ -2807,11 +2807,11 @@ function renderAIStrategy(){
       '<div class="kpi"><div class="kpi-label">Cities Active</div><div class="kpi-value">'+Object.keys(MKT.byCity).length+'</div></div>'+
       '<div class="kpi"><div class="kpi-label">SKUs Live</div><div class="kpi-value">'+Object.keys(MKT.bySku).length+'</div></div>'+
       '</div>'+
-      '<div id="ai-strategy-out" style="min-height:200px;padding:24px;background:#f8fafc;border-radius:12px;border:1.5px solid #e0e7ef;font-size:14px;line-height:1.7;color:#1a2a3a">'+
+      '<div id="mkt-ai-strategy-out" style="min-height:200px;padding:24px;background:#f8fafc;border-radius:12px;border:1.5px solid #e0e7ef;font-size:14px;line-height:1.7;color:#1a2a3a">'+
       '<div style="text-align:center;color:#aaa;padding:40px 0">&#x1F504; Generating your 30-60-90 day strategy...</div></div>'+
       '<div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">'+
       '<button class="btn" onclick="generateAIStrategy(false)" style="flex:1;min-width:160px">&#x1F9E0; Regenerate Strategy</button>'+
-      '<select id="ai-strategy-focus" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer">'+
+      '<select id="mkt-ai-strategy-focus" style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer">'+
       '<option value="all">All Areas</option>'+
       '<option value="growth">Growth &amp; Expansion</option>'+
       '<option value="marketing">Marketing &amp; Ads</option>'+
@@ -2825,9 +2825,9 @@ function renderAIStrategy(){
 function generateAIStrategy(isAuto){
   var key=localStorage.getItem('nh_claude_key');
   if(!key) return;
-  var focus=document.getElementById('ai-strategy-focus');
+  var focus=document.getElementById('mkt-ai-strategy-focus');
   var focusArea=focus?focus.value:'all';
-  var out=document.getElementById('ai-strategy-out');
+  var out=document.getElementById('mkt-ai-strategy-out');
   if(!out) return;
   out.innerHTML='<div style="text-align:center;color:#aaa;padding:40px 0">&#x1F504; Generating your '+focusArea+' strategy...</div>';
   var topSkus=Object.entries(MKT.bySku||{}).sort(function(a,b){return b[1].rev-a[1].rev;}).slice(0,3).map(function(e){return e[0]+' (₹'+Math.round(e[1].rev/1000)+'K)';}).join(', ');
